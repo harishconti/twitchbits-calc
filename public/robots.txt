@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://twitchbits-calc.com/sitemap-index.xml
