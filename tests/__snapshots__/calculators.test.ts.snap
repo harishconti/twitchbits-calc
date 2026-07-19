@@ -26,3 +26,26 @@ exports[`revenue calculator > snapshots a typical partner estimate 1`] = `
   },
 }
 `;
+
+exports[`sub revenue calculator > snapshots a typical partner sub mix 1`] = `
+{
+  "annualTotal": 14674.380000000001,
+  "hourlyEquivalent": 10.190541666666666,
+  "monthly": {
+    "gift": 34.93,
+    "prime": 52.395,
+    "tier1": 873.25,
+    "tier2": 174.825,
+    "tier3": 87.46499999999999,
+    "total": 1222.865,
+  },
+  "rawCount": {
+    "gift": 10,
+    "prime": 15,
+    "tier1": 250,
+    "tier2": 25,
+    "tier3": 5,
+    "total": 305,
+  },
+}
+`;

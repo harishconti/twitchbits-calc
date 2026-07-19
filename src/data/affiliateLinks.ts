@@ -2,9 +2,41 @@ export const AFFILIATES = {
   streamlabs: {
     id: "streamlabs-ultra",
     label: "Streamlabs Ultra",
-    url: "https://streamlabs.com/ultra", // replaced with real Impact link in Task 18
+    url: "https://streamlabs.com/ultra",
     disclosure: "We earn a commission when you sign up for Streamlabs Ultra.",
     cta: { primary: "Upgrade your stream", alt: "Start free trial" },
+    placement: "after-result" as const,
+  },
+  restream: {
+    id: "restream-studio",
+    label: "Restream",
+    url: "https://restream.io",
+    disclosure: "We earn a commission when you sign up for Restream.",
+    cta: { primary: "Multistream free", alt: "Try Restream" },
+    placement: "after-result" as const,
+  },
+  epoccam: {
+    id: "elgato-epoccam",
+    label: "Elgato EpocCam",
+    url: "https://www.elgato.com",
+    disclosure: "We earn a commission when you purchase Elgato products.",
+    cta: { primary: "Shop Elgato gear", alt: "Browse Elgato" },
+    placement: "after-result" as const,
+  },
+  tubebuddy: {
+    id: "tubebuddy",
+    label: "TubeBuddy",
+    url: "https://www.tubebuddy.com",
+    disclosure: "We earn a commission when you sign up for TubeBuddy.",
+    cta: { primary: "Grow on YouTube", alt: "Try TubeBuddy" },
+    placement: "after-result" as const,
+  },
+  placeit: {
+    id: "placeit",
+    label: "Placeit",
+    url: "https://placeit.net",
+    disclosure: "We earn a commission when you subscribe to Placeit.",
+    cta: { primary: "Make channel graphics", alt: "Try Placeit" },
     placement: "after-result" as const,
   },
   amazon: {

@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import SponsorshipCalculator from '../components/calculators/SponsorshipCalculator.astro';
+import { sponsorshipFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="Sponsorship & Brand Deal Calculator"
+  description="Estimate what to charge for a brand deal based on followers, engagement rate, niche, audience region, and deliverable."
+  slug="sponsorship-calculator"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Creator Tools', url: '/sponsorship-calculator' }]}
+  faqs={sponsorshipFaqs}
+>
+  <SponsorshipCalculator />
+</ToolLayout>

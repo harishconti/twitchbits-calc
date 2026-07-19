@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import TiktokCalculator from '../components/calculators/TiktokCalculator.astro';
+import { tiktokFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="100 TikTok Coins to USD"
+  description="100 TikTok Coins cost a viewer about $1.05 USD. See what the creator earns in diamonds after TikTok's cut."
+  slug="tiktok-coins-100-to-usd"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'TikTok Tools', url: '/tiktok-coins-100-to-usd' }]}
+  faqs={tiktokFaqs}
+>
+  <TiktokCalculator />
+</ToolLayout>

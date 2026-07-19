@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import SubRevenueCalculator from '../components/calculators/SubRevenueCalculator.astro';
+import { subRevenueFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="Twitch Sub Revenue Calculator"
+  description="Estimate monthly and annual Twitch subscription revenue by tier mix, Prime, gift subs, and revenue split."
+  slug="twitch-sub-revenue-calculator"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: '/twitch-sub-revenue-calculator' }]}
+  faqs={subRevenueFaqs}
+>
+  <SubRevenueCalculator />
+</ToolLayout>

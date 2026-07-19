@@ -1,0 +1,22 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import LinearConverter from '../components/calculators/LinearConverter.astro';
+import { bitsToUsd, usdToBits, bulkTable } from '../lib/calculators/bits';
+import { BULK_TABLE, VIEWER_PACKS, REGIONS } from '../data/bitsConfig';
+import { bitsFaqs } from '../data/faqs';
+const region = REGIONS.br;
+---
+<ToolLayout
+  title="Twitch Bits to BRL Calculator"
+  description={`Convert Twitch Bits to Brazilian Reais (BRL). See streamer payout and viewer cost at the ${region.rate}:1 USD rate.`}
+  slug="twitch-bits-to-brl"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: '/twitch-bits-to-brl' }]}
+  faqs={bitsFaqs('br')}
+>
+  <LinearConverter config={{
+    tool: 'bits', unitName: 'Bits', paramKey: 'bits', region: 'br', currency: 'BRL',
+    toUsd: (n) => bitsToUsd(n, 'br'), fromUsd: (u) => usdToBits(u, 'br'),
+    bulkRows: BULK_TABLE, toBulkRows: (rows) => bulkTable(rows, 'br'),
+    viewerContext: { perUnitCostUsd: VIEWER_PACKS[0].perBitUsd, label: 'Viewer pays' },
+  }} />
+</ToolLayout>

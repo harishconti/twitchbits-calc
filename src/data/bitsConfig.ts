@@ -14,6 +14,10 @@ export const REGIONS = {
   eu: { label: "Eurozone", currency: "EUR", rate: 0.92 },
   ca: { label: "Canada", currency: "CAD", rate: 1.36 },
   au: { label: "Australia", currency: "AUD", rate: 1.51 },
+  jp: { label: "Japan", currency: "JPY", rate: 151.0 },
+  mx: { label: "Mexico", currency: "MXN", rate: 18.0 },
+  br: { label: "Brazil", currency: "BRL", rate: 5.5 },
+  in: { label: "India", currency: "INR", rate: 83.0 },
 } as const;
 
 export type RegionCode = keyof typeof REGIONS;
