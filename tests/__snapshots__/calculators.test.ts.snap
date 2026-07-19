@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`revenue calculator > snapshots a typical partner estimate 1`] = `
+{
+  "annual": {
+    "ads": 2160,
+    "bits": 6000,
+    "subs": 10690.092,
+    "total": 18850.091999999997,
+  },
+  "hourlyEquivalent": 13.090341666666665,
+  "minWageMultiple": 1.8055643678160918,
+  "monthly": {
+    "ads": 180,
+    "bits": 500,
+    "subs": 890.841,
+    "total": 1570.841,
+  },
+}
+`;

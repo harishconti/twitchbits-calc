@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import RevenueCalculator from '../components/calculators/RevenueCalculator.astro';
+import { revenueFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="Twitch Revenue Calculator"
+  description="Estimate monthly and annual Twitch earnings from subs, Bits, and ads. Compare to minimum wage by the hour."
+  slug="twitch-revenue-calculator"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: '/twitch-revenue-calculator' }]}
+  faqs={revenueFaqs}
+>
+  <RevenueCalculator />
+</ToolLayout>
