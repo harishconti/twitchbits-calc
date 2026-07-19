@@ -27,23 +27,23 @@
 
 ## File Structure
 
-| File | Responsibility | Action |
-|---|---|---|
-| `src/lib/slug.ts` | `slugFor(type, key)` — single source of truth for programmatic URLs | Create |
-| `src/lib/slug.test.ts` | slug regression tests vs old manual slugs | Create |
-| `src/data/programmatic.ts` | Generation arrays + currency region list (excludes `us`) | Create |
-| `src/data/programmatic.test.ts` | Array invariants (positive ints; `us` excluded) | Create |
-| `src/data/toolContent.ts` | `ToolContent` interface + per-tool structured content blocks | Create |
-| `src/components/ToolContent.astro` | Renders `ToolContent` to semantic HTML with token interpolation | Create |
-| `src/layouts/ToolLayout.astro` | Add named `below` slot between calculator panel and FAQ | Modify (additive) |
-| `src/pages/how-much-is-[amount]-bits-on-twitch.astro` | Bits-amount dynamic route | Create |
-| `src/pages/twitch-bits-to-[currency].astro` | Bits-currency dynamic route (excludes USD) | Create |
-| `src/pages/tiktok-coins-[amount]-to-usd.astro` | TikTok-amount dynamic route | Create |
-| `src/pages/youtube-money-[views]-views.astro` | YouTube-views dynamic route | Create |
-| 7 × `how-much-is-*-bits-on-twitch.astro` | Manual bits-amount pages | Delete |
-| 8 × `twitch-bits-to-{gbp,eur,cad,aud,jpy,mxn,brl,inr}.astro` | Manual currency pages | Delete |
-| 2 × `tiktok-coins-{100,1000}-to-usd.astro` | Manual tiktok pages | Delete |
-| 2 × `youtube-money-{1000,10000}-views.astro` | Manual youtube pages | Delete |
+| File                                                         | Responsibility                                                      | Action            |
+| ------------------------------------------------------------ | ------------------------------------------------------------------- | ----------------- |
+| `src/lib/slug.ts`                                            | `slugFor(type, key)` — single source of truth for programmatic URLs | Create            |
+| `src/lib/slug.test.ts`                                       | slug regression tests vs old manual slugs                           | Create            |
+| `src/data/programmatic.ts`                                   | Generation arrays + currency region list (excludes `us`)            | Create            |
+| `src/data/programmatic.test.ts`                              | Array invariants (positive ints; `us` excluded)                     | Create            |
+| `src/data/toolContent.ts`                                    | `ToolContent` interface + per-tool structured content blocks        | Create            |
+| `src/components/ToolContent.astro`                           | Renders `ToolContent` to semantic HTML with token interpolation     | Create            |
+| `src/layouts/ToolLayout.astro`                               | Add named `below` slot between calculator panel and FAQ             | Modify (additive) |
+| `src/pages/how-much-is-[amount]-bits-on-twitch.astro`        | Bits-amount dynamic route                                           | Create            |
+| `src/pages/twitch-bits-to-[currency].astro`                  | Bits-currency dynamic route (excludes USD)                          | Create            |
+| `src/pages/tiktok-coins-[amount]-to-usd.astro`               | TikTok-amount dynamic route                                         | Create            |
+| `src/pages/youtube-money-[views]-views.astro`                | YouTube-views dynamic route                                         | Create            |
+| 7 × `how-much-is-*-bits-on-twitch.astro`                     | Manual bits-amount pages                                            | Delete            |
+| 8 × `twitch-bits-to-{gbp,eur,cad,aud,jpy,mxn,brl,inr}.astro` | Manual currency pages                                               | Delete            |
+| 2 × `tiktok-coins-{100,1000}-to-usd.astro`                   | Manual tiktok pages                                                 | Delete            |
+| 2 × `youtube-money-{1000,10000}-views.astro`                 | Manual youtube pages                                                | Delete            |
 
 **Unchanged (canonical standalone pages — NOT folded into dynamic routes):** `twitch-bits-to-usd.astro`, `twitch-revenue-calculator.astro`, `twitch-sub-revenue-calculator.astro`, `tiktok-coins-to-usd.astro`, `youtube-money-calculator.astro`, `sponsorship-calculator.astro`.
 
@@ -52,37 +52,44 @@
 ## Task 1: `slugFor` helper + tests
 
 **Files:**
+
 - Create: `src/lib/slug.ts`
 - Test: `src/lib/slug.test.ts`
 
 **Interfaces:**
+
 - Produces: `slugFor(type, key)` — used by all four dynamic routes (Tasks 5–8) and the slug regression test.
 
 - [ ] **Step 1: Write the failing test**
 
 `src/lib/slug.test.ts`:
-```ts
-import { describe, it, expect } from 'vitest';
-import { slugFor } from './slug';
 
-describe('slugFor', () => {
-  it('matches old manual bits-amount slugs', () => {
-    expect(slugFor('bitsAmount', 100)).toBe('how-much-is-100-bits-on-twitch');
-    expect(slugFor('bitsAmount', 50000)).toBe('how-much-is-50000-bits-on-twitch');
-    expect(slugFor('bitsAmount', 100000)).toBe('how-much-is-100000-bits-on-twitch');
+```ts
+import { describe, it, expect } from "vitest";
+import { slugFor } from "./slug";
+
+describe("slugFor", () => {
+  it("matches old manual bits-amount slugs", () => {
+    expect(slugFor("bitsAmount", 100)).toBe("how-much-is-100-bits-on-twitch");
+    expect(slugFor("bitsAmount", 50000)).toBe(
+      "how-much-is-50000-bits-on-twitch",
+    );
+    expect(slugFor("bitsAmount", 100000)).toBe(
+      "how-much-is-100000-bits-on-twitch",
+    );
   });
-  it('matches old manual bits-currency slugs (lowercase ISO code)', () => {
-    expect(slugFor('bitsCurrency', 'gbp')).toBe('twitch-bits-to-gbp');
-    expect(slugFor('bitsCurrency', 'inr')).toBe('twitch-bits-to-inr');
-    expect(slugFor('bitsCurrency', 'jpy')).toBe('twitch-bits-to-jpy');
+  it("matches old manual bits-currency slugs (lowercase ISO code)", () => {
+    expect(slugFor("bitsCurrency", "gbp")).toBe("twitch-bits-to-gbp");
+    expect(slugFor("bitsCurrency", "inr")).toBe("twitch-bits-to-inr");
+    expect(slugFor("bitsCurrency", "jpy")).toBe("twitch-bits-to-jpy");
   });
-  it('matches old manual tiktok-amount slugs', () => {
-    expect(slugFor('tiktokAmount', 100)).toBe('tiktok-coins-100-to-usd');
-    expect(slugFor('tiktokAmount', 1000)).toBe('tiktok-coins-1000-to-usd');
+  it("matches old manual tiktok-amount slugs", () => {
+    expect(slugFor("tiktokAmount", 100)).toBe("tiktok-coins-100-to-usd");
+    expect(slugFor("tiktokAmount", 1000)).toBe("tiktok-coins-1000-to-usd");
   });
-  it('matches old manual youtube-views slugs', () => {
-    expect(slugFor('youtubeViews', 1000)).toBe('youtube-money-1000-views');
-    expect(slugFor('youtubeViews', 10000)).toBe('youtube-money-10000-views');
+  it("matches old manual youtube-views slugs", () => {
+    expect(slugFor("youtubeViews", 1000)).toBe("youtube-money-1000-views");
+    expect(slugFor("youtubeViews", 10000)).toBe("youtube-money-10000-views");
   });
 });
 ```
@@ -95,16 +102,22 @@ Expected: FAIL — `slugFor` is not exported (module not found).
 - [ ] **Step 3: Write minimal implementation**
 
 `src/lib/slug.ts`:
+
 ```ts
-export type SlugType = 'bitsAmount' | 'bitsCurrency' | 'tiktokAmount' | 'youtubeViews';
+export type SlugType =
+  "bitsAmount" | "bitsCurrency" | "tiktokAmount" | "youtubeViews";
 
 export function slugFor(type: SlugType, key: string | number): string {
   const k = String(key);
   switch (type) {
-    case 'bitsAmount': return `how-much-is-${k}-bits-on-twitch`;
-    case 'bitsCurrency': return `twitch-bits-to-${k}`;
-    case 'tiktokAmount': return `tiktok-coins-${k}-to-usd`;
-    case 'youtubeViews': return `youtube-money-${k}-views`;
+    case "bitsAmount":
+      return `how-much-is-${k}-bits-on-twitch`;
+    case "bitsCurrency":
+      return `twitch-bits-to-${k}`;
+    case "tiktokAmount":
+      return `tiktok-coins-${k}-to-usd`;
+    case "youtubeViews":
+      return `youtube-money-${k}-views`;
   }
 }
 ```
@@ -134,39 +147,45 @@ EOF
 ## Task 2: `programmatic.ts` generation arrays + invariants
 
 **Files:**
+
 - Create: `src/data/programmatic.ts`
 - Test: `src/data/programmatic.test.ts`
 
 **Interfaces:**
+
 - Produces: `BITS_AMOUNTS`, `TIKTOK_AMOUNTS`, `YOUTUBE_VIEWS` (readonly `number[]`), and `BITS_CURRENCY_REGIONS` (readonly `RegionCode[]` excluding `'us'`). Consumed by Tasks 5–8.
 
 - [ ] **Step 1: Write the failing test**
 
 `src/data/programmatic.test.ts`:
+
 ```ts
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
-  BITS_AMOUNTS, TIKTOK_AMOUNTS, YOUTUBE_VIEWS, BITS_CURRENCY_REGIONS,
-} from './programmatic';
+  BITS_AMOUNTS,
+  TIKTOK_AMOUNTS,
+  YOUTUBE_VIEWS,
+  BITS_CURRENCY_REGIONS,
+} from "./programmatic";
 
 const isPosInt = (n: unknown): n is number =>
-  typeof n === 'number' && Number.isInteger(n) && n > 0 && Number.isFinite(n);
+  typeof n === "number" && Number.isInteger(n) && n > 0 && Number.isFinite(n);
 
-describe('programmatic generation arrays', () => {
-  it('every bits amount is a positive finite integer', () => {
+describe("programmatic generation arrays", () => {
+  it("every bits amount is a positive finite integer", () => {
     expect(BITS_AMOUNTS.every(isPosInt)).toBe(true);
   });
-  it('every tiktok amount is a positive finite integer', () => {
+  it("every tiktok amount is a positive finite integer", () => {
     expect(TIKTOK_AMOUNTS.every(isPosInt)).toBe(true);
   });
-  it('every youtube views value is a positive finite integer', () => {
+  it("every youtube views value is a positive finite integer", () => {
     expect(YOUTUBE_VIEWS.every(isPosInt)).toBe(true);
   });
-  it('currency regions exclude us (canonical standalone page owns /twitch-bits-to-usd)', () => {
-    expect(BITS_CURRENCY_REGIONS).not.toContain('us');
+  it("currency regions exclude us (canonical standalone page owns /twitch-bits-to-usd)", () => {
+    expect(BITS_CURRENCY_REGIONS).not.toContain("us");
     expect(BITS_CURRENCY_REGIONS.length).toBeGreaterThan(0);
   });
-  it('includes the old manual bits amounts so slugs are preserved', () => {
+  it("includes the old manual bits amounts so slugs are preserved", () => {
     expect(BITS_AMOUNTS).toContain(100);
     expect(BITS_AMOUNTS).toContain(250);
     expect(BITS_AMOUNTS).toContain(500);
@@ -186,8 +205,9 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Write minimal implementation**
 
 `src/data/programmatic.ts`:
+
 ```ts
-import type { RegionCode } from './bitsConfig';
+import type { RegionCode } from "./bitsConfig";
 
 // Generation inputs for the four programmatic-SEO dynamic routes.
 // Expand these arrays to add more variants — one edit propagates at build.
@@ -206,7 +226,14 @@ export const YOUTUBE_VIEWS = [1000, 10000, 100000, 1000000] as const;
 // `twitch-bits-to-[currency]` — excludes 'us' so it does not collide with the
 // canonical standalone /twitch-bits-to-usd page (which uses BitsCalculator).
 export const BITS_CURRENCY_REGIONS: readonly RegionCode[] = [
-  'gb', 'eu', 'ca', 'au', 'jp', 'mx', 'br', 'in',
+  "gb",
+  "eu",
+  "ca",
+  "au",
+  "jp",
+  "mx",
+  "br",
+  "in",
 ];
 ```
 
@@ -235,9 +262,11 @@ EOF
 ## Task 3: `toolContent.ts` structured content blocks
 
 **Files:**
+
 - Create: `src/data/toolContent.ts`
 
 **Interfaces:**
+
 - Produces: `ContentSection`, `ToolContent` interfaces and `toolContent` record keyed by `'bits' | 'bitsCurrency' | 'tiktok' | 'youtube'`. Consumed by `ToolContent.astro` (Task 4) and the dynamic routes (Tasks 5–8).
 - **Token contract** — the `values` prop passed to `ToolContent.astro` must supply these keys (only the ones each doc's templates reference):
   - `bits`: `{amount}`, `{usd}`, `{viewerCost}`
@@ -250,6 +279,7 @@ This task has no unit test (it is typed authoring data, not logic). Correctness 
 - [ ] **Step 1: Write the data file**
 
 `src/data/toolContent.ts`:
+
 ```ts
 export interface ContentSection {
   /** Renders as <h2>. May contain {tokens}. */
@@ -268,18 +298,18 @@ export interface ToolContent {
 // Rates are referenced conceptually and via tokens — never hardcoded — so a
 // rate change in bitsConfig.ts / coinConfig.ts / youtubeConfig.ts propagates.
 export const toolContent: Record<
-  'bits' | 'bitsCurrency' | 'tiktok' | 'youtube',
+  "bits" | "bitsCurrency" | "tiktok" | "youtube",
   ToolContent
 > = {
   bits: {
     sections: [
       {
         heading: `How {amount} Bits turn into streamer dollars`,
-        body: `Twitch pays streamers a fixed <strong>$0.01 per Bit</strong> cheered, so {amount} Bits equals <strong>${'$'}{usd}</strong> for the streamer. This rate is the same for Affiliates and Partners — what changes with status is eligibility, not the per-Bit payout. The number above is the streamer's gross payout before any platform withholding or taxes.`,
+        body: `Twitch pays streamers a fixed <strong>$0.01 per Bit</strong> cheered, so {amount} Bits equals <strong>${"$"}{usd}</strong> for the streamer. This rate is the same for Affiliates and Partners — what changes with status is eligibility, not the per-Bit payout. The number above is the streamer's gross payout before any platform withholding or taxes.`,
       },
       {
         heading: `What viewers actually pay for {amount} Bits`,
-        body: `Viewers buy Bits in packs, and the per-Bit price drops slightly on larger packs. At the smallest pack rate, {amount} Bits costs a viewer about <strong>${'$'}{viewerCost}</strong>. That gap between viewer cost and streamer payout is Twitch's margin on Bits — the streamer's $0.01-per-Bit cut is unchanged regardless of which pack the viewer bought.`,
+        body: `Viewers buy Bits in packs, and the per-Bit price drops slightly on larger packs. At the smallest pack rate, {amount} Bits costs a viewer about <strong>${"$"}{viewerCost}</strong>. That gap between viewer cost and streamer payout is Twitch's margin on Bits — the streamer's $0.01-per-Bit cut is unchanged regardless of which pack the viewer bought.`,
       },
       {
         heading: `The Bits payout model, explained`,
@@ -296,7 +326,7 @@ export const toolContent: Record<
     sections: [
       {
         heading: `Twitch Bits to {currency}: the streamer payout`,
-        body: `Twitch pays streamers a fixed <strong>$0.01 per Bit</strong> in USD, so {amount} Bits equals <strong>${'$'}{usd}</strong> for the streamer. At the current USD-to-{currency} rate of <strong>{rate}</strong>, that's the same per-Bit economics as the USD calculator — only the display currency changes. The streamer is paid in USD by Twitch; the {currency} figure here is a conversion for viewers and creators who think in {currency}.`,
+        body: `Twitch pays streamers a fixed <strong>$0.01 per Bit</strong> in USD, so {amount} Bits equals <strong>${"$"}{usd}</strong> for the streamer. At the current USD-to-{currency} rate of <strong>{rate}</strong>, that's the same per-Bit economics as the USD calculator — only the display currency changes. The streamer is paid in USD by Twitch; the {currency} figure here is a conversion for viewers and creators who think in {currency}.`,
       },
       {
         heading: `What viewers pay in {currency}`,
@@ -312,11 +342,11 @@ export const toolContent: Record<
     sections: [
       {
         heading: `What {amount} TikTok Coins are worth`,
-        body: `Viewers buy TikTok Coins at roughly $0.0105 each, so {amount} Coins costs a viewer about <strong>${'$'}{viewerCost}</strong>. When those Coins are spent on gifts, TikTok converts them to Diamonds for the creator at a 2:1 ratio — {amount} Coins becomes <strong>{diamonds}</strong> Diamonds — and each Diamond pays the creator about $0.005.`,
+        body: `Viewers buy TikTok Coins at roughly $0.0105 each, so {amount} Coins costs a viewer about <strong>${"$"}{viewerCost}</strong>. When those Coins are spent on gifts, TikTok converts them to Diamonds for the creator at a 2:1 ratio — {amount} Coins becomes <strong>{diamonds}</strong> Diamonds — and each Diamond pays the creator about $0.005.`,
       },
       {
         heading: `What the creator actually earns from {amount} Coins`,
-        body: `After TikTok's ~50% cut, the creator receives the Diamond value: <strong>{amount}</strong> Coins → {diamonds} Diamonds → <strong>${'$'}{creatorUsd}</strong> for the creator. The gap between the ${'$'}{viewerCost} the viewer paid and the ${'$'}{creatorUsd} the creator received is TikTok's platform share — that's the core difference between TikTok gifts and, for example, Twitch Bits, where the streamer receives 100% of the Bits value.`,
+        body: `After TikTok's ~50% cut, the creator receives the Diamond value: <strong>{amount}</strong> Coins → {diamonds} Diamonds → <strong>${"$"}{creatorUsd}</strong> for the creator. The gap between the ${"$"}{viewerCost} the viewer paid and the ${"$"}{creatorUsd} the creator received is TikTok's platform share — that's the core difference between TikTok gifts and, for example, Twitch Bits, where the streamer receives 100% of the Bits value.`,
       },
       {
         heading: `Coins vs Diamonds, simply`,
@@ -333,7 +363,7 @@ export const toolContent: Record<
     sections: [
       {
         heading: `How much {views} YouTube views can earn`,
-        body: `YouTube pays per 1,000 monetized views through RPM (revenue per mille), after YouTube's 45% cut. For {views} views at a typical long-form RPM range, earnings land roughly between <strong>${'$'}{lowUsd}</strong> and <strong>${'$'}{highUsd}</strong>. The wide range reflects how much RPM varies by niche, audience country, and ad fill rate — the calculator above lets you narrow it with your own RPM, niche, and audience.`,
+        body: `YouTube pays per 1,000 monetized views through RPM (revenue per mille), after YouTube's 45% cut. For {views} views at a typical long-form RPM range, earnings land roughly between <strong>${"$"}{lowUsd}</strong> and <strong>${"$"}{highUsd}</strong>. The wide range reflects how much RPM varies by niche, audience country, and ad fill rate — the calculator above lets you narrow it with your own RPM, niche, and audience.`,
       },
       {
         heading: `What actually drives YouTube RPM`,
@@ -346,7 +376,7 @@ export const toolContent: Record<
       },
       {
         heading: `How YouTube's 45% cut is already included`,
-        body: `RPM is defined as the creator's take after YouTube's 45% share, so the ${'$'}{lowUsd}–${'$'}{highUsd} range above is what the creator keeps — not gross ad spend. To estimate pre-tax take-home, you'd still subtract self-employment and income tax from this figure; the calculator shows pre-tax earnings.`,
+        body: `RPM is defined as the creator's take after YouTube's 45% share, so the ${"$"}{lowUsd}–${"$"}{highUsd} range above is what the creator keeps — not gross ad spend. To estimate pre-tax take-home, you'd still subtract self-employment and income tax from this figure; the calculator shows pre-tax earnings.`,
       },
     ],
   },
@@ -380,16 +410,19 @@ EOF
 ## Task 4: `ToolContent.astro` renderer + `below` slot in `ToolLayout`
 
 **Files:**
+
 - Create: `src/components/ToolContent.astro`
 - Modify: `src/layouts/ToolLayout.astro` (add named `below` slot)
 
 **Interfaces:**
+
 - Consumes: `ToolContent` / `ContentSection` from `src/data/toolContent.ts` (Task 3).
 - Produces: `<ToolContent doc={...} values={...} slot="below" />` — used by all four dynamic routes (Tasks 5–8).
 
 - [ ] **Step 1: Create the renderer component**
 
 `src/components/ToolContent.astro`:
+
 ```astro
 ---
 import type { ToolContent, ContentSection } from '../data/toolContent';
@@ -454,11 +487,14 @@ const resolve = (s: string): string =>
 Modify `src/layouts/ToolLayout.astro`. In the template body, insert `<slot name="below" />` between the closing `</section>` of `hero-tool` (line 30) and `<FaqSection faqs={faqs} />` (line 31).
 
 Find:
+
 ```astro
     </section>
     <FaqSection faqs={faqs} />
 ```
+
 Replace with:
+
 ```astro
     </section>
     <slot name="below" />
@@ -497,6 +533,7 @@ EOF
 ## Task 5: Bits-amount dynamic route + delete 7 manual pages
 
 **Files:**
+
 - Create: `src/pages/how-much-is-[amount]-bits-on-twitch.astro`
 - Delete: `src/pages/how-much-is-100-bits-on-twitch.astro`
 - Delete: `src/pages/how-much-is-250-bits-on-twitch.astro`
@@ -507,12 +544,14 @@ EOF
 - Delete: `src/pages/how-much-is-50000-bits-on-twitch.astro`
 
 **Interfaces:**
+
 - Consumes: `BITS_AMOUNTS` (Task 2), `slugFor` (Task 1), `toolContent` (Task 3), `ToolContent` (Task 4), existing `bitsToUsd`/`usdToBits`/`bulkTable` from `src/lib/calculators/bits`, existing `BULK_TABLE`/`VIEWER_PACKS` from `src/data/bitsConfig`, existing `bitsFaqs` from `src/data/faqs`.
 - Produces: dynamic route emitting `/how-much-is-{amount}-bits-on-twitch` for every value in `BITS_AMOUNTS`.
 
 - [ ] **Step 1: Create the dynamic route**
 
 `src/pages/how-much-is-[amount]-bits-on-twitch.astro`:
+
 ```astro
 ---
 import ToolLayout from '../layouts/ToolLayout.astro';
@@ -621,16 +660,19 @@ EOF
 ## Task 6: Bits-currency dynamic route + delete 8 manual pages
 
 **Files:**
+
 - Create: `src/pages/twitch-bits-to-[currency].astro`
 - Delete: `src/pages/twitch-bits-to-gbp.astro`, `-eur.astro`, `-cad.astro`, `-aud.astro`, `-jpy.astro`, `-mxn.astro`, `-brl.astro`, `-inr.astro`
 
 **Interfaces:**
+
 - Consumes: `BITS_CURRENCY_REGIONS` (Task 2), `REGIONS` + `BULK_TABLE` + `VIEWER_PACKS` from `src/data/bitsConfig`, `bitsToUsd`/`usdToBits`/`bulkTable` from `src/lib/calculators/bits`, `bitsFaqs` from `src/data/faqs`, `slugFor` (Task 1), `toolContent.bitsCurrency` (Task 3), `ToolContent` (Task 4).
 - Produces: dynamic route emitting `/twitch-bits-to-{gbp,eur,cad,aud,jpy,mxn,brl,inr}`. **Does not emit `/twitch-bits-to-usd`** — that stays the canonical standalone page.
 
 - [ ] **Step 1: Create the dynamic route**
 
 `src/pages/twitch-bits-to-[currency].astro`:
+
 ```astro
 ---
 import ToolLayout from '../layouts/ToolLayout.astro';
@@ -746,16 +788,19 @@ EOF
 ## Task 7: TikTok-amount dynamic route + delete 2 manual pages
 
 **Files:**
+
 - Create: `src/pages/tiktok-coins-[amount]-to-usd.astro`
 - Delete: `src/pages/tiktok-coins-100-to-usd.astro`, `src/pages/tiktok-coins-1000-to-usd.astro`
 
 **Interfaces:**
+
 - Consumes: `TIKTOK_AMOUNTS` (Task 2), `COIN_TO_USD`/`COIN_TO_DIAMOND`/`DIAMOND_TO_USD` from `src/data/coinConfig`, `coinsToUsd` from `src/lib/calculators/tiktok`, `tiktokFaqs` from `src/data/faqs`, `slugFor` (Task 1), `toolContent.tiktok` (Task 3), `ToolContent` (Task 4), existing `TiktokCalculator` component (rendered with no props — matches the manual pages exactly).
 - Produces: dynamic route emitting `/tiktok-coins-{amount}-to-usd` for every value in `TIKTOK_AMOUNTS`.
 
 - [ ] **Step 1: Create the dynamic route**
 
 `src/pages/tiktok-coins-[amount]-to-usd.astro`:
+
 ```astro
 ---
 import ToolLayout from '../layouts/ToolLayout.astro';
@@ -850,16 +895,19 @@ EOF
 ## Task 8: YouTube-views dynamic route + delete 2 manual pages
 
 **Files:**
+
 - Create: `src/pages/youtube-money-[views]-views.astro`
 - Delete: `src/pages/youtube-money-1000-views.astro`, `src/pages/youtube-money-10000-views.astro`
 
 **Interfaces:**
+
 - Consumes: `YOUTUBE_VIEWS` (Task 2), `rangeFromRpm` + `earningsFromViews` from `src/lib/calculators/youtube`, `DEFAULT_RPM` from `src/data/youtubeConfig`, `youtubeFaqs` from `src/data/faqs`, `slugFor` (Task 1), `toolContent.youtube` (Task 3), `ToolContent` (Task 4), existing `YoutubeCalculator` component (rendered with no props — matches the manual pages exactly).
 - Produces: dynamic route emitting `/youtube-money-{views}-views` for every value in `YOUTUBE_VIEWS`.
 
 - [ ] **Step 1: Create the dynamic route**
 
 `src/pages/youtube-money-[views]-views.astro`:
+
 ```astro
 ---
 import ToolLayout from '../layouts/ToolLayout.astro';
@@ -960,12 +1008,14 @@ EOF
 ## Task 9: Final verification — build, tests, lint, sitemap
 
 **Files:**
+
 - No new files; verification of the whole sub-project.
 
 - [ ] **Step 1: Full clean build**
 
 Run: `npm run build`
 Expected: succeeds; no duplicate-path errors; no warnings about missing routes. Pages generated:
+
 - 10 × `how-much-is-{amount}-bits-on-twitch`
 - 8 × `twitch-bits-to-{currency}` (excluding `usd`)
 - 5 × `tiktok-coins-{amount}-to-usd`
@@ -984,11 +1034,13 @@ Expected: all four files listed.
 - [ ] **Step 4: Confirm old URLs still resolve (slug preservation)**
 
 Run:
+
 ```bash
 for u in how-much-is-100-bits-on-twitch how-much-is-50000-bits-on-twitch twitch-bits-to-gbp twitch-bits-to-inr tiktok-coins-100-to-usd tiktok-coins-1000-to-usd youtube-money-1000-views youtube-money-10000-views; do
   test -f "dist/$u/index.html" && echo "OK  $u" || echo "MISSING $u"
 done
 ```
+
 Expected: `OK` for every line — every old manual slug resolves to a built page.
 
 - [ ] **Step 5: Confirm sitemap reflects the new route set**
@@ -1011,6 +1063,7 @@ Expected: empty (everything committed in Tasks 1–8). If non-empty, commit the 
 ## Self-Review (run by the plan author, not a subagent)
 
 **1. Spec coverage:**
+
 - Four `getStaticPaths` dynamic routes → Tasks 5–8. ✓
 - `src/data/programmatic.ts` generation arrays → Task 2. ✓
 - `src/data/toolContent.ts` structured content → Task 3. ✓
@@ -1026,6 +1079,7 @@ Expected: empty (everything committed in Tasks 1–8). If non-empty, commit the 
 **2. Placeholder scan:** No "TBD"/"TODO"/"implement later". Every code step shows full code. The `${'$'}{token}` pattern in Task 3 is explained in the note (intentional, not a placeholder). ✓
 
 **3. Type consistency:**
+
 - `slugFor(type, key)` signature: defined Task 1, used identically in Tasks 5–8. ✓
 - `BITS_AMOUNTS` / `TIKTOK_AMOUNTS` / `YOUTUBE_VIEWS` / `BITS_CURRENCY_REGIONS`: defined Task 2, consumed identically in Tasks 5–8. ✓
 - `toolContent` record keys `'bits' | 'bitsCurrency' | 'tiktok' | 'youtube'`: defined Task 3, consumed as `toolContent.bits` / `.bitsCurrency` / `.tiktok` / `.youtube` in Tasks 5–8. ✓

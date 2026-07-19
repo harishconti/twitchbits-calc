@@ -1,4 +1,4 @@
-import type { RegionCode } from './bitsConfig';
+import type { RegionCode } from "./bitsConfig";
 
 // Generation inputs for the four programmatic-SEO dynamic routes.
 // Expand these arrays to add more variants — one edit propagates at build.
@@ -17,5 +17,12 @@ export const YOUTUBE_VIEWS = [1000, 10000, 100000, 1000000] as const;
 // `twitch-bits-to-[currency]` — excludes 'us' so it does not collide with the
 // canonical standalone /twitch-bits-to-usd page (which uses BitsCalculator).
 export const BITS_CURRENCY_REGIONS: readonly RegionCode[] = [
-  'gb', 'eu', 'ca', 'au', 'jp', 'mx', 'br', 'in',
+  "gb",
+  "eu",
+  "ca",
+  "au",
+  "jp",
+  "mx",
+  "br",
+  "in",
 ];

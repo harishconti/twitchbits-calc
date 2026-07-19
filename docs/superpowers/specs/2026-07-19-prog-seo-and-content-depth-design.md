@@ -13,13 +13,13 @@ This spec covers **Sub-project A** of a five-part improvement program: consolida
 
 ### Decomposition (context for later sub-projects)
 
-| # | Sub-project | Delivers |
-|---|---|---|
-| **A** | Programmatic SEO + content depth | *(this spec)* |
-| B | New calculators | Kick revenue (95/5), Patreon earnings (tiers + fees), YouTube Shorts-vs-long-form RPM |
-| C | Net-income & tax + CPM modifiers | Platform-split + self-employment-tax toggles; surface niche/geo selects in YouTube UI |
-| D | Pages Functions backend | `functions/api/channel`, `functions/api/rates`, `functions/api/subscribe` (KV/D1 + lead magnet) |
-| E | Monetization & lead capture | Affiliate expansion, `AffiliateCTA` variants, `Newsletter.astro` lead-magnet wiring to D |
+| #     | Sub-project                      | Delivers                                                                                        |
+| ----- | -------------------------------- | ----------------------------------------------------------------------------------------------- |
+| **A** | Programmatic SEO + content depth | _(this spec)_                                                                                   |
+| B     | New calculators                  | Kick revenue (95/5), Patreon earnings (tiers + fees), YouTube Shorts-vs-long-form RPM           |
+| C     | Net-income & tax + CPM modifiers | Platform-split + self-employment-tax toggles; surface niche/geo selects in YouTube UI           |
+| D     | Pages Functions backend          | `functions/api/channel`, `functions/api/rates`, `functions/api/subscribe` (KV/D1 + lead magnet) |
+| E     | Monetization & lead capture      | Affiliate expansion, `AffiliateCTA` variants, `Newsletter.astro` lead-magnet wiring to D        |
 
 ### Backend-rule decision (recorded for B–E)
 
@@ -39,12 +39,12 @@ Replace ~20 manually-authored programmatic-SEO pages with four `getStaticPaths` 
 
 Four dynamic routes replace the manual pages. Route filenames are chosen to **preserve existing URLs exactly**, so no `_redirects` file and no SEO reset.
 
-| Route file | Param source | Variants generated | Replaces (deleted) |
-|---|---|---|---|
-| `src/pages/how-much-is-[amount]-bits-on-twitch.astro` | `BITS_AMOUNTS` | `how-much-is-{100,250,500,...}-bits-on-twitch` | `how-much-is-{100,250,500,1000,5000,10000,50000}-bits-on-twitch.astro` |
-| `src/pages/twitch-bits-to-[currency].astro` | `BITS_CURRENCY_REGIONS` (lowercase ISO code) | `twitch-bits-to-{gbp,eur,cad,aud,jpy,mxn,brl,inr}` | `twitch-bits-to-{gbp,eur,cad,aud,jpy,mxn,brl,inr}.astro` |
-| `src/pages/tiktok-coins-[amount]-to-usd.astro` | `TIKTOK_AMOUNTS` | `tiktok-coins-{100,500,...}-to-usd` | `tiktok-coins-{100,1000}-to-usd.astro` |
-| `src/pages/youtube-money-[views]-views.astro` | `YOUTUBE_VIEWS` | `youtube-money-{1000,...}-views` | `youtube-money-{1000,10000}-views.astro` |
+| Route file                                            | Param source                                 | Variants generated                                 | Replaces (deleted)                                                     |
+| ----------------------------------------------------- | -------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------- |
+| `src/pages/how-much-is-[amount]-bits-on-twitch.astro` | `BITS_AMOUNTS`                               | `how-much-is-{100,250,500,...}-bits-on-twitch`     | `how-much-is-{100,250,500,1000,5000,10000,50000}-bits-on-twitch.astro` |
+| `src/pages/twitch-bits-to-[currency].astro`           | `BITS_CURRENCY_REGIONS` (lowercase ISO code) | `twitch-bits-to-{gbp,eur,cad,aud,jpy,mxn,brl,inr}` | `twitch-bits-to-{gbp,eur,cad,aud,jpy,mxn,brl,inr}.astro`               |
+| `src/pages/tiktok-coins-[amount]-to-usd.astro`        | `TIKTOK_AMOUNTS`                             | `tiktok-coins-{100,500,...}-to-usd`                | `tiktok-coins-{100,1000}-to-usd.astro`                                 |
+| `src/pages/youtube-money-[views]-views.astro`         | `YOUTUBE_VIEWS`                              | `youtube-money-{1000,...}-views`                   | `youtube-money-{1000,10000}-views.astro`                               |
 
 **Slug-preservation invariant:** generated slugs must equal the old manual slugs byte-for-byte. Enforced by a single tested `slugFor(type, key)` helper in `src/lib/slug.ts` used by every route.
 
@@ -60,18 +60,32 @@ All new data lives in `src/data/` per CLAUDE.md Rule 2 (rates as one-line data e
 ### `src/data/programmatic.ts` — generation inputs
 
 ```ts
-export const BITS_AMOUNTS = [100, 250, 500, 1000, 2000, 5000, 10000, 25000, 50000, 100000];
+export const BITS_AMOUNTS = [
+  100, 250, 500, 1000, 2000, 5000, 10000, 25000, 50000, 100000,
+];
 export const TIKTOK_AMOUNTS = [100, 500, 1000, 5000, 10000];
 export const YOUTUBE_VIEWS = [1000, 10000, 100000, 1000000];
 
 // Currency route skips 'us' (canonical standalone page owns /twitch-bits-to-usd).
-export const BITS_CURRENCY_REGIONS = ['gb','eu','ca','au','jp','mx','br','in'] as const;
+export const BITS_CURRENCY_REGIONS = [
+  "gb",
+  "eu",
+  "ca",
+  "au",
+  "jp",
+  "mx",
+  "br",
+  "in",
+] as const;
 ```
 
 ### `src/lib/slug.ts` — slug helper (single source of truth for URLs)
 
 ```ts
-export function slugFor(type: 'bitsAmount' | 'bitsCurrency' | 'tiktokAmount' | 'youtubeViews', key: string | number): string;
+export function slugFor(
+  type: "bitsAmount" | "bitsCurrency" | "tiktokAmount" | "youtubeViews",
+  key: string | number,
+): string;
 ```
 
 ### `src/data/toolContent.ts` — structured semantic content
@@ -80,12 +94,17 @@ One `ToolContent` per tool, shared across all its amount/currency variants. Body
 
 ```ts
 export interface ContentSection {
-  heading: string;        // renders as <h2>
-  body: string;           // prose; may contain {tokens} and inline <strong> etc.
-  bullets?: string[];     // optional <ul>
+  heading: string; // renders as <h2>
+  body: string; // prose; may contain {tokens} and inline <strong> etc.
+  bullets?: string[]; // optional <ul>
 }
-export interface ToolContent { sections: ContentSection[]; }
-export const toolContent: Record<'bits' | 'bitsCurrency' | 'tiktok' | 'youtube', ToolContent> = { /* ... */ };
+export interface ToolContent {
+  sections: ContentSection[];
+}
+export const toolContent: Record<
+  "bits" | "bitsCurrency" | "tiktok" | "youtube",
+  ToolContent
+> = {/* ... */};
 ```
 
 **Token contract** (keys the `values` prop must supply — documented in the interface): `{amount}`, `{usd}`, `{currency}`, `{currencyCode}`, `{viewerCost}`, `{rate}`, `{platformFee}`, `{payout}`. Variant numbers come from the existing pure calc functions (`bitsToUsd`, `usdToBits`, `bulkTable`, `tiktokToUsd`, YouTube RPM) — no new math.
@@ -181,10 +200,12 @@ The three sibling routes follow the identical shape, swapping config / faq facto
 **No new calculator-math tests** — routes only feed existing, tested pure functions. New test surface:
 
 `src/data/programmatic.test.ts`:
+
 - Every value in `BITS_AMOUNTS` / `TIKTOK_AMOUNTS` / `YOUTUBE_VIEWS` is a positive finite integer.
 - `BITS_CURRENCY_REGIONS` excludes `'us'` (the collision invariant).
 
 `src/lib/slug.test.ts`:
+
 - `slugFor` produces the exact old manual slugs, e.g. `slugFor('bitsAmount', 100) === 'how-much-is-100-bits-on-twitch'`, `slugFor('bitsCurrency', 'gbp') === 'twitch-bits-to-gbp'`, etc. — covering every deleted manual page (regression guard for redirects/link rot).
 
 ## Build verification (definition of done)
@@ -205,14 +226,14 @@ The three sibling routes follow the identical shape, swapping config / faq facto
 
 ## Risks & mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Deleting a manual page loses unique copy/links the template doesn't reproduce | Parity-diff each old slug against the new dynamic render before deletion; manual review of any diff |
-| Two routes emit the same URL (Astro build error) | `us` excluded from currency route; enforced by `programmatic.test.ts` |
-| Old indexed URL changes / link rot | Slugs preserved exactly via `how-much-is-[amount]...` route name + `slugFor`; no `_redirects` needed |
-| `set:html` XSS surface | Only trusted `toolContent.ts` prose + `String()`-coerced calc numbers reach it; no user input |
-| `toolContent` tokens drift from what routes pass | `values` keys documented in interface; `slugFor` + values covered by tests |
-| Expansion array gets a bad value (0, NaN, 50000.5) | `programmatic.test.ts` asserts positive finite integers |
+| Risk                                                                          | Mitigation                                                                                           |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Deleting a manual page loses unique copy/links the template doesn't reproduce | Parity-diff each old slug against the new dynamic render before deletion; manual review of any diff  |
+| Two routes emit the same URL (Astro build error)                              | `us` excluded from currency route; enforced by `programmatic.test.ts`                                |
+| Old indexed URL changes / link rot                                            | Slugs preserved exactly via `how-much-is-[amount]...` route name + `slugFor`; no `_redirects` needed |
+| `set:html` XSS surface                                                        | Only trusted `toolContent.ts` prose + `String()`-coerced calc numbers reach it; no user input        |
+| `toolContent` tokens drift from what routes pass                              | `values` keys documented in interface; `slugFor` + values covered by tests                           |
+| Expansion array gets a bad value (0, NaN, 50000.5)                            | `programmatic.test.ts` asserts positive finite integers                                              |
 
 ## Rollback
 
