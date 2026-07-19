@@ -1,9 +1,9 @@
 ---
-interface Props { rows: { bits: number; usd: number }[]; currency?: string; }
-const { rows, currency = 'USD' } = Astro.props;
+interface Props { rows: { bits: number; usd: number }[]; currency?: string; unitLabel?: string; }
+const { rows, currency = 'USD', unitLabel = 'Bits' } = Astro.props;
 ---
 <table class="ref-table">
-  <thead><tr><th>Bits</th><th>{currency}</th></tr></thead>
+  <thead><tr><th>{unitLabel}</th><th>{currency}</th></tr></thead>
   <tbody>
     {rows.map(r => (
       <tr><td class="mono">{r.bits.toLocaleString('en-US')}</td><td class="mono">{r.usd.toLocaleString('en-US',{style:'currency',currency})}</td></tr>

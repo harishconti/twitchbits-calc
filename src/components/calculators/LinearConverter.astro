@@ -17,6 +17,7 @@ export interface ConverterConfig {
   bulkRows: number[];
   toBulkRows: (rows: number[]) => { bits: number; usd: number }[];
   currency?: string;
+  region?: string;
   defaultAmount?: number;
   viewerContext?: { perUnitCostUsd: number; label: string };
 }
@@ -37,7 +38,7 @@ const rows = config.toBulkRows(config.bulkRows);
     <CopyButton id="copy" />
     <ShareButton id="share" />
   </div>
-  <ReferenceTable rows={rows} currency={config.currency ?? 'USD'} />
+  <ReferenceTable rows={rows} currency={config.currency ?? 'USD'} unitLabel={config.unitName} />
 </div>
 <style>
   .calculator { background:var(--color-surface); border:1px solid var(--color-border); border-radius:12px; padding:1.25rem; max-width:480px; margin:0 auto; }
@@ -51,7 +52,7 @@ const rows = config.toBulkRows(config.bulkRows);
 -->
 <script id="__lc_config__" type="application/json" is:inline set:html={JSON.stringify({
   tool: config.tool, unitName: config.unitName, paramKey: config.paramKey,
-  currency: config.currency ?? 'USD', defaultAmount: config.defaultAmount,
+  currency: config.currency ?? 'USD', region: config.region, defaultAmount: config.defaultAmount,
 })} />
 <script>
   // LinearConverter resolves its pure math functions by `tool` via a registry.
@@ -66,7 +67,7 @@ const rows = config.toBulkRows(config.bulkRows);
   const root = document.querySelector('[data-tool]');
   const meta = JSON.parse(document.getElementById('__lc_config__')?.textContent ?? '{}');
   const FNS = {
-    bits: { toUsd: bitsToUsd, fromUsd: usdToBits },
+    bits: { toUsd: (n: number) => bitsToUsd(n, meta.region), fromUsd: (u: number) => usdToBits(u, meta.region) },
     tiktok: { toUsd: coinsToUsd, fromUsd: usdToCoins },
   };
   const fns = FNS[meta.tool];
