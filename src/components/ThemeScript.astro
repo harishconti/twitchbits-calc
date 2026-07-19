@@ -1,0 +1,14 @@
+---
+// Renders a tiny inline script that sets data-theme BEFORE first paint.
+---
+<script is:inline>
+  (function () {
+    try {
+      var t = localStorage.getItem('theme');
+      if (t !== 'light' && t !== 'dark') t = 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>

@@ -1,0 +1,9 @@
+---
+interface Props { id?: string; label?: string; }
+const { id = 'copy', label = 'Copy result' } = Astro.props;
+---
+<button id={id} type="button" class="copy-btn" data-copy>{label}</button>
+<style>
+  .copy-btn { padding:.75rem 1.25rem; border-radius:8px; border:1px solid var(--color-border); background:var(--color-surface-2); color:var(--color-text); cursor:pointer; }
+  .copy-btn[data-copied="true"] { color:var(--color-success); border-color:var(--color-success); }
+</style>

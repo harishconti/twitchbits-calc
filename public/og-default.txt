@@ -1,0 +1,16 @@
+OG default image placeholder
+============================
+
+Intended asset: /og-default.png  (referenced in src/components/layout/Base.astro meta)
+
+Spec:
+- Size: 1200×630 pixels
+- Background: Twitch purple #9146ff (solid)
+- Wordmark: "Twitch Bits Calculator" in white, centered, sans-serif bold
+- Optional subtitle: "Free creator-economy calculators"
+- No logos or trademarks we don't own
+- File format: PNG (optimize with `pngquant` or `oxipng` to < 100KB)
+
+Status: TODO — needs a real design pass. This .txt note exists so the
+reference in Base.astro has a discoverable intent record. The site builds
+without the .png present (Astro does not verify OG asset existence at build).

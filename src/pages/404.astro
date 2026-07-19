@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { TOOLS } from '../lib/site';
+---
+<BaseLayout title="Page not found" description="The page you're looking for doesn't exist." noindex>
+  <section style="max-width:560px;margin:0 auto;text-align:center;padding:2rem 0;">
+    <h1>404</h1>
+    <p>That page doesn't exist. Try one of our calculators:</p>
+    <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:.5rem;">
+      {TOOLS.map((t) => <li><a href={`/${t.slug}`}>{t.name}</a></li>)}
+    </ul>
+  </section>
+</BaseLayout>

@@ -1,0 +1,30 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import FaqSection from '../components/FaqSection.astro';
+import RelatedTools from '../components/RelatedTools.astro';
+import AffiliateCTA from '../components/AffiliateCTA.astro';
+import { buildWebAppSchema, buildBreadcrumbSchema } from '../lib/schema';
+interface Props {
+  title: string; description: string; slug: string;
+  crumbs: { name: string; url: string }[];
+  faqs: { q: string; a: string }[];
+}
+const { title, description, slug, crumbs, faqs } = Astro.props;
+const jsonLd = [buildWebAppSchema(title), buildBreadcrumbSchema(crumbs)];
+---
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <article>
+    <Breadcrumbs crumbs={crumbs} />
+    <h1>{title}</h1>
+    <p class="subhead">{description}</p>
+    <slot />
+    <FaqSection faqs={faqs} />
+    <RelatedTools exclude={slug} />
+    <AffiliateCTA />
+  </article>
+</BaseLayout>
+<style>
+  .subhead { color:var(--color-text-muted); margin-bottom:1.5rem; }
+  article { max-width:760px; margin:0 auto; }
+</style>

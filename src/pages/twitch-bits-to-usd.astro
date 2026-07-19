@@ -1,0 +1,25 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import BitsCalculator from '../components/calculators/BitsCalculator.astro';
+import { bitsFaqs } from '../data/faqs';
+const faqs = bitsFaqs('us');
+---
+<ToolLayout
+  title="Twitch Bits to USD Calculator"
+  description="Convert Twitch Bits to USD (and back) instantly. See streamer payout, viewer cost, and a bulk reference table."
+  slug="twitch-bits-to-usd"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: '/twitch-bits-to-usd' }]}
+  faqs={faqs}
+>
+  <BitsCalculator />
+  <section class="edu">
+    <h2>How much do streamers make from Bits?</h2>
+    <p>Streamers earn <strong>$0.01 per Bit</strong> cheered in their channel — so 1,000 Bits equals $10. Viewers pay a
+    premium to buy Bits (around $0.012–$0.014 each depending on the pack), which is how Twitch makes money on the
+    difference. Bits are one of three main revenue streams for Twitch creators, alongside subscriptions and ads.</p>
+  </section>
+</ToolLayout>
+<style>
+  .edu { margin-top:2rem; max-width:680px; }
+  .edu p { color:var(--color-text-muted); line-height:1.6; }
+</style>

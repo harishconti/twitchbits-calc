@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Newsletter from '../components/Newsletter.astro';
+import { TOOLS, SITE } from '../lib/site';
+import { getCollection } from 'astro:content';
+import { buildOrganizationSchema, buildWebSiteSchema } from '../lib/schema';
+const posts = (await getCollection('blog')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()).slice(0, 3);
+const jsonLd = [buildOrganizationSchema(), buildWebSiteSchema()];
+---
+<BaseLayout title={`${SITE.name} — ${SITE.tagline}`} description="Free calculators for Twitch Bits, Twitch revenue, TikTok coins, and YouTube money. Know exactly what you earn." jsonLd={jsonLd}>
+  <section class="hero">
+    <h1>Free creator-economy calculators</h1>
+    <p class="sub">Know exactly what you earn — Twitch, TikTok, and YouTube.</p>
+    <a class="hero-cta" href="/twitch-bits-to-usd">Twitch Bits → USD →</a>
+  </section>
+  <section class="tools" aria-label="Calculators">
+    <div class="grid">
+      {TOOLS.map((t) => (
+        <a class="card" href={`/${t.slug}`}><strong>{t.name}</strong><span>{t.desc}</span></a>
+      ))}
+    </div>
+  </section>
+  <section class="latest">
+    <h2>Latest guides</h2>
+    <ul>
+      {posts.map((p) => <li><a href={`/blog/${p.id}`}>{p.data.title}</a></li>)}
+    </ul>
+  </section>
+  <Newsletter />
+</BaseLayout>
+<style>
+  .hero { text-align:center; padding:2rem 0; }
+  .hero h1 { font-size:2rem; }
+  .sub { color:var(--color-text-muted); }
+  .hero-cta { display:inline-block; margin-top:1rem; padding:.75rem 1.5rem; background:var(--color-accent); color:#fff; border-radius:8px; text-decoration:none; }
+  .grid { display:grid; grid-template-columns:1fr; gap:.75rem; }
+  @media (min-width:720px){ .grid { grid-template-columns:repeat(2,1fr); } }
+  .card { display:flex; flex-direction:column; gap:.25rem; padding:1.25rem; border:1px solid var(--color-border); border-radius:10px; background:var(--color-surface); text-decoration:none; color:var(--color-text); }
+  .card:hover { border-color:var(--color-accent); }
+  .latest { margin-top:2rem; }
+  .latest ul { list-style:none; padding:0; display:flex; flex-direction:column; gap:.5rem; }
+</style>

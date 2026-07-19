@@ -1,0 +1,36 @@
+---
+import { SITE } from '../../lib/site';
+import ThemeScript from '../ThemeScript.astro';
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  noindex?: boolean;
+  jsonLd?: object | object[];
+}
+const { title, description, canonical, ogImage, noindex, jsonLd } = Astro.props;
+const url = canonical ?? new URL(Astro.url.pathname, SITE.url).href;
+const img = ogImage ?? '/og-default.png';
+const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+---
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={url} />
+{noindex && <meta name="robots" content="noindex,nofollow" />}
+<meta property="og:type" content="website" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={url} />
+<meta property="og:image" content={new URL(img, SITE.url).href} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={new URL(img, SITE.url).href} />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<ThemeScript />
+{ld.map((b) => <script type="application/ld+json" set:html={JSON.stringify(b)} />)}
+<!-- Cloudflare Web Analytics (cookieless, first-party CDN) -->
+<script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"REPLACE_WITH_CLOUDFLARE_TOKEN"}' />

@@ -1,0 +1,76 @@
+---
+import Tabs from '../primitives/Tabs.astro';
+import NumberInput from '../primitives/NumberInput.astro';
+import ResultDisplay from '../primitives/ResultDisplay.astro';
+import CopyButton from '../primitives/CopyButton.astro';
+import ShareButton from '../primitives/ShareButton.astro';
+import ReferenceTable from '../primitives/ReferenceTable.astro';
+import Tooltip from '../primitives/Tooltip.astro';
+import { formatCurrency } from '../../lib/format';
+
+export interface ConverterConfig {
+  tool: 'bits' | 'tiktok';
+  unitName: string;
+  paramKey: string;
+  toUsd: (n: number) => number;
+  fromUsd: (u: number) => number;
+  bulkRows: number[];
+  toBulkRows: (rows: number[]) => { bits: number; usd: number }[];
+  currency?: string;
+  region?: string;
+  defaultAmount?: number;
+  viewerContext?: { perUnitCostUsd: number; label: string };
+}
+const { config } = Astro.props as { config: ConverterConfig };
+const rows = config.toBulkRows(config.bulkRows);
+---
+<div class="calculator" data-tool={config.tool}>
+  <Tabs id="tabs" tabs={[config.unitName, 'USD']} />
+  <NumberInput id="amount" label={config.unitName} autofocus value={config.defaultAmount ?? ''} />
+  <ResultDisplay id="result" />
+  <div class="breakdown">
+    <div>Streamer gets <strong class="mono">{formatCurrency(config.toUsd(config.defaultAmount ?? 0), config.currency ?? 'USD')}</strong> (100%)</div>
+    {config.viewerContext && (
+      <div>{config.viewerContext.label} <strong class="mono">~${config.viewerContext.perUnitCostUsd.toFixed(4)}</strong> per unit <Tooltip id="vc" text="What viewers pay per unit, based on pack pricing." /></div>
+    )}
+  </div>
+  <div class="actions">
+    <CopyButton id="copy" />
+    <ShareButton id="share" />
+  </div>
+  <ReferenceTable rows={rows} currency={config.currency ?? 'USD'} unitLabel={config.unitName} />
+</div>
+<style>
+  .calculator { background:var(--color-surface); border:1px solid var(--color-border); border-radius:12px; padding:1.25rem; max-width:480px; margin:0 auto; }
+  .breakdown { font-size:.9rem; color:var(--color-text-muted); display:flex; flex-direction:column; gap:.25rem; margin:.5rem 0; }
+  .actions { display:flex; gap:.5rem; margin-top:1rem; }
+  .actions > * { flex:1; }
+</style>
+<!--
+  The pure functions can't survive JSON.stringify (they'd become strings), so we
+  serialize only metadata and re-import the real functions in the island by `tool`.
+-->
+<script id="__lc_config__" type="application/json" is:inline set:html={JSON.stringify({
+  tool: config.tool, unitName: config.unitName, paramKey: config.paramKey,
+  currency: config.currency ?? 'USD', region: config.region, defaultAmount: config.defaultAmount,
+})} />
+<script>
+  // LinearConverter resolves its pure math functions by `tool` via a registry.
+  // Only the `bits` calculator exists today (Task 8); Task 13 adds the `tiktok`
+  // entry here once src/lib/calculators/tiktok.ts lands. We do NOT statically
+  // import tiktok now — Vite resolves static (and string-literal dynamic)
+  // imports at build time, so referencing a not-yet-existing module would fail
+  // `npm run build`. Each tool is wired in the task that creates its calculator.
+  import { initLinearConverter } from '../../scripts/calculator-behavior';
+  import { bitsToUsd, usdToBits } from '../../lib/calculators/bits';
+  import { coinsToUsd, usdToCoins } from '../../lib/calculators/tiktok';
+  const root = document.querySelector('[data-tool]');
+  const meta = JSON.parse(document.getElementById('__lc_config__')?.textContent ?? '{}');
+  const FNS = {
+    bits: { toUsd: (n: number) => bitsToUsd(n, meta.region), fromUsd: (u: number) => usdToBits(u, meta.region) },
+    tiktok: { toUsd: coinsToUsd, fromUsd: usdToCoins },
+  };
+  const fns = FNS[meta.tool];
+  if (!fns) throw new Error(`LinearConverter: no functions registered for tool "${meta.tool}"`);
+  initLinearConverter(root, { ...meta, ...fns });
+</script>

@@ -1,0 +1,22 @@
+---
+import { SITE, TOOLS } from '../../lib/site';
+---
+<header class="header">
+  <a class="logo" href="/">{SITE.name}</a>
+  <nav aria-label="Primary">
+    <details class="tools-menu">
+      <summary>Tools</summary>
+      <ul>
+        {TOOLS.map(t => <li><a href={`/${t.slug}`}>{t.name}</a></li>)}
+      </ul>
+    </details>
+    <a href="/blog">Blog</a>
+    <a href="/affiliate-disclosure">Disclosure</a>
+  </nav>
+</header>
+<style>
+  .header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid var(--color-border); }
+  .logo { font-weight:700; color:var(--color-text); text-decoration:none; }
+  .tools-menu summary { cursor:pointer; list-style:none; }
+  .tools-menu ul { list-style:none; margin:0; padding:.5rem; border:1px solid var(--color-border); background:var(--color-surface); }
+</style>

@@ -1,0 +1,16 @@
+---
+import { toggleTheme } from '../../scripts/theme';
+---
+<button
+  type="button"
+  class="theme-toggle"
+  aria-label="Toggle dark / light theme"
+  data-theme-toggle
+>
+  <span aria-hidden="true">◐</span>
+</button>
+<script>
+  document.querySelector('[data-theme-toggle]')?.addEventListener('click', () => {
+    import('../../scripts/theme').then(({ toggleTheme }) => toggleTheme());
+  });
+</script>

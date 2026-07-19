@@ -1,0 +1,8 @@
+---
+interface Props { id?: string; label?: string; }
+const { id = 'share', label = 'Share link' } = Astro.props;
+---
+<button id={id} type="button" class="share-btn" data-share>{label}</button>
+<style>
+  .share-btn { padding:.75rem 1.25rem; border-radius:8px; border:1px solid var(--color-accent); background:var(--color-accent); color:#fff; cursor:pointer; }
+</style>

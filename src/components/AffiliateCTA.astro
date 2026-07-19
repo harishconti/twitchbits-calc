@@ -1,0 +1,19 @@
+---
+import { AFFILIATES } from '../data/affiliateLinks';
+interface Props { variant?: 'primary' | 'alt'; program?: string; }
+const { variant = 'primary', program = 'streamlabs' } = Astro.props;
+const a = AFFILIATES[program];
+if (!a) { return null as any; }
+const cta = variant === 'alt' ? a.cta.alt : a.cta.primary;
+---
+<aside class="affiliate-cta" aria-label="Sponsored">
+  <span class="tag">Affiliate</span>
+  <h3>{a.label}</h3>
+  <p>{a.disclosure}</p>
+  <a class="cta" href={a.url} rel="sponsored nofollow" target="_blank">{cta}</a>
+</aside>
+<style>
+  .affiliate-cta { border-left:3px solid var(--color-accent); background:var(--color-surface-2); padding:1rem 1.25rem; border-radius:8px; margin-top:1.5rem; }
+  .tag { font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); }
+  .cta { display:inline-block; margin-top:.5rem; padding:.6rem 1rem; background:var(--color-accent); color:#fff; border-radius:6px; text-decoration:none; }
+</style>

@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import TiktokCalculator from '../components/calculators/TiktokCalculator.astro';
+import { tiktokFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="TikTok Coins to USD Calculator"
+  description="Convert TikTok coins and diamonds to USD. See what creators earn from gifts after TikTok's cut."
+  slug="tiktok-coins-to-usd"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'TikTok Tools', url: '/tiktok-coins-to-usd' }]}
+  faqs={tiktokFaqs}
+>
+  <TiktokCalculator />
+</ToolLayout>
