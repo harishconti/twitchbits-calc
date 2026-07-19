@@ -1,0 +1,17 @@
+---
+import { buildFaqSchema } from '../lib/schema';
+interface Props { faqs: { q: string; a: string }[]; }
+const { faqs } = Astro.props;
+---
+<section class="faq" aria-label="Frequently asked questions">
+  <h2>Frequently asked questions</h2>
+  {faqs.map((f) => (
+    <details><summary>{f.q}</summary><p>{f.a}</p></details>
+  ))}
+</section>
+<script type="application/ld+json" is:inline set:html={JSON.stringify(buildFaqSchema(faqs))} />
+<style>
+  .faq { margin-top:2rem; }
+  .faq details { border:1px solid var(--color-border); border-radius:8px; padding:.75rem 1rem; margin-bottom:.5rem; }
+  .faq summary { cursor:pointer; font-weight:600; }
+</style>
