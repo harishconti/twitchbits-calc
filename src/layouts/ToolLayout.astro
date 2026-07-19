@@ -3,6 +3,7 @@ import BaseLayout from './BaseLayout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import FaqSection from '../components/FaqSection.astro';
 import RelatedTools from '../components/RelatedTools.astro';
+import RelatedReads from '../components/RelatedReads.astro';
 import AffiliateCTA from '../components/AffiliateCTA.astro';
 import Newsletter from '../components/Newsletter.astro';
 import { buildWebAppSchema, buildBreadcrumbSchema } from '../lib/schema';
@@ -28,6 +29,7 @@ const jsonLd = [buildWebAppSchema(title), buildBreadcrumbSchema(crumbs)];
       </article>
     </section>
     <FaqSection faqs={faqs} />
+    <RelatedReads />
     <RelatedTools exclude={slug} />
     <AffiliateCTA />
     <Newsletter />

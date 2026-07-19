@@ -3,16 +3,27 @@ import { estimateRevenue } from '../../lib/calculators/revenue';
 import { SPLIT_PRESETS } from '../../data/subConfig';
 import { AD_CPM_DEFAULTS } from '../../data/adConfig';
 import { formatCurrency } from '../../lib/format';
+import RangeSlider from '../primitives/RangeSlider.astro';
 ---
 <form class="revenue-calc" data-tool="revenue">
   <div class="panels">
     <fieldset class="panel-mini">
       <legend>Subscriptions</legend>
-      <label>Tier 1 ($4.99)<input type="number" min="0" data-sub="tier1" value="50"/></label>
-      <label>Tier 2 ($9.99)<input type="number" min="0" data-sub="tier2" value="0"/></label>
-      <label>Tier 3 ($24.99)<input type="number" min="0" data-sub="tier3" value="0"/></label>
-      <label>Prime<input type="number" min="0" data-sub="prime" value="5"/></label>
-      <label>Gift<input type="number" min="0" data-sub="gift" value="0"/></label>
+      <label>Tier 1 ($4.99)
+        <RangeSlider id="sub-tier1" label="" min={0} max={2000} step={1} value={50} compact />
+      </label>
+      <label>Tier 2 ($9.99)
+        <RangeSlider id="sub-tier2" label="" min={0} max={500} step={1} value={0} compact />
+      </label>
+      <label>Tier 3 ($24.99)
+        <RangeSlider id="sub-tier3" label="" min={0} max={200} step={1} value={0} compact />
+      </label>
+      <label>Prime
+        <RangeSlider id="sub-prime" label="" min={0} max={500} step={1} value={5} compact />
+      </label>
+      <label>Gift
+        <RangeSlider id="sub-gift" label="" min={0} max={500} step={1} value={0} compact />
+      </label>
       <label>Split
         <select data-split>
           {SPLIT_PRESETS.map(s => <option value={s.value} selected={s.value === 0.5}>{s.label}</option>)}
@@ -21,48 +32,122 @@ import { formatCurrency } from '../../lib/format';
     </fieldset>
     <fieldset class="panel-mini">
       <legend>Bits</legend>
-      <label>Bits cheered<input type="number" min="0" data-bits value="5000"/></label>
+      <label>Bits cheered
+        <RangeSlider id="bits" label="" min={0} max={250000} step={100} value={5000} compact />
+      </label>
     </fieldset>
     <fieldset class="panel-mini">
       <legend>Ads</legend>
-      <label>CPM ($)<input type="number" min="0" step="0.1" data-cpm value={AD_CPM_DEFAULTS.us}/></label>
-      <label>Minutes/stream<input type="number" min="0" data-minutes value="120"/></label>
-      <label>Avg viewers<input type="number" min="0" data-viewers value="50"/></label>
+      <label>CPM ($)
+        <RangeSlider id="cpm" label="" min={0} max={20} step={0.1} value={AD_CPM_DEFAULTS.us} prefix="$" compact />
+      </label>
+      <label>Minutes/stream
+        <RangeSlider id="minutes" label="" min={0} max={480} step={5} value={120} suffix="min" compact />
+      </label>
+      <label>Avg viewers
+        <RangeSlider id="viewers" label="" min={0} max={5000} step={10} value={50} compact />
+      </label>
     </fieldset>
   </div>
+
   <div class="result" data-result aria-live="polite">$0.00 / month</div>
   <div class="sub" data-subresult></div>
+
+  <div class="breakdown" data-breakdown>
+    <strong>Where your money comes from</strong>
+    <div class="breakdown-grid" data-breakdown-grid></div>
+  </div>
+
+  <div class="goal-calc" data-goal>
+    <label>Monthly goal ($)
+      <input type="number" min="0" data-goal-input value="1000" />
+    </label>
+    <p data-goal-output>At a 50/50 split you need ~<strong>401</strong> Tier 1 subs/month.</p>
+  </div>
 </form>
 <script>
-  import { estimateRevenue } from '../../lib/calculators/revenue';
+  import { estimateRevenue, subsForGoal } from '../../lib/calculators/revenue';
   import { formatCurrency } from '../../lib/format';
+  import { SPLIT_PRESETS } from '../../data/subConfig';
+
   const form = document.querySelector('[data-tool="revenue"]') as HTMLFormElement;
-  const read = () => {
-    const num = (sel: string) => Number((form.querySelector(sel) as HTMLInputElement)?.value || 0);
-    return {
-      subs: { tier1: num('[data-sub="tier1"]'), tier2: num('[data-sub="tier2"]'), tier3: num('[data-sub="tier3"]'), prime: num('[data-sub="prime"]'), gift: num('[data-sub="gift"]') },
-      split: Number((form.querySelector('[data-split]') as HTMLSelectElement)?.value || 0.5),
-      bits: num('[data-bits]'),
-      ads: { cpm: num('[data-cpm]'), minutes: num('[data-minutes]'), viewers: num('[data-viewers]') },
-    };
-  };
+  const sliderValue = (id: string) => Number(form.querySelector(`[data-range-slider="${id}"]`)?.dataset.value ?? 0);
+
+  const read = () => ({
+    subs: {
+      tier1: sliderValue('sub-tier1'),
+      tier2: sliderValue('sub-tier2'),
+      tier3: sliderValue('sub-tier3'),
+      prime: sliderValue('sub-prime'),
+      gift: sliderValue('sub-gift'),
+    },
+    split: Number((form.querySelector('[data-split]') as HTMLSelectElement)?.value ?? 0.5),
+    bits: sliderValue('bits'),
+    ads: { cpm: sliderValue('cpm'), minutes: sliderValue('minutes'), viewers: sliderValue('viewers') },
+  });
+
   const render = () => {
     const r = estimateRevenue(read());
     form.querySelector('[data-result]')!.textContent = `${formatCurrency(r.monthly.total, 'USD')} / month`;
     form.querySelector('[data-subresult]')!.textContent = `≈ ${formatCurrency(r.annual.total, 'USD')} / year · ${formatCurrency(r.hourlyEquivalent, 'USD')}/hr (${r.minWageMultiple.toFixed(1)}× min wage)`;
+
+    const grid = form.querySelector('[data-breakdown-grid]') as HTMLElement;
+    const rows = [
+      { label: 'Tier 1', value: r.subsBreakdown.tier1 },
+      { label: 'Tier 2', value: r.subsBreakdown.tier2 },
+      { label: 'Tier 3', value: r.subsBreakdown.tier3 },
+      { label: 'Prime', value: r.subsBreakdown.prime },
+      { label: 'Gift', value: r.subsBreakdown.gift },
+      { label: 'Bits', value: r.monthly.bits },
+      { label: 'Ads', value: r.monthly.ads },
+    ];
+    grid.innerHTML = rows.map(row => `
+      <div class="breakdown-cell">
+        <span>${row.label}</span>
+        <strong>${formatCurrency(row.value, 'USD')}</strong>
+      </div>
+    `).join('');
+
+    renderGoal();
   };
-  form.addEventListener('input', render);
+
+  const renderGoal = () => {
+    const goal = Number((form.querySelector('[data-goal-input]') as HTMLInputElement)?.value ?? 0);
+    const split = Number((form.querySelector('[data-split]') as HTMLSelectElement)?.value ?? 0.5);
+    const needed = subsForGoal(goal, split);
+    const splitLabel = SPLIT_PRESETS.find(s => s.value === split)?.label.split(' ')[0] ?? '50/50';
+    form.querySelector('[data-goal-output]')!.innerHTML = `At a ${splitLabel} split you need <strong>${needed.toLocaleString()}</strong> Tier 1 subs/month to hit ${formatCurrency(goal, 'USD')}.`;
+  };
+
+  form.querySelectorAll('[data-range-slider]').forEach(slider => {
+    slider.addEventListener('input', render);
+  });
+  form.querySelector('[data-split]')?.addEventListener('change', render);
+  form.querySelector('[data-goal-input]')?.addEventListener('input', renderGoal);
+
   render();
 </script>
 <style>
-  .revenue-calc { display: flex; flex-direction: column; gap: var(--spacing-5); }
+  .revenue-calc { display: flex; flex-direction: column; gap: var(--spacing-6); }
   .panels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-4); }
-  .panel-mini { border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); padding: var(--spacing-4); display: grid; gap: var(--spacing-3); }
+  .panel-mini { border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); padding: var(--spacing-4); display: grid; gap: var(--spacing-4); }
   legend { font-weight: 800; font-size: var(--text-sm); color: var(--color-fg); padding: 0 var(--spacing-2); }
   label { display: grid; gap: var(--spacing-2); color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
-  input, select { width: 100%; min-height: 44px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
-  input:focus, select:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
-  .result { font-family: var(--font-mono); font-size: var(--text-3xl); font-weight: 700; color: var(--color-accent); line-height: var(--leading-tight); }
+  select { width: 100%; min-height: 44px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+  select:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .result { font-family: var(--font-mono); font-size: clamp(28px, 4vw, 48px); font-weight: 700; color: var(--color-accent); line-height: var(--leading-tight); white-space: nowrap; }
   .sub { color: var(--color-muted); font-size: var(--text-sm); }
-  @media (max-width: 860px) { .panels { grid-template-columns: 1fr; } }
+  .breakdown { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); }
+  .breakdown strong { font-size: var(--text-sm); color: var(--color-fg); }
+  .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--spacing-3); }
+  .breakdown-cell { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); }
+  .breakdown-cell span { font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
+  .breakdown-cell strong { font-family: var(--font-mono); font-size: var(--text-base); color: var(--color-fg); }
+  .goal-calc { display: grid; grid-template-columns: 1fr 2fr; gap: var(--spacing-4); align-items: center; padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); }
+  .goal-calc label { margin: 0; }
+  .goal-calc input { width: 100%; min-height: 44px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; }
+  .goal-calc input:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .goal-calc p { color: var(--color-fg-2); font-size: var(--text-sm); margin: 0; }
+  .goal-calc p strong { color: var(--color-accent); }
+  @media (max-width: 860px) { .panels, .goal-calc { grid-template-columns: 1fr; } }
 </style>

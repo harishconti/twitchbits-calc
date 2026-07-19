@@ -1,10 +1,108 @@
 ---
 import LinearConverter from './LinearConverter.astro';
-import { coinsToUsd, usdToCoins, coinsBulkTable } from '../../lib/calculators/tiktok';
-import { COIN_BULK } from '../../data/coinConfig';
+import ReferenceTable from '../primitives/ReferenceTable.astro';
+import { coinsToUsd, usdToCoins, coinsBulkTable, diamondsToUsd, usdToDiamonds, diamondsBulkTable, coinsToDiamonds } from '../../lib/calculators/tiktok';
+import { COIN_BULK, DIAMOND_BULK, TIKTOK_GIFT_EXAMPLES, COIN_TO_DIAMOND, DIAMOND_TO_USD, COIN_TO_USD } from '../../data/coinConfig';
+import { formatCurrency, formatCurrencyPrecise } from '../../lib/format';
 ---
-<LinearConverter config={{
-  tool: 'tiktok', unitName: 'TikTok Coins', paramKey: 'coins',
-  toUsd: coinsToUsd, fromUsd: usdToCoins,
-  bulkRows: COIN_BULK, toBulkRows: (rows) => coinsBulkTable(rows),
-}} />
+<div class="tiktok-calc">
+  <LinearConverter config={{
+    tool: 'tiktok', unitName: 'TikTok Coins', paramKey: 'coins',
+    toUsd: coinsToUsd, fromUsd: usdToCoins,
+    bulkRows: COIN_BULK, toBulkRows: (rows) => coinsBulkTable(rows),
+    viewerContext: { perUnitCostUsd: COIN_TO_USD, label: 'Viewer pays' },
+  }} />
+
+  <div class="diamond-panel">
+    <div class="panel-header">
+      <h3>Or convert Diamonds → USD</h3>
+      <p>Creators receive Diamonds, not Coins. 1 Coin ≈ 0.5 Diamonds, and 1 Diamond ≈ ${DIAMOND_TO_USD} USD.</p>
+    </div>
+    <form class="diamond-form" data-tool="tiktok-diamonds">
+      <label>Diamonds
+        <input type="number" min="0" data-diamonds value="1000" />
+      </label>
+      <div class="diamond-result" data-diamond-result aria-live="polite">$5.00</div>
+      <ReferenceTable rows={diamondsBulkTable(DIAMOND_BULK).map(r => ({ bits: r.bits, usd: r.usd }))} currency="USD" unitLabel="Diamonds" />
+    </form>
+  </div>
+
+  <div class="flow-panel">
+    <h3>How the TikTok gift economy works</h3>
+    <div class="flow">
+      <div class="flow-step">
+        <strong>Viewer buys Coins</strong>
+        <span>~${COIN_TO_USD} / coin</span>
+      </div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step">
+        <strong>Sends a gift</strong>
+        <span>1–10,000+ coins</span>
+      </div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step">
+        <strong>Creator gets Diamonds</strong>
+        <span>≈ {COIN_TO_DIAMOND * 100}% of coins</span>
+      </div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step">
+        <strong>Cash out</strong>
+        <span>~${DIAMOND_TO_USD} / diamond</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="gift-panel">
+    <h3>What popular gifts are worth to the creator</h3>
+    <div class="gift-grid">
+      {TIKTOK_GIFT_EXAMPLES.map(g => (
+        <div class="gift-card">
+          <strong>{g.name}</strong>
+          <span>{g.coins} coins</span>
+          <span class="gift-earn">≈ {formatCurrencyPrecise(g.diamonds * DIAMOND_TO_USD, 'USD')} for creator</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script>
+  import { formatCurrency } from '../../lib/format';
+  import { diamondsToUsd } from '../../lib/calculators/tiktok';
+  const form = document.querySelector('[data-tool="tiktok-diamonds"]') as HTMLFormElement;
+  const input = form?.querySelector('[data-diamonds]') as HTMLInputElement;
+  const result = form?.querySelector('[data-diamond-result]') as HTMLElement;
+  const update = () => {
+    const diamonds = Number(input?.value ?? 0);
+    result.textContent = formatCurrency(diamondsToUsd(diamonds), 'USD');
+  };
+  input?.addEventListener('input', update);
+  update();
+</script>
+
+<style>
+  .tiktok-calc { display: flex; flex-direction: column; gap: var(--spacing-6); }
+  .diamond-panel { border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); padding: var(--spacing-5); display: flex; flex-direction: column; gap: var(--spacing-4); }
+  .panel-header h3 { font-size: var(--text-xl); font-weight: 700; }
+  .panel-header p { color: var(--color-muted); font-size: var(--text-sm); margin-top: var(--spacing-2); }
+  .diamond-form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4); align-items: end; }
+  .diamond-form label { display: grid; gap: var(--spacing-2); color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
+  .diamond-form input { width: 100%; min-height: 46px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; }
+  .diamond-form input:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .diamond-result { font-family: var(--font-mono); font-size: var(--text-2xl); font-weight: 700; color: var(--color-accent); line-height: var(--leading-tight); }
+  .flow-panel { display: flex; flex-direction: column; gap: var(--spacing-4); padding-top: var(--spacing-4); border-top: 1px solid var(--color-border-soft); }
+  .flow-panel h3 { font-size: var(--text-lg); font-weight: 700; }
+  .flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--spacing-2); align-items: center; }
+  .flow-step { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); text-align: center; }
+  .flow-step strong { font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-fg); }
+  .flow-step span { font-size: var(--text-sm); color: var(--color-muted); }
+  .flow-arrow { text-align: center; color: var(--color-accent); font-size: var(--text-xl); font-weight: 800; }
+  .gift-panel { display: flex; flex-direction: column; gap: var(--spacing-4); padding-top: var(--spacing-4); border-top: 1px solid var(--color-border-soft); }
+  .gift-panel h3 { font-size: var(--text-lg); font-weight: 700; }
+  .gift-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--spacing-3); }
+  .gift-card { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); }
+  .gift-card strong { font-size: var(--text-sm); color: var(--color-fg); }
+  .gift-card span { font-size: var(--text-xs); color: var(--color-muted); }
+  .gift-card .gift-earn { color: var(--color-accent); font-weight: 700; }
+  @media (max-width: 640px) { .flow { grid-template-columns: 1fr; } .flow-arrow { transform: rotate(90deg); } .diamond-form { grid-template-columns: 1fr; } }
+</style>
