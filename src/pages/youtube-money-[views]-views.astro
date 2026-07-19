@@ -42,8 +42,8 @@ const viewsLabel = views.toLocaleString();
     doc={toolContent.youtube}
     values={{
       views: viewsLabel,
-      lowUsd: lowUsd.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
-      highUsd: highUsd.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }),
+      lowUsd: lowUsd.toLocaleString('en-US', { maximumFractionDigits: 0 }),
+      highUsd: highUsd.toLocaleString('en-US', { maximumFractionDigits: 0 }),
     }}
     slot="below"
   />
