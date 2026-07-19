@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../lib/site';
+---
+<BaseLayout title="Privacy Policy" description={`${SITE.name} privacy policy — cookieless analytics, no personal data collected.`} noindex>
+  <article class="legal">
+    <h1>Privacy Policy</h1>
+    <p>{SITE.name} uses Cloudflare Web Analytics, which is cookieless and does not collect personal data.</p>
+    <p>Shareable calculator URLs use query parameters (e.g. <code>?bits=1000</code>) that stay in your browser and are not stored server-side — we have no backend.</p>
+    <p>If you join the email waitlist via Tally.so, your email is processed by Tally under their privacy policy.</p>
+    <p>We do not sell data. Contact us via the repository for any privacy questions.</p>
+  </article>
+</BaseLayout>
+<style>
+  .legal { max-width:680px; margin:0 auto; }
+</style>

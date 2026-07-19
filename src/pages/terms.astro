@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../lib/site';
+---
+<BaseLayout title="Terms of Use" description={`Terms of use for ${SITE.name}.`} noindex>
+  <article class="legal">
+    <h1>Terms of Use</h1>
+    <p>All calculators on {SITE.name} provide estimates for informational purposes only and are not financial advice.</p>
+    <p>Platform rates (Twitch, TikTok, YouTube) change over time; we update our data periodically but make no guarantee of real-time accuracy.</p>
+    <p>Use of affiliate links is optional and never affects calculator results.</p>
+    <p>By using this site you accept these terms as-is.</p>
+  </article>
+</BaseLayout>
+<style>
+  .legal { max-width:680px; margin:0 auto; }
+</style>

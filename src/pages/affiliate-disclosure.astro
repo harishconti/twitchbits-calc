@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { AFFILIATES } from '../data/affiliateLinks';
+import { SITE } from '../lib/site';
+const programs = Object.values(AFFILIATES);
+const today = new Date().toISOString().slice(0, 10);
+---
+<BaseLayout title="Affiliate Disclosure" description="How this site earns money through affiliate links." noindex>
+  <article class="legal">
+    <h1>Affiliate Disclosure</h1>
+    <p>Last updated: {today}</p>
+    <p>{SITE.name} participates in affiliate programs. When you click certain links and make a purchase or sign up, we may earn a commission at no extra cost to you.</p>
+    <h2>Programs</h2>
+    <ul>
+      {programs.map((p) => (
+        <li><strong>{p.label}</strong> — {p.disclosure}</li>
+      ))}
+    </ul>
+    <p>Calculators and content are estimates and not financial advice.</p>
+  </article>
+</BaseLayout>
+<style>
+  .legal { max-width:680px; margin:0 auto; }
+</style>
