@@ -1,0 +1,12 @@
+---
+import LinearConverter from './LinearConverter.astro';
+import { bitsToUsd, usdToBits, bulkTable } from '../../lib/calculators/bits';
+import { BULK_TABLE, VIEWER_PACKS } from '../../data/bitsConfig';
+const defaultPerBit = VIEWER_PACKS[0].perBitUsd;
+---
+<LinearConverter config={{
+  tool: 'bits', unitName: 'Bits', paramKey: 'bits',
+  toUsd: bitsToUsd, fromUsd: usdToBits,
+  bulkRows: BULK_TABLE, toBulkRows: (rows) => bulkTable(rows),
+  viewerContext: { perUnitCostUsd: defaultPerBit, label: 'Viewer pays' },
+}} />
