@@ -16,5 +16,13 @@ exports[`revenue calculator > snapshots a typical partner estimate 1`] = `
     "subs": 890.841,
     "total": 1570.841,
   },
+  "subsBreakdown": {
+    "gift": 17.465,
+    "prime": 69.86,
+    "tier1": 698.5999999999999,
+    "tier2": 69.92999999999999,
+    "tier3": 34.986,
+    "total": 890.841,
+  },
 }
 `;

@@ -1,0 +1,176 @@
+---
+interface Props {
+  id: string;
+  label: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  value?: number;
+  prefix?: string;
+  suffix?: string;
+  compact?: boolean;
+}
+const { id, label, min = 0, max = 100, step = 1, value = min, prefix = '', suffix = '', compact = false } = Astro.props;
+const startPct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+---
+<div class={`range-slider ${compact ? 'compact' : ''}`} data-range-slider={id} data-min={min} data-max={max} data-step={step}>
+  <label for={id} class="label">{label}</label>
+  <div class="track-wrap">
+    <input
+      type="range"
+      id={id}
+      class="range-input"
+      min={min}
+      max={max}
+      step={step}
+      value={value}
+      aria-label={label}
+    />
+    <div class="track">
+      <div class="track-fill" style={`width: ${startPct}%`}></div>
+    </div>
+    <div class="thumb" style={`left: ${startPct}%`}></div>
+  </div>
+  <div class={`value ${compact ? 'compact' : ''}`}>
+    {prefix && <span class="prefix">{prefix}</span>}
+    <input type="number" class="number-input" min={min} max={max} step={step} value={value} aria-label={`${label} value`} />
+    {suffix && <span class="suffix">{suffix}</span>}
+  </div>
+</div>
+<script>
+  function initRangeSlider(root: HTMLElement) {
+    const range = root.querySelector<HTMLInputElement>('.range-input');
+    const number = root.querySelector<HTMLInputElement>('.number-input');
+    const fill = root.querySelector<HTMLElement>('.track-fill');
+    const thumb = root.querySelector<HTMLElement>('.thumb');
+    if (!range || !number || !fill || !thumb) return;
+
+    const min = Number(root.dataset.min ?? 0);
+    const max = Number(root.dataset.max ?? 100);
+
+    const sync = (value: number) => {
+      const clamped = Math.min(max, Math.max(min, value));
+      const pct = ((clamped - min) / (max - min)) * 100;
+      range.value = String(clamped);
+      number.value = String(clamped);
+      fill.style.width = `${pct}%`;
+      thumb.style.left = `${pct}%`;
+      root.dataset.value = String(clamped);
+    };
+
+    range.addEventListener('input', () => sync(Number(range.value)));
+    number.addEventListener('input', () => sync(Number(number.value)));
+    number.addEventListener('change', () => sync(Number(number.value)));
+
+    sync(Number(range.value));
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-range-slider]').forEach(initRangeSlider);
+</script>
+<style>
+  .range-slider {
+    display: grid;
+    gap: var(--spacing-2);
+  }
+  .label {
+    color: var(--color-fg-2);
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+  .label:empty { display: none; }
+  .track-wrap {
+    position: relative;
+    height: 24px;
+    display: flex;
+    align-items: center;
+  }
+  .range-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+    z-index: 2;
+  }
+  .track {
+    position: absolute;
+    inset-inline: 0;
+    height: 6px;
+    background: var(--color-border);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+  .track-fill {
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: var(--radius-pill);
+    transition: width var(--duration-fast) var(--ease-standard);
+  }
+  .thumb {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    background: var(--color-bg);
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+    box-shadow: var(--shadow-raised);
+    transition: left var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+    z-index: 1;
+  }
+  .track-wrap:hover .thumb,
+  .range-input:focus + .track + .thumb,
+  .range-input:active + .track + .thumb {
+    transform: scale(1.15);
+  }
+  .range-input:focus + .track {
+    box-shadow: var(--shadow-focus-ring);
+  }
+  .value {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    color: var(--color-fg);
+    font-weight: 700;
+    font-size: var(--text-base);
+  }
+  .value.compact {
+    font-size: var(--text-sm);
+  }
+  .number-input {
+    width: 72px;
+    min-height: 32px;
+    padding: 0 var(--spacing-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font: inherit;
+    text-align: center;
+  }
+  .range-slider:has(.label:empty) .number-input { width: 64px; }
+  .range-slider.compact {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: var(--spacing-3);
+  }
+  .range-slider.compact .label { grid-column: 1 / -1; }
+  .range-slider.compact .track-wrap { height: 20px; }
+  .range-slider.compact .number-input {
+    width: 56px;
+    min-height: 28px;
+    font-size: var(--text-sm);
+  }
+  .number-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-focus-ring);
+  }
+  .prefix,
+  .suffix {
+    color: var(--color-muted);
+    font-weight: 600;
+  }
+</style>

@@ -1,14 +1,17 @@
 import { describe, it, expect } from "vitest";
 import { bitsToUsd, usdToBits, bulkTable } from "../src/lib/calculators/bits";
-import { estimateRevenue } from "../src/lib/calculators/revenue";
+import { estimateRevenue, subsForGoal } from "../src/lib/calculators/revenue";
 import {
   coinsToUsd,
   diamondsToUsd,
   usdToCoins,
+  coinsToDiamonds,
+  usdToDiamonds,
 } from "../src/lib/calculators/tiktok";
 import {
   earningsFromViews,
   rangeFromRpm,
+  adjustedRpm,
 } from "../src/lib/calculators/youtube";
 
 describe("bits calculator", () => {
@@ -75,6 +78,26 @@ describe("revenue calculator", () => {
       }),
     ).toMatchSnapshot();
   });
+
+  it("breaks down sub revenue by tier", () => {
+    const r = estimateRevenue({
+      subs: { tier1: 10, tier2: 5, tier3: 1, prime: 2, gift: 1 },
+      split: 0.5,
+      bits: 0,
+      ads: { cpm: 0, minutes: 0, viewers: 0 },
+    });
+    expect(r.subsBreakdown.tier1).toBeCloseTo(10 * 4.99 * 0.5, 2);
+    expect(r.subsBreakdown.tier2).toBeCloseTo(5 * 9.99 * 0.5, 2);
+    expect(r.subsBreakdown.tier3).toBeCloseTo(1 * 24.99 * 0.5, 2);
+    expect(r.subsBreakdown.total).toBeCloseTo(r.monthly.subs, 2);
+  });
+
+  it("calculates subs needed for a monthly goal", () => {
+    // At 50/50 split, each tier-1 sub pays the streamer $2.495.
+    // $1,000 / $2.495 ≈ 401 → ceil 401.
+    expect(subsForGoal(1000, 0.5)).toBe(401);
+    expect(subsForGoal(0, 0.5)).toBe(0);
+  });
 });
 
 describe("tiktok calculator", () => {
@@ -85,6 +108,10 @@ describe("tiktok calculator", () => {
   });
   it("diamonds to USD", () => {
     expect(diamondsToUsd(1000)).toBeCloseTo(5, 0); // ~$0.005/diamond
+  });
+  it("converts coins to diamonds and USD to diamonds", () => {
+    expect(coinsToDiamonds(100)).toBe(50);
+    expect(usdToDiamonds(5)).toBe(1000); // $5 / $0.005 per diamond
   });
   it("guards bad input", () => {
     expect(coinsToUsd(-1)).toBe(0);
@@ -100,6 +127,11 @@ describe("youtube calculator", () => {
     const r = rangeFromRpm(10_000, 2, 8);
     expect(r.low).toBe(20);
     expect(r.high).toBe(80);
+  });
+  it("adjusts rpm by format and country factors", () => {
+    const r = adjustedRpm(2, 8, 0.12, 0.82); // Shorts in UK
+    expect(r.low).toBeCloseTo(0.1968, 3); // 2 * 0.12 * 0.82 per 1k
+    expect(r.high).toBeCloseTo(0.7872, 3); // 8 * 0.12 * 0.82 per 1k
   });
   it("guards bad input", () => {
     expect(earningsFromViews(-1, 4)).toBe(0);

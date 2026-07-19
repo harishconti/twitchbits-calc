@@ -3,6 +3,19 @@ export function earningsFromViews(views: number, rpm: number): number {
     return 0;
   return (views / 1000) * rpm;
 }
+
+export function adjustedRpm(
+  baseLow: number,
+  baseHigh: number,
+  formatFactor: number,
+  countryFactor: number,
+) {
+  return {
+    low: earningsFromViews(1000, baseLow * formatFactor * countryFactor),
+    high: earningsFromViews(1000, baseHigh * formatFactor * countryFactor),
+  };
+}
+
 export function rangeFromRpm(views: number, low: number, high: number) {
   return {
     low: earningsFromViews(views, low),
