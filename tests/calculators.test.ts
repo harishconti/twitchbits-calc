@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { bitsToUsd, usdToBits, bulkTable } from '../src/lib/calculators/bits';
 import { estimateRevenue } from '../src/lib/calculators/revenue';
 import { coinsToUsd, diamondsToUsd, usdToCoins } from '../src/lib/calculators/tiktok';
+import { earningsFromViews, rangeFromRpm } from '../src/lib/calculators/youtube';
 
 describe('bits calculator', () => {
   it('converts bits to USD at $0.01/Bits', () => {
@@ -67,5 +68,20 @@ describe('tiktok calculator', () => {
   it('guards bad input', () => {
     expect(coinsToUsd(-1)).toBe(0);
     expect(diamondsToUsd(NaN)).toBe(0);
+  });
+});
+
+describe('youtube calculator', () => {
+  it('earnings = rpm * views / 1000', () => {
+    expect(earningsFromViews(10_000, 4)).toBe(40);
+  });
+  it('returns a low–high range from rpm bounds', () => {
+    const r = rangeFromRpm(10_000, 2, 8);
+    expect(r.low).toBe(20);
+    expect(r.high).toBe(80);
+  });
+  it('guards bad input', () => {
+    expect(earningsFromViews(-1, 4)).toBe(0);
+    expect(earningsFromViews(1000, NaN)).toBe(0);
   });
 });
