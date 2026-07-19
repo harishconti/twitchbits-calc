@@ -2,8 +2,16 @@
 interface Props { id?: string; label?: string; }
 const { id = 'copy', label = 'Copy result' } = Astro.props;
 ---
-<button id={id} type="button" class="copy-btn" data-copy>{label}</button>
+<button id={id} type="button" class="btn btn-secondary" data-copy>{label}</button>
 <style>
-  .copy-btn { padding:.75rem 1.25rem; border-radius:8px; border:1px solid var(--color-border); background:var(--color-surface-2); color:var(--color-text); cursor:pointer; }
-  .copy-btn[data-copied="true"] { color:var(--color-success); border-color:var(--color-success); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 var(--spacing-5);
+    border: 1px solid transparent; border-radius: var(--radius-md); font: 700 var(--text-sm) / 1 var(--font-body);
+    color: inherit; text-decoration: none; cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .btn:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
+  .btn-secondary { background: var(--color-surface); color: var(--color-fg); border-color: var(--color-border); box-shadow: var(--shadow-ring); }
+  .btn-secondary:hover { border-color: var(--color-accent); color: var(--color-accent); transform: translateY(-1px); }
+  .btn[data-copied="true"] { color: var(--color-success); border-color: var(--color-success); }
 </style>

@@ -2,14 +2,20 @@
 import { SITE } from '../../lib/site';
 ---
 <footer class="footer">
-  <nav aria-label="Footer">
-    <a href="/affiliate-disclosure">Affiliate Disclosure</a>
-    <a href="/privacy">Privacy</a>
-    <a href="/terms">Terms</a>
-  </nav>
-  <p>© {new Date().getFullYear()} {SITE.name}. Calculators are estimates, not financial advice.</p>
+  <div class="container footer-inner">
+    <nav aria-label="Footer">
+      <a href="/affiliate-disclosure">Affiliate Disclosure</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
+    </nav>
+    <p>© {new Date().getFullYear()} {SITE.name}. Calculators are estimates, not financial advice.</p>
+  </div>
 </footer>
 <style>
-  .footer { padding:2rem 1.25rem; border-top:1px solid var(--color-border); color:var(--color-text-muted); font-size:.875rem; display:flex; flex-direction:column; gap:.5rem; }
-  .footer nav { display:flex; gap:1rem; }
+  .footer { border-top: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-muted); font-size: var(--text-sm); }
+  .footer-inner { display: flex; flex-direction: column; gap: var(--spacing-3); padding-block: var(--spacing-6); }
+  .footer nav { display: flex; gap: var(--spacing-5); }
+  .footer a { color: var(--color-fg-2); font-weight: 600; transition: color var(--duration-fast) var(--ease-standard); }
+  .footer a:hover { color: var(--color-accent); }
+  @media (min-width: 640px) { .footer-inner { flex-direction: row; align-items: center; justify-content: space-between; } }
 </style>

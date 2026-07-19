@@ -3,14 +3,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE } from '../lib/site';
 ---
 <BaseLayout title="Privacy Policy" description={`${SITE.name} privacy policy — cookieless analytics, no personal data collected.`} noindex>
-  <article class="legal">
-    <h1>Privacy Policy</h1>
-    <p>{SITE.name} uses Cloudflare Web Analytics, which is cookieless and does not collect personal data.</p>
-    <p>Shareable calculator URLs use query parameters (e.g. <code>?bits=1000</code>) that stay in your browser and are not stored server-side — we have no backend.</p>
-    <p>If you join the email waitlist via Tally.so, your email is processed by Tally under their privacy policy.</p>
-    <p>We do not sell data. Contact us via the repository for any privacy questions.</p>
-  </article>
+  <div class="container">
+    <article class="legal">
+      <p class="eyebrow">Privacy</p>
+      <h1>Privacy Policy</h1>
+      <p>{SITE.name} uses Cloudflare Web Analytics, which is cookieless and does not collect personal data.</p>
+      <p>Shareable calculator URLs use query parameters (e.g. <code>?bits=1000</code>) that stay in your browser and are not stored server-side — we have no backend.</p>
+      <p>If you join the email waitlist via Tally.so, your email is processed by Tally under their privacy policy.</p>
+      <p>We do not sell data. Contact us via the repository for any privacy questions.</p>
+    </article>
+  </div>
 </BaseLayout>
 <style>
-  .legal { max-width:680px; margin:0 auto; }
+  .legal { max-width: 720px; margin: 0 auto; padding-block: var(--section-y-desktop); }
+  .eyebrow { color: var(--color-meta); font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+  h1 { font-size: var(--text-3xl); font-weight: 800; margin-top: var(--spacing-3); margin-bottom: var(--spacing-4); }
+  p { line-height: var(--leading-body); color: var(--color-fg); margin-bottom: var(--spacing-4); }
+  code { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--spacing-1) var(--spacing-2); font-family: var(--font-mono); font-size: var(--text-sm); }
 </style>

@@ -7,7 +7,20 @@ const { id, text } = Astro.props;
   <span role="tooltip" id={id} class="tip">{text}</span>
 </span>
 <style>
-  .tooltip { position:relative; display:inline-block; }
-  .tip { position:absolute; bottom:1.4em; left:50%; transform:translateX(-50%); background:var(--color-surface-2); border:1px solid var(--color-border); padding:.4rem .6rem; border-radius:6px; font-size:.75rem; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; }
-  .tooltip:focus-within .tip, .tooltip:hover .tip { opacity:1; }
+  .tooltip { position: relative; display: inline-block; }
+  .tooltip button {
+    width: 20px; height: 20px; padding: 0;
+    border: 1px solid var(--color-border); border-radius: var(--radius-pill);
+    background: var(--color-surface); color: var(--color-muted);
+    font-size: var(--text-xs); line-height: 1; cursor: pointer;
+    transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+  }
+  .tooltip button:hover { color: var(--color-accent); border-color: var(--color-accent); }
+  .tip { position: absolute; bottom: 1.6em; left: 50%; transform: translateX(-50%); z-index: 10;
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+    padding: var(--spacing-2) var(--spacing-3); font-size: var(--text-sm); color: var(--color-fg-2);
+    white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity var(--duration-fast) var(--ease-standard);
+    box-shadow: var(--shadow-raised);
+  }
+  .tooltip:focus-within .tip, .tooltip:hover .tip { opacity: 1; }
 </style>

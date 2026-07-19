@@ -7,13 +7,29 @@ if (!a) { return null as any; }
 const cta = variant === 'alt' ? a.cta.alt : a.cta.primary;
 ---
 <aside class="affiliate-cta" aria-label="Sponsored">
-  <span class="tag">Affiliate</span>
-  <h3>{a.label}</h3>
-  <p>{a.disclosure}</p>
-  <a class="cta" href={a.url} rel="sponsored nofollow" target="_blank">{cta}</a>
+  <div class="cta-inner">
+    <span class="tag">Affiliate</span>
+    <h3>{a.label}</h3>
+    <p>{a.disclosure}</p>
+    <a class="btn btn-primary" href={a.url} rel="sponsored nofollow" target="_blank">{cta}</a>
+  </div>
 </aside>
 <style>
-  .affiliate-cta { border-left:3px solid var(--color-accent); background:var(--color-surface-2); padding:1rem 1.25rem; border-radius:8px; margin-top:1.5rem; }
-  .tag { font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--color-text-muted); }
-  .cta { display:inline-block; margin-top:.5rem; padding:.6rem 1rem; background:var(--color-accent); color:#fff; border-radius:6px; text-decoration:none; }
+  .affiliate-cta {
+    border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+    background: var(--color-surface); overflow: hidden;
+    padding: var(--spacing-6);
+  }
+  .cta-inner { border-left: 4px solid var(--color-accent); padding-left: var(--spacing-5); }
+  .tag { font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted); }
+  h3 { font-size: var(--text-xl); font-weight: 700; margin-top: var(--spacing-2); }
+  p { color: var(--color-muted); font-size: var(--text-sm); margin-top: var(--spacing-2); max-width: 560px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 var(--spacing-5);
+    margin-top: var(--spacing-4); border: 1px solid transparent; border-radius: var(--radius-md);
+    font: 700 var(--text-sm) / 1 var(--font-body); text-decoration: none;
+    transition: background-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+  }
+  .btn-primary { background: var(--color-accent); color: var(--color-accent-on); }
+  .btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); }
 </style>

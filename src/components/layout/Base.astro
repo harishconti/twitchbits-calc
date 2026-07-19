@@ -30,7 +30,13 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={new URL(img, SITE.url).href} />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+  rel="stylesheet"
+/>
 <ThemeScript />
 {ld.map((b) => <script type="application/ld+json" set:html={JSON.stringify(b)} />)}
-<!-- Cloudflare Web Analytics (cookieless, first-party CDN) -->
+<!-- Cloudflare Web Analytics (cookieless, deferred) -->
 <script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"REPLACE_WITH_CLOUDFLARE_TOKEN"}' />

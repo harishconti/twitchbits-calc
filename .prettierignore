@@ -1,0 +1,8 @@
+node_modules
+dist
+.astro
+.claude
+.remember
+.superpowers
+.playwright-mcp
+*.log

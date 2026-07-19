@@ -1,16 +1,33 @@
 ---
-import { toggleTheme } from '../../scripts/theme';
 ---
-<button
-  type="button"
-  class="theme-toggle"
-  aria-label="Toggle dark / light theme"
-  data-theme-toggle
->
-  <span aria-hidden="true">◐</span>
+<button type="button" class="theme-toggle" aria-label="Toggle dark / light theme" data-theme-toggle>
+  <svg class="icon-light" aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="5"></circle>
+    <path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+  </svg>
+  <svg class="icon-dark" aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+  </svg>
 </button>
 <script>
   document.querySelector('[data-theme-toggle]')?.addEventListener('click', () => {
     import('../../scripts/theme').then(({ toggleTheme }) => toggleTheme());
   });
 </script>
+<style>
+  .theme-toggle {
+    width: 40px; height: 40px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    background: var(--color-surface); color: var(--color-fg-2);
+    cursor: pointer; position: relative; overflow: hidden;
+    transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+  }
+  .theme-toggle:hover { color: var(--color-accent); border-color: var(--color-accent); }
+  .theme-toggle:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
+  .theme-toggle svg { transition: transform var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard); }
+  .theme-toggle .icon-light { position: absolute; opacity: 1; transform: scale(1) rotate(0deg); }
+  .theme-toggle .icon-dark { position: absolute; opacity: 0; transform: scale(0.7) rotate(-45deg); }
+  :global([data-theme="dark"]) .theme-toggle .icon-light { opacity: 0; transform: scale(0.7) rotate(45deg); }
+  :global([data-theme="dark"]) .theme-toggle .icon-dark { opacity: 1; transform: scale(1) rotate(0deg); }
+</style>

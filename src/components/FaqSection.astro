@@ -5,13 +5,30 @@ const { faqs } = Astro.props;
 ---
 <section class="faq" aria-label="Frequently asked questions">
   <h2>Frequently asked questions</h2>
-  {faqs.map((f) => (
-    <details><summary>{f.q}</summary><p>{f.a}</p></details>
-  ))}
+  <div class="faq-list">
+    {faqs.map((f) => (
+      <details class="faq-item">
+        <summary>{f.q}</summary>
+        <p>{f.a}</p>
+      </details>
+    ))}
+  </div>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(buildFaqSchema(faqs))} />
 </section>
-<script type="application/ld+json" is:inline set:html={JSON.stringify(buildFaqSchema(faqs))} />
 <style>
-  .faq { margin-top:2rem; }
-  .faq details { border:1px solid var(--color-border); border-radius:8px; padding:.75rem 1rem; margin-bottom:.5rem; }
-  .faq summary { cursor:pointer; font-weight:600; }
+  .faq { padding-block: var(--section-y-phone); }
+  .faq h2 { font-size: var(--text-2xl); font-weight: 800; margin-bottom: var(--spacing-5); }
+  .faq-list { display: flex; flex-direction: column; gap: var(--spacing-3); }
+  .faq-item { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+  .faq-item summary {
+    cursor: pointer; font-weight: 700; font-size: var(--text-base);
+    padding: var(--spacing-4) var(--spacing-5); list-style: none;
+    background: var(--color-surface); color: var(--color-fg);
+    transition: color var(--duration-fast) var(--ease-standard);
+  }
+  .faq-item summary:hover { color: var(--color-accent); }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item p { padding: 0 var(--spacing-5) var(--spacing-4); margin: 0; color: var(--color-muted); line-height: var(--leading-body); }
+  @media (min-width: 640px) { .faq { padding-block: var(--section-y-tablet); } }
+  @media (min-width: 1024px) { .faq { padding-block: var(--section-y-desktop); } }
 </style>

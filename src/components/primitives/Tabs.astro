@@ -4,11 +4,35 @@ const { id, tabs, active = 0 } = Astro.props;
 ---
 <div class="tabs" role="tablist" data-tabs={id}>
   {tabs.map((t, i) => (
-    <button role="tab" type="button" aria-selected={i === active ? 'true' : 'false'} data-tab-index={i} class={i === active ? 'tab active' : 'tab'}>{t}</button>
+    <button
+      role="tab"
+      type="button"
+      aria-selected={i === active ? 'true' : 'false'}
+      data-tab-index={i}
+      class={i === active ? 'tab active' : 'tab'}
+    >{t}</button>
   ))}
 </div>
 <style>
-  .tabs { display:inline-flex; gap:.25rem; background:var(--color-surface-2); border-radius:8px; padding:.25rem; }
-  .tab { padding:.5rem 1rem; border:none; background:transparent; color:var(--color-text-muted); border-radius:6px; cursor:pointer; font:inherit; }
-  .tab.active { background:var(--color-accent); color:#fff; }
+  .tabs {
+    display: inline-flex;
+    gap: var(--spacing-1);
+    padding: var(--spacing-1);
+    background: var(--color-surface-warm);
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-md);
+  }
+  .tab {
+    padding: var(--spacing-2) var(--spacing-4);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    font: 700 var(--text-sm) / 1 var(--font-body);
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+  }
+  .tab:hover { color: var(--color-fg); }
+  .tab.active { background: var(--color-accent); color: var(--color-accent-on); border-color: var(--color-accent); }
+  .tab:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
 </style>

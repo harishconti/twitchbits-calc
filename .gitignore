@@ -5,3 +5,6 @@ dist/
 *.log
 .env*
 .superpowers/
+.playwright-mcp/
+.claude/plan.md
+.claude/settings.local.json
