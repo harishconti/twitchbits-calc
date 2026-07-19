@@ -13,6 +13,15 @@ import {
   rangeFromRpm,
   adjustedRpm,
 } from "../src/lib/calculators/youtube";
+import {
+  estimateSubRevenue,
+  subsForGoal,
+  subBulkTable,
+} from "../src/lib/calculators/subs";
+import {
+  estimateSponsorship,
+  sponsorshipByFollowers,
+} from "../src/lib/calculators/sponsorship";
 
 describe("bits calculator", () => {
   it("converts bits to USD at $0.01/Bits", () => {
@@ -136,5 +145,119 @@ describe("youtube calculator", () => {
   it("guards bad input", () => {
     expect(earningsFromViews(-1, 4)).toBe(0);
     expect(earningsFromViews(1000, NaN)).toBe(0);
+  });
+});
+
+describe("sub revenue calculator", () => {
+  it("computes monthly sub revenue by tier", () => {
+    const r = estimateSubRevenue({
+      tier1: 100,
+      tier2: 10,
+      tier3: 2,
+      prime: 5,
+      gift: 0,
+      split: 0.5,
+    });
+    expect(r.monthly.tier1).toBeCloseTo(100 * 4.99 * 0.5, 2);
+    expect(r.monthly.tier2).toBeCloseTo(10 * 9.99 * 0.5, 2);
+    expect(r.monthly.tier3).toBeCloseTo(2 * 24.99 * 0.5, 2);
+    expect(r.monthly.total).toBeCloseTo(
+      (100 * 4.99 + 10 * 9.99 + 2 * 24.99 + 5 * 4.99) * 0.5,
+      2,
+    );
+  });
+
+  it("guards negative inputs", () => {
+    const r = estimateSubRevenue({
+      tier1: -10,
+      tier2: 0,
+      tier3: 0,
+      prime: 0,
+      gift: 0,
+      split: 0.5,
+    });
+    expect(r.monthly.total).toBe(0);
+  });
+
+  it("snapshots a typical partner sub mix", () => {
+    expect(
+      estimateSubRevenue({
+        tier1: 250,
+        tier2: 25,
+        tier3: 5,
+        prime: 15,
+        gift: 10,
+        split: 0.7,
+      }),
+    ).toMatchSnapshot();
+  });
+
+  it("calculates tier-1 subs needed for a monthly goal", () => {
+    expect(subsForGoal(1000, 0.5)).toBe(401);
+    expect(subsForGoal(0, 0.5)).toBe(0);
+  });
+
+  it("returns a bulk sub reference table", () => {
+    const rows = subBulkTable(0.5, [10, 100, 1000]);
+    expect(rows).toHaveLength(3);
+    expect(rows[1]).toEqual({ count: 100, monthly: 249.5, annual: 2994 });
+  });
+});
+
+describe("sponsorship calculator", () => {
+  it("estimates a brand deal range from followers and engagement", () => {
+    const est = estimateSponsorship({
+      followers: 50_000,
+      engagement: 2.5,
+      niche: "Gaming / Tech",
+      region: "us",
+      deliverable: "integration",
+    });
+    expect(est.low).toBeGreaterThan(0);
+    expect(est.high).toBeGreaterThan(est.low);
+    expect(est.reached).toBeGreaterThan(0);
+  });
+
+  it("increases estimate with higher engagement", () => {
+    const lowEng = estimateSponsorship({
+      followers: 100_000,
+      engagement: 1,
+      niche: "Gaming / Tech",
+      region: "us",
+      deliverable: "shoutout",
+    });
+    const highEng = estimateSponsorship({
+      followers: 100_000,
+      engagement: 8,
+      niche: "Gaming / Tech",
+      region: "us",
+      deliverable: "shoutout",
+    });
+    expect(highEng.mid).toBeGreaterThan(lowEng.mid);
+  });
+
+  it("guards invalid inputs", () => {
+    const est = estimateSponsorship({
+      followers: -5000,
+      engagement: NaN,
+      niche: "Gaming / Tech",
+      region: "us",
+      deliverable: "shoutout",
+    });
+    expect(est.low).toBe(0);
+    expect(est.high).toBe(0);
+  });
+
+  it("returns a follower rate card", () => {
+    const rows = sponsorshipByFollowers(
+      100_000,
+      "Gaming / Tech",
+      "us",
+      "shoutout",
+      [1000, 10000, 100000],
+    );
+    expect(rows).toHaveLength(3);
+    expect(rows[2].followers).toBe(100000);
+    expect(rows[2].low).toBeGreaterThan(0);
   });
 });

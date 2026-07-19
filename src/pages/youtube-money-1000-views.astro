@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import YoutubeCalculator from '../components/calculators/YoutubeCalculator.astro';
+import { youtubeFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="YouTube Money Calculator — 1,000 Views"
+  description="Estimate how much 1,000 YouTube views earn based on niche, format, and audience country."
+  slug="youtube-money-1000-views"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'YouTube Tools', url: '/youtube-money-1000-views' }]}
+  faqs={youtubeFaqs}
+>
+  <YoutubeCalculator />
+</ToolLayout>

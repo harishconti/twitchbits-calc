@@ -1,0 +1,107 @@
+---
+import { estimateSponsorship, sponsorshipByFollowers } from '../../lib/calculators/sponsorship';
+import { SPONSORSHIP_NICHES, SPONSORSHIP_REGIONS, SPONSORSHIP_DELIVERABLES } from '../../data/sponsorshipConfig';
+import { formatCurrency } from '../../lib/format';
+import RangeSlider from '../primitives/RangeSlider.astro';
+
+const nicheOptions = SPONSORSHIP_NICHES.map((n, i) => ({ value: n.label, label: n.label, selected: i === 1 }));
+const regionOptions = Object.entries(SPONSORSHIP_REGIONS).map(([key, r]) => ({ value: key, label: r.label, selected: key === 'us' }));
+const deliverableOptions = Object.entries(SPONSORSHIP_DELIVERABLES).map(([key, d]) => ({ value: key, label: d.label, selected: key === 'integration' }));
+---
+<form class="sponsor-calc" data-tool="sponsorship">
+  <div class="field-group">
+    <RangeSlider id="followers" label="Followers" min={0} max={1000000} step={1000} value={50000} />
+    <RangeSlider id="engagement" label="Engagement rate (%)" min={0} max={20} step={0.1} value={2.5} suffix="%" />
+  </div>
+  <div class="field-group">
+    <label class="field">Niche
+      <select data-niche>
+        {nicheOptions.map(o => <option value={o.value} selected={o.selected ? true : undefined}>{o.label}</option>)}
+      </select>
+    </label>
+    <label class="field">Audience region
+      <select data-region>
+        {regionOptions.map(o => <option value={o.value} selected={o.selected ? true : undefined}>{o.label}</option>)}
+      </select>
+    </label>
+  </div>
+  <div class="field-group">
+    <label class="field">Deliverable
+      <select data-deliverable>
+        {deliverableOptions.map(o => <option value={o.value} selected={o.selected ? true : undefined}>{o.label}</option>)}
+      </select>
+    </label>
+  </div>
+
+  <div class="result" data-result aria-live="polite">$0 – $0 / deal</div>
+  <p class="result-note" data-result-note>Estimate for a typical integration in the gaming/tech niche.</p>
+
+  <div class="what-if" data-what-if>
+    <strong>Rate card by follower count</strong>
+    <div class="what-if-grid" data-what-if-grid></div>
+  </div>
+</form>
+<script>
+  import { estimateSponsorship, sponsorshipByFollowers } from '../../lib/calculators/sponsorship';
+  import { formatCurrency } from '../../lib/format';
+  import { SPONSORSHIP_NICHES, SPONSORSHIP_REGIONS, SPONSORSHIP_DELIVERABLES } from '../../data/sponsorshipConfig';
+
+  const form = document.querySelector('[data-tool="sponsorship"]') as HTMLFormElement;
+  const followersSlider = form.querySelector('[data-range-slider="followers"]') as HTMLElement;
+  const engagementSlider = form.querySelector('[data-range-slider="engagement"]') as HTMLElement;
+  const nicheSelect = form.querySelector('[data-niche]') as HTMLSelectElement;
+  const regionSelect = form.querySelector('[data-region]') as HTMLSelectElement;
+  const deliverableSelect = form.querySelector('[data-deliverable]') as HTMLSelectElement;
+  const result = form.querySelector('[data-result]') as HTMLElement;
+  const note = form.querySelector('[data-result-note]') as HTMLElement;
+  const whatIfGrid = form.querySelector('[data-what-if-grid]') as HTMLElement;
+
+  const render = () => {
+    const est = estimateSponsorship({
+      followers: Number(followersSlider.dataset.value ?? 0),
+      engagement: Number(engagementSlider.dataset.value ?? 0),
+      niche: nicheSelect.value,
+      region: regionSelect.value as keyof typeof SPONSORSHIP_REGIONS,
+      deliverable: deliverableSelect.value as keyof typeof SPONSORSHIP_DELIVERABLES,
+    });
+    result.textContent = `${formatCurrency(est.low, 'USD')} – ${formatCurrency(est.high, 'USD')} / deal`;
+    note.textContent = `Estimate for ${String(est.deliverable.label).toLowerCase()}, ${String(est.niche.label).toLowerCase()} niche, audience mainly in ${est.region.label}.`;
+
+    const rows = sponsorshipByFollowers(
+      Number(followersSlider.dataset.value ?? 0),
+      nicheSelect.value,
+      regionSelect.value as keyof typeof SPONSORSHIP_REGIONS,
+      deliverableSelect.value as keyof typeof SPONSORSHIP_DELIVERABLES,
+    );
+    whatIfGrid.innerHTML = rows.map(row => (
+      '<div class="scenario">' +
+        '<span class="scenario-meta">' + row.followers.toLocaleString() + ' followers</span>' +
+        '<span class="scenario-earn">' + formatCurrency(row.low, 'USD') + ' – ' + formatCurrency(row.high, 'USD') + '</span>' +
+      '</div>'
+    )).join('');
+  };
+
+  followersSlider.addEventListener('input', render);
+  engagementSlider.addEventListener('input', render);
+  nicheSelect.addEventListener('change', render);
+  regionSelect.addEventListener('change', render);
+  deliverableSelect.addEventListener('change', render);
+
+  render();
+</script>
+<style>
+  .sponsor-calc { display: flex; flex-direction: column; gap: var(--spacing-6); }
+  .field-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--spacing-5); align-items: start; }
+  .field { display: grid; gap: var(--spacing-2); color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
+  select { width: 100%; min-height: 46px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+  select:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .result { font-family: var(--font-mono); font-size: clamp(26px, 4vw, 44px); font-weight: 700; color: var(--color-accent); line-height: var(--leading-tight); white-space: nowrap; }
+  .result-note { color: var(--color-muted); font-size: var(--text-sm); }
+  .what-if { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); }
+  .what-if strong { font-size: var(--text-sm); color: var(--color-fg); }
+  .what-if-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--spacing-3); }
+  .scenario { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); }
+  .scenario-meta { font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
+  .scenario-earn { font-family: var(--font-mono); font-size: var(--text-base); font-weight: 700; color: var(--color-fg); }
+  @media (max-width: 560px) { .field-group { grid-template-columns: 1fr; } }
+</style>

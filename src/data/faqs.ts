@@ -57,6 +57,52 @@ export const revenueFaqs = [
   },
 ];
 
+export const subRevenueFaqs = [
+  {
+    q: "How much do Twitch streamers make per sub?",
+    a: "Tier 1 ($4.99), Tier 2 ($9.99), and Tier 3 ($24.99) subs pay the streamer their split of that price. A 50/50 split gives $2.50, $5.00, and $12.50 respectively.",
+  },
+  {
+    q: "What is the Twitch Partner Plus sub split?",
+    a: "Partner Plus can earn a 70/30 split on recurring subscriptions up to $100K in net revenue, then it resets to 50/50.",
+  },
+  {
+    q: "Do Prime subs pay the streamer?",
+    a: "Yes. Prime subs pay the streamer the same Tier-1 split amount; the viewer pays via Amazon Prime instead of cash.",
+  },
+  {
+    q: "How many subs do I need to make $1,000 a month?",
+    a: "At a 50/50 split you need about 401 Tier-1 subs per month to reach $1,000. At 70/30 you need about 287.",
+  },
+  {
+    q: "Does this include taxes and fees?",
+    a: "No. The numbers are pre-tax, pre-fee gross estimates. Twitch pays you; you handle withholding and local taxes.",
+  },
+];
+
+export const sponsorshipFaqs = [
+  {
+    q: "How much should I charge for a brand deal?",
+    a: "Estimate based on followers, engagement, niche, audience country, and deliverable. A common rule of thumb is $5–$60 CPM per 1,000 followers reached.",
+  },
+  {
+    q: "Why does engagement matter more than follower count?",
+    a: "Brands pay for reach and action. A smaller creator with 5% engagement can earn more per follower than a larger creator with 0.5% engagement.",
+  },
+  {
+    q: "Which niche pays the most for sponsorships?",
+    a: "Finance, business, and tech typically pay the highest CPMs. Lifestyle and vlog niches tend to pay lower but can land volume deals.",
+  },
+  {
+    q: "Is this a guaranteed rate?",
+    a: "No. This is a negotiation starting point. Actual rates depend on exclusivity, usage rights, campaign length, and the brand's budget.",
+  },
+  {
+    q: "What deliverable pays the most?",
+    a: "Long-term brand deals and dedicated videos or stream segments usually command a premium over simple shoutouts or social posts.",
+  },
+];
+
 export const tiktokFaqs = [
   {
     q: "How much is a TikTok coin worth in USD for creators?",

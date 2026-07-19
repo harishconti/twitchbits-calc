@@ -19,6 +19,12 @@ export const TOOLS = [
     desc: "Estimate monthly + annual Twitch earnings.",
   },
   {
+    slug: "twitch-sub-revenue-calculator",
+    name: "Twitch Sub Revenue Calculator",
+    short: "Subs",
+    desc: "Estimate subscription revenue by tier and split.",
+  },
+  {
     slug: "tiktok-coins-to-usd",
     name: "TikTok Coins → USD",
     short: "TikTok",
@@ -29,5 +35,11 @@ export const TOOLS = [
     name: "YouTube Money Calculator",
     short: "YouTube",
     desc: "Estimate YouTube earnings from RPM × views.",
+  },
+  {
+    slug: "sponsorship-calculator",
+    name: "Sponsorship Calculator",
+    short: "Sponsor",
+    desc: "Estimate brand deal rates by followers + niche.",
   },
 ] as const;
