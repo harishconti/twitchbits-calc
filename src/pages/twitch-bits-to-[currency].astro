@@ -1,0 +1,54 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import LinearConverter from '../components/calculators/LinearConverter.astro';
+import ToolContent from '../components/ToolContent.astro';
+import { bitsToUsd, usdToBits, bulkTable } from '../lib/calculators/bits';
+import { BULK_TABLE, VIEWER_PACKS, REGIONS } from '../data/bitsConfig';
+import { BITS_CURRENCY_REGIONS } from '../data/programmatic';
+import { toolContent } from '../data/toolContent';
+import { slugFor } from '../lib/slug';
+import { bitsFaqs } from '../data/faqs';
+
+export function getStaticPaths() {
+  return BITS_CURRENCY_REGIONS.map((region) => {
+    const r = REGIONS[region];
+    const currency = r.currency.toLowerCase();
+    const amount = 100; // representative amount shown in the content block
+    const usd = bitsToUsd(amount, region);
+    const slug = slugFor('bitsCurrency', currency);
+    return {
+      params: { currency },
+      props: { region, currency: r.currency, rate: r.rate, amount, usd, slug },
+    };
+  });
+}
+
+const { region, currency, rate, amount, usd, slug } = Astro.props;
+---
+<ToolLayout
+  title={`Twitch Bits to ${currency} Calculator`}
+  description={`Convert Twitch Bits to ${currency}. See streamer payout and viewer cost at the ${rate}:1 USD rate.`}
+  slug={slug}
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: `/${slug}` }]}
+  faqs={bitsFaqs(region)}
+>
+  <LinearConverter
+    config={{
+      tool: 'bits',
+      unitName: 'Bits',
+      paramKey: 'bits',
+      region,
+      currency,
+      toUsd: (n) => bitsToUsd(n, region),
+      fromUsd: (u) => usdToBits(u, region),
+      bulkRows: BULK_TABLE,
+      toBulkRows: (rows) => bulkTable(rows, region),
+      viewerContext: { perUnitCostUsd: VIEWER_PACKS[0].perBitUsd, label: 'Viewer pays' },
+    }}
+  />
+  <ToolContent
+    doc={toolContent.bitsCurrency}
+    values={{ amount, usd: usd.toFixed(2), currency, rate }}
+    slot="below"
+  />
+</ToolLayout>
