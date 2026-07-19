@@ -31,5 +31,6 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 <meta name="twitter:image" content={new URL(img, SITE.url).href} />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <ThemeScript />
-<!-- Cloudflare Web Analytics (added in Task 20; placeholder no-op here) -->
 {ld.map((b) => <script type="application/ld+json" set:html={JSON.stringify(b)} />)}
+<!-- Cloudflare Web Analytics (cookieless, first-party CDN) -->
+<script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"REPLACE_WITH_CLOUDFLARE_TOKEN"}' />
