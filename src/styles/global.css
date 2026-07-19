@@ -1,33 +1,250 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0f0f13;
-  --color-surface: #18181b;
-  --color-surface-2: #232327;
-  --color-border: #2e2e34;
-  --color-text: #f4f4f5;
-  --color-text-muted: #a1a1aa;
-  --color-accent: #9146ff;
-  --color-accent-hover: #7c3aed;
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-warm: var(--surface-warm);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-muted: var(--muted);
+  --color-meta: var(--meta);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-accent: var(--accent);
+  --color-accent-on: var(--accent-on);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-base: var(--text-base);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-2xl: var(--text-2xl);
+  --text-3xl: var(--text-3xl);
+  --text-4xl: var(--text-4xl);
+  --leading-body: var(--leading-body);
+  --leading-tight: var(--leading-tight);
+  --tracking-display: var(--tracking-display);
+  --spacing-1: var(--space-1);
+  --spacing-2: var(--space-2);
+  --spacing-3: var(--space-3);
+  --spacing-4: var(--space-4);
+  --spacing-5: var(--space-5);
+  --spacing-6: var(--space-6);
+  --spacing-8: var(--space-8);
+  --spacing-12: var(--space-12);
+  --spacing-section-desktop: var(--section-y-desktop);
+  --spacing-section-tablet: var(--section-y-tablet);
+  --spacing-section-phone: var(--section-y-phone);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-pill: var(--radius-pill);
+  --shadow-flat: var(--elev-flat);
+  --shadow-ring: var(--elev-ring);
+  --shadow-raised: var(--elev-raised);
+  --shadow-focus-ring: var(--focus-ring);
+  --duration-fast: var(--motion-fast);
+  --duration-base: var(--motion-base);
+  --ease-standard: var(--ease-standard);
+  --container-max: var(--container-max);
+  --spacing-container-desktop: var(--container-gutter-desktop);
+  --spacing-container-tablet: var(--container-gutter-tablet);
+  --spacing-container-phone: var(--container-gutter-phone);
 }
 
-:root { color-scheme: dark; }
-:root[data-theme="light"] { color-scheme: light; }
-
-:root[data-theme="light"] {
-  --color-bg: #ffffff;
-  --color-surface: #f8f8fb;
-  --color-surface-2: #f1f1f5;
-  --color-border: #e4e4e7;
-  --color-text: #18181b;
-  --color-text-muted: #52525b;
+/* Light theme (default) — Ant reference tokens */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #f7f8fa;
+  --surface-warm: #fff1f0;
+  --fg: #1f1f1f;
+  --fg-2: #4b5563;
+  --muted: #697386;
+  --meta: #d32029;
+  --border: #d9dce3;
+  --border-soft: #eef0f4;
+  --accent: #d32029;
+  --accent-on: #ffffff;
+  --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+  --accent-active: color-mix(in oklab, var(--accent), black 14%);
+  --success: #22a06b;
+  --warn: #faad14;
+  --danger: #cf1322;
+  --font-display:
+    "Plus Jakarta Sans", "Ant Sans", "Alibaba PuHuiTi", Inter, Arial, sans-serif;
+  --font-body:
+    "Plus Jakarta Sans", "Ant Sans", "Alibaba PuHuiTi", Inter, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+  /* fluid type scale: scales smoothly between a compact phone and a roomy desktop */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: clamp(15px, 0.45vw + 13.5px, 17px);
+  --text-lg: clamp(17px, 0.65vw + 14.9px, 20px);
+  --text-xl: clamp(20px, 0.9vw + 17.1px, 24px);
+  --text-2xl: clamp(26px, 1.5vw + 21.2px, 36px);
+  --text-3xl: clamp(34px, 2.4vw + 25.4px, 52px);
+  --text-4xl: clamp(42px, 3.8vw + 28.8px, 72px);
+  --leading-body: 1.52;
+  --leading-tight: 1.08;
+  --tracking-display: -0.018em;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  /* fluid section spacing: scales smoothly with viewport, ranges touch at breakpoints */
+  --section-y-phone: clamp(40px, 5vw, 56px);
+  --section-y-tablet: clamp(56px, 6vw, 80px);
+  --section-y-desktop: clamp(80px, 7vw, 112px);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 18px 42px rgba(31, 31, 31, 0.1);
+  --focus-ring: 0 0 0 4px rgba(211, 32, 41, 0.22);
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --container-max: 1200px;
+  /* fluid horizontal gutters: touch at breakpoints so the layout never lurches */
+  --container-gutter-phone: clamp(14px, 3vw, 24px);
+  --container-gutter-tablet: clamp(24px, 3.5vw, 36px);
+  --container-gutter-desktop: clamp(36px, 4vw, 48px);
 }
 
-html { background-color: var(--color-bg); color: var(--color-text); }
-body { font-family: var(--font-sans); }
-.mono { font-family: var(--font-mono); }
+/* Dark theme — Ant-inspired enterprise dark surfaces, same red accent family */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f0f13;
+  --surface: #18181b;
+  --surface-warm: #2a1d1d;
+  --fg: #f4f4f5;
+  --fg-2: #a1a1aa;
+  --muted: #a1a1aa;
+  --meta: #ff4d4f;
+  --border: #2e2e34;
+  --border-soft: #232327;
+  --accent: #ff4d4f;
+  --accent-on: #ffffff;
+  --accent-hover: color-mix(in oklab, var(--accent), white 12%);
+  --accent-active: color-mix(in oklab, var(--accent), white 22%);
+  --success: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --elev-raised: 0 18px 42px rgba(0, 0, 0, 0.35);
+  --focus-ring: 0 0 0 4px rgba(255, 77, 79, 0.25);
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+html {
+  background-color: var(--bg);
+  color: var(--fg);
+  scroll-behavior: smooth;
+}
+body {
+  min-height: 100vh;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color var(--duration-base) var(--ease-standard),
+    color var(--duration-base) var(--ease-standard);
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-display);
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  font: inherit;
+}
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Global layout — unlayered so it overrides Tailwind's .container utility */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-gutter-phone);
+}
+@media (min-width: 640px) {
+  .container {
+    padding-inline: var(--container-gutter-tablet);
+  }
+}
+@media (min-width: 1024px) {
+  .container {
+    padding-inline: var(--container-gutter-desktop);
+  }
+}
+
+section {
+  padding-block: var(--section-y-phone);
+}
+@media (min-width: 640px) {
+  section {
+    padding-block: var(--section-y-tablet);
+  }
+}
+@media (min-width: 1024px) {
+  section {
+    padding-block: var(--section-y-desktop);
+  }
+}
+
+/* Smooth page rhythm: main sections are full-bleed, content is centered inside .container */
+main {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Keep images and oversized grids from breaking the fluid layout */
+img,
+video,
+svg,
+iframe {
+  max-width: 100%;
+  height: auto;
+}

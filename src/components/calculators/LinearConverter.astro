@@ -29,9 +29,17 @@ const rows = config.toBulkRows(config.bulkRows);
   <NumberInput id="amount" label={config.unitName} autofocus value={config.defaultAmount ?? ''} />
   <ResultDisplay id="result" />
   <div class="breakdown">
-    <div>Streamer gets <strong class="mono">{formatCurrency(config.toUsd(config.defaultAmount ?? 0), config.currency ?? 'USD')}</strong> (100%)</div>
+    <div class="breakdown-row">
+      <span>Streamer gets</span>
+      <strong class="mono">{formatCurrency(config.toUsd(config.defaultAmount ?? 0), config.currency ?? 'USD')}</strong>
+      <span class="note">100%</span>
+    </div>
     {config.viewerContext && (
-      <div>{config.viewerContext.label} <strong class="mono">~${config.viewerContext.perUnitCostUsd.toFixed(4)}</strong> per unit <Tooltip id="vc" text="What viewers pay per unit, based on pack pricing." /></div>
+      <div class="breakdown-row">
+        <span>{config.viewerContext.label}</span>
+        <strong class="mono">~${config.viewerContext.perUnitCostUsd.toFixed(4)}</strong>
+        <span class="note">per unit <Tooltip id="vc" text="What viewers pay per unit, based on pack pricing." /></span>
+      </div>
     )}
   </div>
   <div class="actions">
@@ -41,10 +49,12 @@ const rows = config.toBulkRows(config.bulkRows);
   <ReferenceTable rows={rows} currency={config.currency ?? 'USD'} unitLabel={config.unitName} />
 </div>
 <style>
-  .calculator { background:var(--color-surface); border:1px solid var(--color-border); border-radius:12px; padding:1.25rem; max-width:480px; margin:0 auto; }
-  .breakdown { font-size:.9rem; color:var(--color-text-muted); display:flex; flex-direction:column; gap:.25rem; margin:.5rem 0; }
-  .actions { display:flex; gap:.5rem; margin-top:1rem; }
-  .actions > * { flex:1; }
+  .calculator { display: flex; flex-direction: column; gap: var(--spacing-4); }
+  .breakdown { display: flex; flex-direction: column; gap: var(--spacing-2); }
+  .breakdown-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: var(--spacing-3); font-size: var(--text-sm); color: var(--color-muted); }
+  .breakdown-row strong { color: var(--color-fg); font-size: var(--text-base); }
+  .note { color: var(--color-muted); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-3); margin-top: var(--spacing-2); }
 </style>
 <!--
   The pure functions can't survive JSON.stringify (they'd become strings), so we
@@ -55,12 +65,6 @@ const rows = config.toBulkRows(config.bulkRows);
   currency: config.currency ?? 'USD', region: config.region, defaultAmount: config.defaultAmount,
 })} />
 <script>
-  // LinearConverter resolves its pure math functions by `tool` via a registry.
-  // Only the `bits` calculator exists today (Task 8); Task 13 adds the `tiktok`
-  // entry here once src/lib/calculators/tiktok.ts lands. We do NOT statically
-  // import tiktok now — Vite resolves static (and string-literal dynamic)
-  // imports at build time, so referencing a not-yet-existing module would fail
-  // `npm run build`. Each tool is wired in the task that creates its calculator.
   import { initLinearConverter } from '../../scripts/calculator-behavior';
   import { bitsToUsd, usdToBits } from '../../lib/calculators/bits';
   import { coinsToUsd, usdToCoins } from '../../lib/calculators/tiktok';

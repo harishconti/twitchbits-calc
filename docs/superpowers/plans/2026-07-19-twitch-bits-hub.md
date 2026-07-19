@@ -30,6 +30,7 @@
 ## File Structure (what each file owns)
 
 **Config & scaffold**
+
 - `package.json` — deps (astro, @tailwindcss/vite, tailwindcss, vitest, prettier, eslint) + scripts.
 - `astro.config.mjs` — site URL, integrations (sitemap), vite tailwind plugin, static output.
 - `tsconfig.json` — strict, path alias `@/*` → `src/*`.
@@ -37,6 +38,7 @@
 - `tailwind` config is via CSS `@theme` in `src/styles/global.css` (Tailwind 4 has no JS config by default).
 
 **Data layer (`src/data/`) — single source of truth, editable**
+
 - `bitsConfig.ts` — `BITS_RATE_USD`, `VIEWER_PACKS`, `REGIONS`, `BULK_TABLE`.
 - `currencies.ts` — currency code → symbol/precision for formatting.
 - `subConfig.ts` — sub tier prices + split presets.
@@ -47,47 +49,59 @@
 - `faqs.ts` — FAQ content per tool, region-parameterized where relevant.
 
 **Pure math (`src/lib/calculators/`) — no DOM, no Astro**
+
 - `bits.ts` — `bitsToUsd`, `usdToBits`, `bulkTable`.
 - `revenue.ts` — `estimateRevenue`, `hourlyEquivalent`.
 - `tiktok.ts` — `coinsToUsd`, `diamondsToUsd`, `coinsBulkTable`.
 - `youtube.ts` — `earningsFromViews`, `rangeFromRpm`.
 
 **Lib helpers (`src/lib/`)**
+
 - `format.ts` — `formatNumber`, `formatCurrency`, `parseAmount`.
 - `share.ts` — `readShareParams`, `buildShareUrl`.
 - `schema.ts` — `buildWebAppSchema`, `buildFaqSchema`, `buildBreadcrumbSchema`, `buildOrganizationSchema`.
 
 **Scripts (`src/scripts/`) — vanilla JS islands**
+
 - `theme.ts` — dark/light toggle + localStorage persistence.
 - `calculator-behavior.ts` — `initLinearConverter`, `countUp`, clipboard + share wiring.
 
 **Primitives (`src/components/primitives/`)**
+
 - `NumberInput.astro`, `ResultDisplay.astro`, `Tabs.astro`, `CopyButton.astro`, `ShareButton.astro`, `ReferenceTable.astro`, `Tooltip.astro`, `ThemeToggle.astro`.
 
 **Layout pieces (`src/components/layout/`)**
+
 - `Header.astro`, `Footer.astro`, `Base.astro` (head + theme script + analytics).
 
 **Composite components (`src/components/`)**
+
 - `ThemeScript.astro`, `Breadcrumbs.astro`, `RelatedTools.astro`, `AffiliateCTA.astro`, `FaqSection.astro`, `Newsletter.astro`.
 - `calculators/LinearConverter.astro`, `calculators/BitsCalculator.astro`, `calculators/TiktokCalculator.astro`, `calculators/RevenueCalculator.astro`, `calculators/YoutubeCalculator.astro`.
 
 **Layouts (`src/layouts/`)**
+
 - `BaseLayout.astro`, `ToolLayout.astro`, `BlogLayout.astro`.
 
 **Pages (`src/pages/`)**
+
 - `index.astro`, the 4 tool pages, region + pack-size variants, `blog/index.astro`, `blog/[...slug].astro`, `affiliate-disclosure.astro`, `privacy.astro`, `terms.astro`, `404.astro`.
 
 **Content (`src/content/`)**
+
 - `config.ts` (blog collection schema), `blog/*.md` (3 cornerstone posts).
 
 **Tests (`tests/`)**
+
 - `calculators.test.ts` — unit + snapshot tests on pure functions.
 - `data.test.ts` — config sanity (positive rates, disclosure present, faq counts).
 
 **Public (`public/`)**
+
 - `robots.txt`, `favicon.svg`, `og-default.png`.
 
 **Claude artifacts**
+
 - `CLAUDE.md` (repo root), `.claude/skills/deploy-cloudflare/SKILL.md`, `.claude/skills/add-calculator-tool/SKILL.md`.
 
 ---
@@ -95,10 +109,12 @@
 ## Task 1: Scaffold project + tooling
 
 **Files:**
+
 - Create: `package.json`, `astro.config.mjs`, `tsconfig.json`, `vitest.config.ts`, `src/styles/global.css`, `src/pages/index.astro`, `.gitignore`, `public/favicon.svg`
 - Modify: (none)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: a running Astro dev server at `http://localhost:4321`, Vitest configured, Tailwind 4 tokens available.
 
@@ -145,13 +161,13 @@ git checkout -b build/twitch-bits-hub
 > **Why the `vite` override:** `vitest@^2.1` declares `vite@^5`, which npm hoists to the tree root; `@tailwindcss/vite@4` then resolves that hoisted copy and calls `createIdResolver` (a Vite 6+ API) — missing on vite@5, so `npm run build` fails with `M.createIdResolver is not a function`. Forcing `vite@7.3.6` (the version Astro 6 ships nested) across the tree makes both Astro and the Tailwind plugin see Vite 7. Verified: build emits `dist/index.html` + sitemap, and `npm test` passes.
 
 ```js
-import { defineConfig } from 'astro/config';
-import sitemap from '@astrojs/sitemap';
-import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from "astro/config";
+import sitemap from "@astrojs/sitemap";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  site: 'https://twitchbits-calc.com',
-  output: 'static',
+  site: "https://twitchbits-calc.com",
+  output: "static",
   integrations: [sitemap()],
   vite: { plugins: [tailwindcss()] },
 });
@@ -173,10 +189,10 @@ export default defineConfig({
 - [ ] **Step 5: Create `vitest.config.ts`**
 
 ```ts
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  test: { environment: 'node', include: ['tests/**/*.test.ts'] },
+  test: { environment: "node", include: ["tests/**/*.test.ts"] },
 });
 ```
 
@@ -201,8 +217,12 @@ export default defineConfig({
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
-:root { color-scheme: dark; }
-:root[data-theme="light"] { color-scheme: light; }
+:root {
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
 
 :root[data-theme="light"] {
   --color-bg: #ffffff;
@@ -213,9 +233,16 @@ export default defineConfig({
   --color-text-muted: #52525b;
 }
 
-html { background-color: var(--color-bg); color: var(--color-text); }
-body { font-family: var(--font-sans); }
-.mono { font-family: var(--font-mono); }
+html {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+body {
+  font-family: var(--font-sans);
+}
+.mono {
+  font-family: var(--font-mono);
+}
 ```
 
 - [ ] **Step 7: Create `src/pages/index.astro`** (placeholder so build works)
@@ -266,41 +293,55 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 2: Theme system — no-flash script + toggle
 
 **Files:**
+
 - Create: `src/components/ThemeScript.astro`, `src/scripts/theme.ts`, `src/components/primitives/ThemeToggle.astro`
 - Test: `tests/theme.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `ThemeScript.astro` (inline head script), `ThemeToggle.astro` (UI button), `getTheme()`/`setTheme()` in `src/scripts/theme.ts`.
 
 - [ ] **Step 1: Write the failing test (`tests/theme.test.ts`)**
 
 ```ts
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from "vitest";
 
 // theme.ts uses localStorage; in node test we shim it.
 const store: Record<string, string> = {};
 (globalThis as any).localStorage = {
   getItem: (k: string) => store[k] ?? null,
-  setItem: (k: string, v: string) => { store[k] = v; },
-  removeItem: (k: string) => { delete store[k]; },
+  setItem: (k: string, v: string) => {
+    store[k] = v;
+  },
+  removeItem: (k: string) => {
+    delete store[k];
+  },
 };
-(globalThis as any).document = { documentElement: { setAttribute: (_k: string, v: string) => { store['_theme_attr'] = v; } } };
+(globalThis as any).document = {
+  documentElement: {
+    setAttribute: (_k: string, v: string) => {
+      store["_theme_attr"] = v;
+    },
+  },
+};
 
-import { getTheme, setTheme, DEFAULT_THEME } from '../src/scripts/theme';
+import { getTheme, setTheme, DEFAULT_THEME } from "../src/scripts/theme";
 
-describe('theme', () => {
-  beforeEach(() => { Object.keys(store).forEach(k => delete store[k]); });
-
-  it('defaults to dark', () => {
-    expect(DEFAULT_THEME).toBe('dark');
-    expect(getTheme()).toBe('dark');
+describe("theme", () => {
+  beforeEach(() => {
+    Object.keys(store).forEach((k) => delete store[k]);
   });
 
-  it('persists a chosen theme', () => {
-    setTheme('light');
-    expect(getTheme()).toBe('light');
-    expect(store['theme']).toBe('light');
+  it("defaults to dark", () => {
+    expect(DEFAULT_THEME).toBe("dark");
+    expect(getTheme()).toBe("dark");
+  });
+
+  it("persists a chosen theme", () => {
+    setTheme("light");
+    expect(getTheme()).toBe("light");
+    expect(store["theme"]).toBe("light");
   });
 });
 ```
@@ -313,14 +354,14 @@ Expected: FAIL — cannot find module `../src/scripts/theme`.
 - [ ] **Step 3: Write `src/scripts/theme.ts`**
 
 ```ts
-export type Theme = 'dark' | 'light';
-export const DEFAULT_THEME: Theme = 'dark';
-const KEY = 'theme';
+export type Theme = "dark" | "light";
+export const DEFAULT_THEME: Theme = "dark";
+const KEY = "theme";
 
 export function getTheme(): Theme {
   try {
     const v = localStorage.getItem(KEY);
-    return v === 'light' || v === 'dark' ? v : DEFAULT_THEME;
+    return v === "light" || v === "dark" ? v : DEFAULT_THEME;
   } catch {
     return DEFAULT_THEME;
   }
@@ -329,12 +370,14 @@ export function getTheme(): Theme {
 export function setTheme(t: Theme): void {
   try {
     localStorage.setItem(KEY, t);
-    document.documentElement.setAttribute('data-theme', t);
-  } catch { /* storage unavailable — keep in-memory default */ }
+    document.documentElement.setAttribute("data-theme", t);
+  } catch {
+    /* storage unavailable — keep in-memory default */
+  }
 }
 
 export function toggleTheme(): Theme {
-  const next: Theme = getTheme() === 'dark' ? 'light' : 'dark';
+  const next: Theme = getTheme() === "dark" ? "light" : "dark";
   setTheme(next);
   return next;
 }
@@ -399,10 +442,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 3: Base layout, Header, Footer, SEO head
 
 **Files:**
+
 - Create: `src/components/layout/Base.astro`, `src/components/layout/Header.astro`, `src/components/layout/Footer.astro`, `src/layouts/BaseLayout.astro`, `src/lib/site.ts`
 - Modify: `src/pages/index.astro`
 
 **Interfaces:**
+
 - Consumes: `ThemeScript.astro`.
 - Produces: `BaseLayout.astro` accepting props `{ title, description, canonical, ogImage, noindex }`; `Header`/`Footer` exported; `SITE` constant in `src/lib/site.ts`.
 
@@ -410,17 +455,37 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ```ts
 export const SITE = {
-  name: 'Twitch Bits Calculator',
-  url: 'https://twitchbits-calc.com',
-  tagline: 'Free creator-economy calculators',
-  twitter: '@twitchbitscalc',
+  name: "Twitch Bits Calculator",
+  url: "https://twitchbits-calc.com",
+  tagline: "Free creator-economy calculators",
+  twitter: "@twitchbitscalc",
 } as const;
 
 export const TOOLS = [
-  { slug: 'twitch-bits-to-usd', name: 'Twitch Bits → USD', short: 'Bits→USD', desc: 'Convert Bits to dollars and back.' },
-  { slug: 'twitch-revenue-calculator', name: 'Twitch Revenue Calculator', short: 'Revenue', desc: 'Estimate monthly + annual Twitch earnings.' },
-  { slug: 'tiktok-coins-to-usd', name: 'TikTok Coins → USD', short: 'TikTok', desc: 'Convert TikTok coins and diamonds to USD.' },
-  { slug: 'youtube-money-calculator', name: 'YouTube Money Calculator', short: 'YouTube', desc: 'Estimate YouTube earnings from RPM × views.' },
+  {
+    slug: "twitch-bits-to-usd",
+    name: "Twitch Bits → USD",
+    short: "Bits→USD",
+    desc: "Convert Bits to dollars and back.",
+  },
+  {
+    slug: "twitch-revenue-calculator",
+    name: "Twitch Revenue Calculator",
+    short: "Revenue",
+    desc: "Estimate monthly + annual Twitch earnings.",
+  },
+  {
+    slug: "tiktok-coins-to-usd",
+    name: "TikTok Coins → USD",
+    short: "TikTok",
+    desc: "Convert TikTok coins and diamonds to USD.",
+  },
+  {
+    slug: "youtube-money-calculator",
+    name: "YouTube Money Calculator",
+    short: "YouTube",
+    desc: "Estimate YouTube earnings from RPM × views.",
+  },
 ] as const;
 ```
 
@@ -574,37 +639,39 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 4: Data layer — bits + currencies + formatting
 
 **Files:**
+
 - Create: `src/data/bitsConfig.ts`, `src/data/currencies.ts`, `src/lib/format.ts`
 - Test: `tests/format.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `BITS_RATE_USD`, `VIEWER_PACKS`, `REGIONS`, `BULK_TABLE` from `bitsConfig.ts`; `formatNumber`, `formatCurrency`, `parseAmount` from `format.ts`. Currency formatting keyed by `REGIONS[region].currency`.
 
 - [ ] **Step 1: Write the failing test (`tests/format.test.ts`)**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { formatNumber, formatCurrency, parseAmount } from '../src/lib/format';
+import { describe, it, expect } from "vitest";
+import { formatNumber, formatCurrency, parseAmount } from "../src/lib/format";
 
-describe('format', () => {
-  it('groups thousands with commas', () => {
-    expect(formatNumber(1000)).toBe('1,000');
-    expect(formatNumber(1234567)).toBe('1,234,567');
+describe("format", () => {
+  it("groups thousands with commas", () => {
+    expect(formatNumber(1000)).toBe("1,000");
+    expect(formatNumber(1234567)).toBe("1,234,567");
   });
-  it('formats USD with 2 decimals', () => {
-    expect(formatCurrency(10, 'USD')).toBe('$10.00');
-    expect(formatCurrency(1234.5, 'USD')).toBe('$1,234.50');
+  it("formats USD with 2 decimals", () => {
+    expect(formatCurrency(10, "USD")).toBe("$10.00");
+    expect(formatCurrency(1234.5, "USD")).toBe("$1,234.50");
   });
-  it('formats GBP and EUR with symbol + code', () => {
-    expect(formatCurrency(10, 'GBP')).toBe('£10.00');
-    expect(formatCurrency(10, 'EUR')).toBe('€10.00');
+  it("formats GBP and EUR with symbol + code", () => {
+    expect(formatCurrency(10, "GBP")).toBe("£10.00");
+    expect(formatCurrency(10, "EUR")).toBe("€10.00");
   });
-  it('parses human amounts incl. commas', () => {
-    expect(parseAmount('1,000')).toBe(1000);
-    expect(parseAmount('12.5')).toBe(12.5);
-    expect(parseAmount('')).toBe(0);
-    expect(parseAmount('abc')).toBe(0);
+  it("parses human amounts incl. commas", () => {
+    expect(parseAmount("1,000")).toBe(1000);
+    expect(parseAmount("12.5")).toBe(12.5);
+    expect(parseAmount("")).toBe(0);
+    expect(parseAmount("abc")).toBe(0);
   });
 });
 ```
@@ -620,58 +687,66 @@ Expected: FAIL — cannot find `../src/lib/format`.
 export const BITS_RATE_USD = 0.01; // streamer payout per Bit (100%)
 
 export const VIEWER_PACKS = [
-  { bits: 100, priceUsd: 1.40, perBitUsd: 0.0140 },
-  { bits: 500, priceUsd: 7.00, perBitUsd: 0.0140 },
+  { bits: 100, priceUsd: 1.4, perBitUsd: 0.014 },
+  { bits: 500, priceUsd: 7.0, perBitUsd: 0.014 },
   { bits: 1500, priceUsd: 19.95, perBitUsd: 0.0133 },
-  { bits: 5000, priceUsd: 64.99, perBitUsd: 0.0130 },
-  { bits: 25000, priceUsd: 308.00, perBitUsd: 0.0123 },
+  { bits: 5000, priceUsd: 64.99, perBitUsd: 0.013 },
+  { bits: 25000, priceUsd: 308.0, perBitUsd: 0.0123 },
 ];
 
 export const REGIONS = {
-  us: { label: 'United States', currency: 'USD', rate: 1.0 },
-  gb: { label: 'United Kingdom', currency: 'GBP', rate: 0.79 },
-  eu: { label: 'Eurozone', currency: 'EUR', rate: 0.92 },
-  ca: { label: 'Canada', currency: 'CAD', rate: 1.36 },
-  au: { label: 'Australia', currency: 'AUD', rate: 1.51 },
+  us: { label: "United States", currency: "USD", rate: 1.0 },
+  gb: { label: "United Kingdom", currency: "GBP", rate: 0.79 },
+  eu: { label: "Eurozone", currency: "EUR", rate: 0.92 },
+  ca: { label: "Canada", currency: "CAD", rate: 1.36 },
+  au: { label: "Australia", currency: "AUD", rate: 1.51 },
 } as const;
 
 export type RegionCode = keyof typeof REGIONS;
-export const DEFAULT_REGION: RegionCode = 'us';
+export const DEFAULT_REGION: RegionCode = "us";
 
-export const BULK_TABLE = [1, 10, 100, 500, 1_000, 5_000, 10_000, 25_000, 50_000, 100_000];
+export const BULK_TABLE = [
+  1, 10, 100, 500, 1_000, 5_000, 10_000, 25_000, 50_000, 100_000,
+];
 ```
 
 - [ ] **Step 4: Create `src/data/currencies.ts`**
 
 ```ts
-export const CURRENCIES: Record<string, { symbol: string; code: string; decimals: number }> = {
-  USD: { symbol: '$', code: 'USD', decimals: 2 },
-  GBP: { symbol: '£', code: 'GBP', decimals: 2 },
-  EUR: { symbol: '€', code: 'EUR', decimals: 2 },
-  CAD: { symbol: 'C$', code: 'CAD', decimals: 2 },
-  AUD: { symbol: 'A$', code: 'AUD', decimals: 2 },
+export const CURRENCIES: Record<
+  string,
+  { symbol: string; code: string; decimals: number }
+> = {
+  USD: { symbol: "$", code: "USD", decimals: 2 },
+  GBP: { symbol: "£", code: "GBP", decimals: 2 },
+  EUR: { symbol: "€", code: "EUR", decimals: 2 },
+  CAD: { symbol: "C$", code: "CAD", decimals: 2 },
+  AUD: { symbol: "A$", code: "AUD", decimals: 2 },
 };
 ```
 
 - [ ] **Step 5: Create `src/lib/format.ts`**
 
 ```ts
-import { CURRENCIES } from '../data/currencies';
+import { CURRENCIES } from "../data/currencies";
 
 export function formatNumber(n: number): string {
   if (!Number.isFinite(n)) n = 0;
-  return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
 export function formatCurrency(usd: number, currency: string): string {
   if (!Number.isFinite(usd)) usd = 0;
   const c = CURRENCIES[currency] ?? CURRENCIES.USD;
-  const value = usd.toLocaleString('en-US', { minimumFractionDigits: c.decimals, maximumFractionDigits: c.decimals });
+  const value = usd.toLocaleString("en-US", {
+    minimumFractionDigits: c.decimals,
+    maximumFractionDigits: c.decimals,
+  });
   return `${c.symbol}${value}`;
 }
 
 export function parseAmount(input: string): number {
-  const cleaned = input.replace(/,/g, '').trim();
+  const cleaned = input.replace(/,/g, "").trim();
   const n = Number(cleaned);
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
@@ -696,39 +771,41 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 5: Pure calculator — bits (TDD)
 
 **Files:**
+
 - Create: `src/lib/calculators/bits.ts`
 - Test: `tests/calculators.test.ts`
 
 **Interfaces:**
+
 - Consumes: `BITS_RATE_USD`, `BULK_TABLE`, `REGIONS` from `src/data/bitsConfig.ts`.
 - Produces: `bitsToUsd(bits, region)`, `usdToBits(usd, region)`, `bulkTable(rows, region)`.
 
 - [ ] **Step 1: Write the failing test (`tests/calculators.test.ts`)**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { bitsToUsd, usdToBits, bulkTable } from '../src/lib/calculators/bits';
+import { describe, it, expect } from "vitest";
+import { bitsToUsd, usdToBits, bulkTable } from "../src/lib/calculators/bits";
 
-describe('bits calculator', () => {
-  it('converts bits to USD at $0.01/Bits', () => {
+describe("bits calculator", () => {
+  it("converts bits to USD at $0.01/Bits", () => {
     expect(bitsToUsd(1000)).toBe(10);
     expect(bitsToUsd(100)).toBe(1);
   });
-  it('converts USD to bits (rounded)', () => {
+  it("converts USD to bits (rounded)", () => {
     expect(usdToBits(10)).toBe(1000);
     expect(usdToBits(1)).toBe(100);
   });
-  it('guards invalid/negative input', () => {
+  it("guards invalid/negative input", () => {
     expect(bitsToUsd(NaN)).toBe(0);
     expect(bitsToUsd(-5)).toBe(0);
     expect(bitsToUsd(Infinity)).toBe(0);
     expect(usdToBits(-1)).toBe(0);
   });
-  it('applies region FX rate for non-USD', () => {
+  it("applies region FX rate for non-USD", () => {
     // 1000 bits = $10 USD; GBP rate 0.79 → £7.90
-    expect(bitsToUsd(1000, 'gb')).toBeCloseTo(7.9, 2);
+    expect(bitsToUsd(1000, "gb")).toBeCloseTo(7.9, 2);
   });
-  it('returns bulk rows with usd equivalents', () => {
+  it("returns bulk rows with usd equivalents", () => {
     const rows = bulkTable();
     expect(rows).toHaveLength(10);
     expect(rows[4]).toEqual({ bits: 1000, usd: 10 });
@@ -744,23 +821,38 @@ Expected: FAIL — cannot find `../src/lib/calculators/bits`.
 - [ ] **Step 3: Create `src/lib/calculators/bits.ts`**
 
 ```ts
-import { BITS_RATE_USD, BULK_TABLE, REGIONS, type RegionCode, DEFAULT_REGION } from '../../data/bitsConfig';
+import {
+  BITS_RATE_USD,
+  BULK_TABLE,
+  REGIONS,
+  type RegionCode,
+  DEFAULT_REGION,
+} from "../../data/bitsConfig";
 
 function rateFor(region: RegionCode = DEFAULT_REGION): number {
   return REGIONS[region]?.rate ?? 1;
 }
 
-export function bitsToUsd(bits: number, region: RegionCode = DEFAULT_REGION): number {
+export function bitsToUsd(
+  bits: number,
+  region: RegionCode = DEFAULT_REGION,
+): number {
   if (!Number.isFinite(bits) || bits < 0) return 0;
   return bits * BITS_RATE_USD * rateFor(region);
 }
 
-export function usdToBits(usd: number, region: RegionCode = DEFAULT_REGION): number {
+export function usdToBits(
+  usd: number,
+  region: RegionCode = DEFAULT_REGION,
+): number {
   if (!Number.isFinite(usd) || usd < 0) return 0;
   return Math.round(usd / (BITS_RATE_USD * rateFor(region)));
 }
 
-export function bulkTable(rows: number[] = BULK_TABLE, region: RegionCode = DEFAULT_REGION) {
+export function bulkTable(
+  rows: number[] = BULK_TABLE,
+  region: RegionCode = DEFAULT_REGION,
+) {
   return rows.map((bits) => ({ bits, usd: bitsToUsd(bits, region) }));
 }
 ```
@@ -784,9 +876,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 6: UI primitives
 
 **Files:**
+
 - Create: `src/components/primitives/NumberInput.astro`, `ResultDisplay.astro`, `Tabs.astro`, `CopyButton.astro`, `ShareButton.astro`, `ReferenceTable.astro`, `Tooltip.astro`
 
 **Interfaces:**
+
 - Consumes: `formatNumber`, `formatCurrency` from `src/lib/format.ts`; `REGIONS` from `bitsConfig.ts` (for ReferenceTable currency label).
 - Produces: stateless Astro primitives used by calculator components. All interactive ones expose `data-*` hooks for `calculator-behavior.ts` to wire.
 
@@ -944,10 +1038,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 7: Calculator behavior island (vanilla JS)
 
 **Files:**
+
 - Create: `src/scripts/calculator-behavior.ts`
 - Test: `tests/calculator-behavior.test.ts`
 
 **Interfaces:**
+
 - Consumes: pure `toUsd`/`fromUsd` functions passed in a config object; `formatNumber`, `formatCurrency`, `parseAmount` from `src/lib/format.ts`; `readShareParams`/`buildShareUrl` from `src/lib/share.ts`.
 - Produces: `initLinearConverter(root, config)` wiring DOM → math → DOM with count-up, copy, share, query-param sync.
 
@@ -960,13 +1056,15 @@ export function readShareParams(allowed: string[]): Record<string, string> {
     new URLSearchParams(window.location.search).forEach((v, k) => {
       if (allowed.includes(k)) out[k] = v;
     });
-  } catch { /* non-browser */ }
+  } catch {
+    /* non-browser */
+  }
   return out;
 }
 
 export function buildShareUrl(params: Record<string, string | number>): string {
   const u = new URL(window.location.href);
-  u.search = '';
+  u.search = "";
   const sp = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => sp.set(k, String(v)));
   u.search = sp.toString();
@@ -977,23 +1075,32 @@ export function buildShareUrl(params: Record<string, string | number>): string {
 - [ ] **Step 2: Write the failing test (`tests/calculator-behavior.test.ts`)** — test `countUp` (the only pure, DOM-free piece)
 
 ```ts
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from "vitest";
 
 // countUp uses rAF; we test the easing math directly via the exported helper.
 // We import the module with a stubbed document; only countUp is pure-ish.
 const rafs: FrameRequestCallback[] = [];
-(globalThis as any).requestAnimationFrame = (cb: FrameRequestCallback) => { rafs.push(cb); return 1; };
+(globalThis as any).requestAnimationFrame = (cb: FrameRequestCallback) => {
+  rafs.push(cb);
+  return 1;
+};
 
-import { countUp } from '../src/scripts/calculator-behavior';
+import { countUp } from "../src/scripts/calculator-behavior";
 
-describe('countUp', () => {
-  it('calls setter with values progressing toward target', () => {
+describe("countUp", () => {
+  it("calls setter with values progressing toward target", () => {
     rafs.length = 0;
     const seen: number[] = [];
     countUp(0, 10, 150, (v) => seen.push(v));
     // pump all queued frames instantly
-    let copy = rafs.slice(); rafs.length = 0;
-    while (copy.length) { const f = copy.shift()!; f(0); copy = rafs.slice(); rafs.length = 0; }
+    let copy = rafs.slice();
+    rafs.length = 0;
+    while (copy.length) {
+      const f = copy.shift()!;
+      f(0);
+      copy = rafs.slice();
+      rafs.length = 0;
+    }
     expect(seen[seen.length - 1]).toBe(10);
   });
 });
@@ -1007,8 +1114,8 @@ Expected: FAIL — cannot find `../src/scripts/calculator-behavior`.
 - [ ] **Step 4: Create `src/scripts/calculator-behavior.ts`**
 
 ```ts
-import { formatNumber, formatCurrency, parseAmount } from '../lib/format';
-import { readShareParams, buildShareUrl } from '../lib/share';
+import { formatNumber, formatCurrency, parseAmount } from "../lib/format";
+import { readShareParams, buildShareUrl } from "../lib/share";
 
 export interface LinearConfig {
   tool: string;
@@ -1017,13 +1124,23 @@ export interface LinearConfig {
   fromUsd: (u: number) => number;
   region?: string;
   currency?: string;
-  paramKey: string;        // query-param key, e.g. 'bits'
+  paramKey: string; // query-param key, e.g. 'bits'
   defaultAmount?: number;
 }
 
-export function countUp(from: number, to: number, durationMs: number, set: (v: number) => void): void {
-  const prefersReduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (prefersReduced) { set(to); return; }
+export function countUp(
+  from: number,
+  to: number,
+  durationMs: number,
+  set: (v: number) => void,
+): void {
+  const prefersReduced =
+    typeof matchMedia !== "undefined" &&
+    matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReduced) {
+    set(to);
+    return;
+  }
   const start = performance.now();
   const tick = (now: number) => {
     const p = Math.min(1, (now - start) / durationMs);
@@ -1035,26 +1152,34 @@ export function countUp(from: number, to: number, durationMs: number, set: (v: n
   requestAnimationFrame(tick);
 }
 
-export function initLinearConverter(root: HTMLElement, config: LinearConfig): void {
-  const input = root.querySelector<HTMLInputElement>('[data-amount]');
-  const result = root.querySelector<HTMLElement>('[data-result]');
-  const copyBtn = root.querySelector<HTMLButtonElement>('[data-copy]');
-  const shareBtn = root.querySelector<HTMLButtonElement>('[data-share]');
-  const currency = config.currency ?? 'USD';
-  let mode: 'toUsd' | 'fromUsd' = 'toUsd';
+export function initLinearConverter(
+  root: HTMLElement,
+  config: LinearConfig,
+): void {
+  const input = root.querySelector<HTMLInputElement>("[data-amount]");
+  const result = root.querySelector<HTMLElement>("[data-result]");
+  const copyBtn = root.querySelector<HTMLButtonElement>("[data-copy]");
+  const shareBtn = root.querySelector<HTMLButtonElement>("[data-share]");
+  const currency = config.currency ?? "USD";
+  let mode: "toUsd" | "fromUsd" = "toUsd";
   let lastUsd = 0;
 
   const renderResult = (usd: number) => {
     if (!result) return;
-    countUp(lastUsd, usd, 150, (v) => { result.textContent = formatCurrency(v, currency); });
+    countUp(lastUsd, usd, 150, (v) => {
+      result.textContent = formatCurrency(v, currency);
+    });
     lastUsd = usd;
   };
 
   const compute = () => {
     if (!input) return;
     const raw = parseAmount(input.value);
-    input.setAttribute('aria-invalid', raw <= 0 && input.value.trim() !== '' ? 'true' : 'false');
-    const usd = mode === 'toUsd' ? config.toUsd(raw) : raw;
+    input.setAttribute(
+      "aria-invalid",
+      raw <= 0 && input.value.trim() !== "" ? "true" : "false",
+    );
+    const usd = mode === "toUsd" ? config.toUsd(raw) : raw;
     renderResult(usd);
     syncShare(raw);
   };
@@ -1072,26 +1197,48 @@ export function initLinearConverter(root: HTMLElement, config: LinearConfig): vo
     input!.value = formatNumber(config.defaultAmount);
   }
 
-  input?.addEventListener('input', compute);
+  input?.addEventListener("input", compute);
 
-  root.querySelectorAll<HTMLButtonElement>('[data-tab-index]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      mode = Number(btn.dataset.tabIndex) === 0 ? 'toUsd' : 'fromUsd';
-      root.querySelectorAll('[data-tab-index]').forEach((b) => b.classList.toggle('active', b === btn));
-      if (input) input.value = mode === 'toUsd' ? formatNumber(config.fromUsd(lastUsd)) : formatNumber(lastUsd);
-      // swap label + placeholder handled by component; here just recompute
-      compute();
+  root
+    .querySelectorAll<HTMLButtonElement>("[data-tab-index]")
+    .forEach((btn) => {
+      btn.addEventListener("click", () => {
+        mode = Number(btn.dataset.tabIndex) === 0 ? "toUsd" : "fromUsd";
+        root
+          .querySelectorAll("[data-tab-index]")
+          .forEach((b) => b.classList.toggle("active", b === btn));
+        if (input)
+          input.value =
+            mode === "toUsd"
+              ? formatNumber(config.fromUsd(lastUsd))
+              : formatNumber(lastUsd);
+        // swap label + placeholder handled by component; here just recompute
+        compute();
+      });
     });
+
+  copyBtn?.addEventListener("click", async () => {
+    const text = `${input?.value ?? ""} ${config.unitName} = ${formatCurrency(lastUsd, currency)}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.dataset.copied = "true";
+      copyBtn.textContent = "Copied ✓";
+      setTimeout(() => {
+        copyBtn.dataset.copied = "false";
+        copyBtn.textContent = "Copy result";
+      }, 1500);
+    } catch {
+      /* clipboard blocked */
+    }
   });
 
-  copyBtn?.addEventListener('click', async () => {
-    const text = `${input?.value ?? ''} ${config.unitName} = ${formatCurrency(lastUsd, currency)}`;
-    try { await navigator.clipboard.writeText(text); copyBtn.dataset.copied = 'true'; copyBtn.textContent = 'Copied ✓'; setTimeout(() => { copyBtn.dataset.copied = 'false'; copyBtn.textContent = 'Copy result'; }, 1500); } catch { /* clipboard blocked */ }
-  });
-
-  shareBtn?.addEventListener('click', async () => {
+  shareBtn?.addEventListener("click", async () => {
     const url = shareBtn.dataset.shareUrl ?? window.location.href;
-    try { await navigator.clipboard.writeText(url); } catch { /* blocked */ }
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      /* blocked */
+    }
   });
 
   compute();
@@ -1117,9 +1264,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 8: LinearConverter + BitsCalculator
 
 **Files:**
+
 - Create: `src/components/calculators/LinearConverter.astro`, `src/components/calculators/BitsCalculator.astro`
 
 **Interfaces:**
+
 - Consumes: `bitsToUsd`, `usdToBits`, `bulkTable` from `src/lib/calculators/bits.ts`; primitives; `initLinearConverter` from `src/scripts/calculator-behavior.ts`.
 - Produces: `BitsCalculator.astro` (drop-in for the hero page) and the reusable `LinearConverter.astro` (also used by TikTok + variants).
 
@@ -1228,67 +1377,77 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 9: ToolLayout, schema, Breadcrumbs, FaqSection, RelatedTools, AffiliateCTA
 
 **Files:**
+
 - Create: `src/layouts/ToolLayout.astro`, `src/lib/schema.ts`, `src/components/Breadcrumbs.astro`, `src/components/FaqSection.astro`, `src/components/RelatedTools.astro`, `src/components/AffiliateCTA.astro`
 
 **Interfaces:**
+
 - Consumes: `BaseLayout.astro`; `TOOLS` from `src/lib/site.ts`; `faqs.ts` content (next task); `affiliateLinks.ts` (Task 18).
 - Produces: `ToolLayout.astro` accepting `{ title, description, slug, faqs, breadcrumb, jsonLd }` and rendering the canonical calculator page structure.
 
 - [ ] **Step 1: Create `src/lib/schema.ts`**
 
 ```ts
-import { SITE } from './site';
+import { SITE } from "./site";
 
 export function buildWebAppSchema(name: string): object {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
     name,
-    applicationCategory: 'UtilityApplication',
-    operatingSystem: 'Web',
-    offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },
+    applicationCategory: "UtilityApplication",
+    operatingSystem: "Web",
+    offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
     url: SITE.url,
   };
 }
 
 export function buildFaqSchema(faqs: { q: string; a: string }[]): object {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
     mainEntity: faqs.map((f) => ({
-      '@type': 'Question', name: f.q,
-      acceptedAnswer: { '@type': 'Answer', text: f.a },
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
   };
 }
 
-export function buildBreadcrumbSchema(crumbs: { name: string; url: string }[]): object {
+export function buildBreadcrumbSchema(
+  crumbs: { name: string; url: string }[],
+): object {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     itemListElement: crumbs.map((c, i) => ({
-      '@type': 'ListItem', position: i + 1, name: c.name, item: c.url,
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.name,
+      item: c.url,
     })),
   };
 }
 
 export function buildOrganizationSchema(): object {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: SITE.name, url: SITE.url,
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE.name,
+    url: SITE.url,
   };
 }
 
 export function buildWebSiteSchema(): object {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: SITE.name, url: SITE.url,
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE.name,
+    url: SITE.url,
     potentialAction: {
-      '@type': 'SearchAction',
+      "@type": "SearchAction",
       target: `${SITE.url}/?q={search_term_string}`,
-      'query-input': 'required name=search_term_string',
+      "query-input": "required name=search_term_string",
     },
   };
 }
@@ -1427,18 +1586,20 @@ const jsonLd = [buildWebAppSchema(title), buildBreadcrumbSchema(crumbs)];
 ```ts
 export const AFFILIATES = {
   streamlabs: {
-    id: 'streamlabs-ultra', label: 'Streamlabs Ultra',
-    url: 'https://streamlabs.com/ultra', // replaced with real Impact link in Task 18
-    disclosure: 'We earn a commission when you sign up for Streamlabs Ultra.',
-    cta: { primary: 'Upgrade your stream', alt: 'Start free trial' },
-    placement: 'after-result' as const,
+    id: "streamlabs-ultra",
+    label: "Streamlabs Ultra",
+    url: "https://streamlabs.com/ultra", // replaced with real Impact link in Task 18
+    disclosure: "We earn a commission when you sign up for Streamlabs Ultra.",
+    cta: { primary: "Upgrade your stream", alt: "Start free trial" },
+    placement: "after-result" as const,
   },
   amazon: {
-    id: 'amazon-streaming-gear', label: 'Amazon Associates',
-    url: 'https://www.amazon.com',
-    disclosure: 'As an Amazon Associate we earn from qualifying purchases.',
-    cta: { primary: 'Shop streaming gear', alt: 'Browse gear' },
-    placement: 'blog-only' as const,
+    id: "amazon-streaming-gear",
+    label: "Amazon Associates",
+    url: "https://www.amazon.com",
+    disclosure: "As an Amazon Associate we earn from qualifying purchases.",
+    cta: { primary: "Shop streaming gear", alt: "Browse gear" },
+    placement: "blog-only" as const,
   },
 } as const;
 ```
@@ -1462,52 +1623,120 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 10: FAQ content + hero Bits page
 
 **Files:**
+
 - Create: `src/data/faqs.ts`, `src/pages/twitch-bits-to-usd.astro`
 
 **Interfaces:**
+
 - Consumes: `BitsCalculator.astro`, `ToolLayout.astro`.
 - Produces: the live hero calculator page at `/twitch-bits-to-usd`.
 
 - [ ] **Step 1: Create `src/data/faqs.ts`**
 
 ```ts
-import type { RegionCode } from './bitsConfig';
+import type { RegionCode } from "./bitsConfig";
 
-export function bitsFaqs(region: RegionCode = 'us') {
-  const cur = region === 'us' ? 'USD' : region.toUpperCase();
+export function bitsFaqs(region: RegionCode = "us") {
+  const cur = region === "us" ? "USD" : region.toUpperCase();
   return [
-    { q: `How much is 100 Bits on Twitch in ${cur}?`, a: `100 Bits = 1 ${cur} for the streamer (at the standard $0.01 per Bit payout). Viewers pay around $1.40 to buy 100 Bits.` },
-    { q: 'How much do streamers make per Bit?', a: 'Streamers receive $0.01 per Bit cheered (100% of the Bits value), regardless of Affiliate vs Partner status.' },
-    { q: 'How much do Bits cost for viewers?', a: 'Viewer cost per Bit is roughly $0.0123–$0.0140 depending on pack size and region; larger packs cost slightly less per Bit.' },
-    { q: 'What is the Twitch Bits to USD conversion rate?', a: 'The streamer payout rate is fixed at 1 Bit = $0.01 USD. Viewer purchase pricing varies by pack and region.' },
-    { q: 'Do Twitch Partners earn more from Bits than Affiliates?', a: 'No. Both Affiliates and Partners receive the same $0.01 per Bit. The difference is eligibility, not the per-Bit rate.' },
-    { q: 'How do I share a specific Bits calculation?', a: 'Use the Share link button — it encodes your amount in the URL so anyone opening it sees the same calculation.' },
-    { q: 'Are Bits refundable?', a: 'Bits are generally non-refundable once cheered. Twitch may refund for proven fraud or technical errors on a case-by-case basis.' },
+    {
+      q: `How much is 100 Bits on Twitch in ${cur}?`,
+      a: `100 Bits = 1 ${cur} for the streamer (at the standard $0.01 per Bit payout). Viewers pay around $1.40 to buy 100 Bits.`,
+    },
+    {
+      q: "How much do streamers make per Bit?",
+      a: "Streamers receive $0.01 per Bit cheered (100% of the Bits value), regardless of Affiliate vs Partner status.",
+    },
+    {
+      q: "How much do Bits cost for viewers?",
+      a: "Viewer cost per Bit is roughly $0.0123–$0.0140 depending on pack size and region; larger packs cost slightly less per Bit.",
+    },
+    {
+      q: "What is the Twitch Bits to USD conversion rate?",
+      a: "The streamer payout rate is fixed at 1 Bit = $0.01 USD. Viewer purchase pricing varies by pack and region.",
+    },
+    {
+      q: "Do Twitch Partners earn more from Bits than Affiliates?",
+      a: "No. Both Affiliates and Partners receive the same $0.01 per Bit. The difference is eligibility, not the per-Bit rate.",
+    },
+    {
+      q: "How do I share a specific Bits calculation?",
+      a: "Use the Share link button — it encodes your amount in the URL so anyone opening it sees the same calculation.",
+    },
+    {
+      q: "Are Bits refundable?",
+      a: "Bits are generally non-refundable once cheered. Twitch may refund for proven fraud or technical errors on a case-by-case basis.",
+    },
   ];
 }
 
 export const revenueFaqs = [
-  { q: 'How is Twitch revenue calculated?', a: 'Twitch revenue = subscription payouts (your split) + Bits ($0.01 each) + ad revenue (CPM × minutes × viewers), summed monthly.' },
-  { q: 'What is the default sub split?', a: 'The standard Twitch sub split is 50/50. Partner Plus tiers can qualify for 70/30 up to $100K, then 50/50 above that.' },
-  { q: 'How much do ads pay on Twitch?', a: 'Ad revenue ≈ CPM × (minutes watched ÷ 1000) × average viewers. Typical CPMs range $2–$10 depending on region and season.' },
-  { q: 'Do gift subs count toward revenue?', a: 'Yes. Gift subs are paid out at the same tier and split as regular subs; the recipient gets the sub, the gifter pays.' },
-  { q: 'Is this calculator accurate?', a: 'It gives an estimate based on current Twitch rates and your inputs. Real payouts vary by region, tax, and program terms.' },
+  {
+    q: "How is Twitch revenue calculated?",
+    a: "Twitch revenue = subscription payouts (your split) + Bits ($0.01 each) + ad revenue (CPM × minutes × viewers), summed monthly.",
+  },
+  {
+    q: "What is the default sub split?",
+    a: "The standard Twitch sub split is 50/50. Partner Plus tiers can qualify for 70/30 up to $100K, then 50/50 above that.",
+  },
+  {
+    q: "How much do ads pay on Twitch?",
+    a: "Ad revenue ≈ CPM × (minutes watched ÷ 1000) × average viewers. Typical CPMs range $2–$10 depending on region and season.",
+  },
+  {
+    q: "Do gift subs count toward revenue?",
+    a: "Yes. Gift subs are paid out at the same tier and split as regular subs; the recipient gets the sub, the gifter pays.",
+  },
+  {
+    q: "Is this calculator accurate?",
+    a: "It gives an estimate based on current Twitch rates and your inputs. Real payouts vary by region, tax, and program terms.",
+  },
 ];
 
 export const tiktokFaqs = [
-  { q: 'How much is a TikTok coin worth in USD for creators?', a: 'Creators earn diamonds from gifts; each diamond is typically worth about $0.005, and coins convert to diamonds at roughly a 2:1 ratio.' },
-  { q: 'What are TikTok diamonds?', a: 'Diamonds are the creator-facing unit. When a viewer sends a gift bought with coins, the creator receives diamonds, redeemable for cash.' },
-  { q: 'How much does TikTok take?', a: 'Twitch-style: TikTok keeps roughly 50% of the coin value; creators receive the remainder as diamonds.' },
-  { q: 'Is the TikTok coin rate the same in every country?', a: 'No. Coin prices and payout rates vary by region and currency; this calculator uses approximate USD rates.' },
-  { q: 'How do I withdraw TikTok diamonds?', a: 'Diamonds are converted to cash once you meet the minimum withdrawal threshold and link a supported payment method.' },
+  {
+    q: "How much is a TikTok coin worth in USD for creators?",
+    a: "Creators earn diamonds from gifts; each diamond is typically worth about $0.005, and coins convert to diamonds at roughly a 2:1 ratio.",
+  },
+  {
+    q: "What are TikTok diamonds?",
+    a: "Diamonds are the creator-facing unit. When a viewer sends a gift bought with coins, the creator receives diamonds, redeemable for cash.",
+  },
+  {
+    q: "How much does TikTok take?",
+    a: "Twitch-style: TikTok keeps roughly 50% of the coin value; creators receive the remainder as diamonds.",
+  },
+  {
+    q: "Is the TikTok coin rate the same in every country?",
+    a: "No. Coin prices and payout rates vary by region and currency; this calculator uses approximate USD rates.",
+  },
+  {
+    q: "How do I withdraw TikTok diamonds?",
+    a: "Diamonds are converted to cash once you meet the minimum withdrawal threshold and link a supported payment method.",
+  },
 ];
 
 export const youtubeFaqs = [
-  { q: 'What is YouTube RPM?', a: 'RPM (revenue per mille) is what you earn per 1,000 views after YouTube takes its 45% cut. It bundles ads, channel memberships, and Super Chat.' },
-  { q: 'How much do YouTubers make per 1,000 views?', a: 'Typical RPM ranges $1–$10 depending on niche and audience geography; finance and tech tend higher, vlogs and kids content lower.' },
-  { q: 'Does YouTube pay for views without ads?', a: 'No ad revenue without monetization (Partner Program). Once eligible, ads + memberships + Super Chat all contribute to RPM.' },
-  { q: 'How accurate is this YouTube calculator?', a: 'It gives a low–high estimate from your RPM and views. Actual earnings vary by niche, season, and ad fill rate.' },
-  { q: 'Do Shorts pay the same as long-form?', a: 'No. Shorts RPM is much lower than long-form; treat Shorts revenue separately when forecasting.' },
+  {
+    q: "What is YouTube RPM?",
+    a: "RPM (revenue per mille) is what you earn per 1,000 views after YouTube takes its 45% cut. It bundles ads, channel memberships, and Super Chat.",
+  },
+  {
+    q: "How much do YouTubers make per 1,000 views?",
+    a: "Typical RPM ranges $1–$10 depending on niche and audience geography; finance and tech tend higher, vlogs and kids content lower.",
+  },
+  {
+    q: "Does YouTube pay for views without ads?",
+    a: "No ad revenue without monetization (Partner Program). Once eligible, ads + memberships + Super Chat all contribute to RPM.",
+  },
+  {
+    q: "How accurate is this YouTube calculator?",
+    a: "It gives a low–high estimate from your RPM and views. Actual earnings vary by niche, season, and ad fill rate.",
+  },
+  {
+    q: "Do Shorts pay the same as long-form?",
+    a: "No. Shorts RPM is much lower than long-form; treat Shorts revenue separately when forecasting.",
+  },
 ];
 ```
 
@@ -1565,10 +1794,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 11: Deploy to Cloudflare Pages preview + project skill
 
 **Files:**
+
 - Create: `.claude/skills/deploy-cloudflare/SKILL.md`, `public/robots.txt`
 - Modify: `README.md`
 
 **Interfaces:**
+
 - Consumes: built `dist/`.
 - Produces: a live `*.pages.dev` preview deploy; a reusable deploy/verify skill.
 
@@ -1591,12 +1822,13 @@ A zero-backend Creator Calculator Hub: Twitch Bits→USD, Twitch Revenue, TikTok
 **Stack:** Astro 6 (static) + Tailwind 4 + vanilla JS. Deployed on Cloudflare Pages.
 
 ## Develop
+
 \`\`\`bash
 npm install
-npm run dev      # http://localhost:4321
-npm run build    # -> dist/
+npm run dev # http://localhost:4321
+npm run build # -> dist/
 npm run preview
-npm test         # vitest
+npm test # vitest
 \`\`\`
 
 See `docs/superpowers/specs/2026-07-19-twitch-bits-hub-design.md` for the design and `docs/superpowers/plans/2026-07-19-twitch-bits-hub.md` for the build plan.
@@ -1604,7 +1836,7 @@ See `docs/superpowers/specs/2026-07-19-twitch-bits-hub-design.md` for the design
 
 - [ ] **Step 3: Create `.claude/skills/deploy-cloudflare/SKILL.md`**
 
-````markdown
+```markdown
 ---
 name: deploy-cloudflare
 description: Build, deploy to Cloudflare Pages, and smoke-test the Twitch Bits Hub. Use when deploying the site or verifying a deploy.
@@ -1622,7 +1854,7 @@ description: Build, deploy to Cloudflare Pages, and smoke-test the Twitch Bits H
 8. After a production deploy, refresh the sitemap in Google Search Console + Bing Webmaster.
 
 If the build fails locally, do not push — fix first. Never deploy a red build.
-````
+```
 
 - [ ] **Step 4: Commit (deploy is a manual/Cloudflare-dashboard step; do not run `git push` unless the user asks)**
 
@@ -1640,23 +1872,27 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 12: Revenue calculator (config + pure fn + component + page)
 
 **Files:**
+
 - Create: `src/data/subConfig.ts`, `src/data/adConfig.ts`, `src/lib/calculators/revenue.ts`, `src/components/calculators/RevenueCalculator.astro`, `src/pages/twitch-revenue-calculator.astro`
 - Test: append to `tests/calculators.test.ts`
 
 **Interfaces:**
+
 - Consumes: `bitsToUsd` from `bits.ts`; `revenueFaqs` from `faqs.ts`; `ToolLayout`.
 - Produces: `estimateRevenue(input)` returning `{ monthly, annual, hourlyEquivalent }`; `/twitch-revenue-calculator`.
 
 - [ ] **Step 1: Append failing test to `tests/calculators.test.ts`**
 
 ```ts
-import { estimateRevenue } from '../src/lib/calculators/revenue';
+import { estimateRevenue } from "../src/lib/calculators/revenue";
 
-describe('revenue calculator', () => {
-  it('computes monthly revenue from subs + bits + ads', () => {
+describe("revenue calculator", () => {
+  it("computes monthly revenue from subs + bits + ads", () => {
     const r = estimateRevenue({
       subs: { tier1: 50, tier2: 0, tier3: 0, prime: 5, gift: 0 },
-      split: 0.5, bits: 5000, ads: { cpm: 2, minutes: 120, viewers: 50 },
+      split: 0.5,
+      bits: 5000,
+      ads: { cpm: 2, minutes: 120, viewers: 50 },
     });
     // subs: 50 * 4.99 * 0.5 + 5 * 4.99 * 0.5 = 124.75 + 12.475 = 137.225
     // bits: 5000 * 0.01 = 50
@@ -1668,13 +1904,25 @@ describe('revenue calculator', () => {
     expect(r.annual.total).toBeCloseTo(199.225 * 12, 2);
   });
 
-  it('guards negative inputs', () => {
-    const r = estimateRevenue({ subs: { tier1: -5, tier2: 0, tier3: 0, prime: 0, gift: 0 }, split: 0.5, bits: -10, ads: { cpm: -1, minutes: 0, viewers: 0 } });
+  it("guards negative inputs", () => {
+    const r = estimateRevenue({
+      subs: { tier1: -5, tier2: 0, tier3: 0, prime: 0, gift: 0 },
+      split: 0.5,
+      bits: -10,
+      ads: { cpm: -1, minutes: 0, viewers: 0 },
+    });
     expect(r.monthly.total).toBe(0);
   });
 
-  it('snapshots a typical partner estimate', () => {
-    expect(estimateRevenue({ subs: { tier1: 200, tier2: 10, tier3: 2, prime: 20, gift: 5 }, split: 0.7, bits: 50000, ads: { cpm: 4, minutes: 300, viewers: 150 } })).toMatchSnapshot();
+  it("snapshots a typical partner estimate", () => {
+    expect(
+      estimateRevenue({
+        subs: { tier1: 200, tier2: 10, tier3: 2, prime: 20, gift: 5 },
+        split: 0.7,
+        bits: 50000,
+        ads: { cpm: 4, minutes: 300, viewers: 150 },
+      }),
+    ).toMatchSnapshot();
   });
 });
 ```
@@ -1689,9 +1937,9 @@ Expected: FAIL — cannot find `../src/lib/calculators/revenue`.
 ```ts
 export const SUB_PRICES = { tier1: 4.99, tier2: 9.99, tier3: 24.99 };
 export const SPLIT_PRESETS = [
-  { label: '50/50 (standard)', value: 0.5 },
-  { label: '60/40', value: 0.6 },
-  { label: '70/30 (Partner Plus)', value: 0.7 },
+  { label: "50/50 (standard)", value: 0.5 },
+  { label: "60/40", value: 0.6 },
+  { label: "70/30 (Partner Plus)", value: 0.7 },
 ] as const;
 ```
 
@@ -1699,7 +1947,11 @@ export const SPLIT_PRESETS = [
 
 ```ts
 export const AD_CPM_DEFAULTS: Record<string, number> = {
-  us: 4.0, gb: 3.0, eu: 3.0, ca: 3.0, au: 3.5,
+  us: 4.0,
+  gb: 3.0,
+  eu: 3.0,
+  ca: 3.0,
+  au: 3.5,
 };
 export const MIN_WAGE_USD_HOURLY = 7.25;
 ```
@@ -1707,13 +1959,19 @@ export const MIN_WAGE_USD_HOURLY = 7.25;
 - [ ] **Step 5: Create `src/lib/calculators/revenue.ts`**
 
 ```ts
-import { SUB_PRICES } from '../../data/subConfig';
-import { MIN_WAGE_USD_HOURLY } from '../../data/adConfig';
-import { BITS_RATE_USD } from '../../data/bitsConfig';
+import { SUB_PRICES } from "../../data/subConfig";
+import { MIN_WAGE_USD_HOURLY } from "../../data/adConfig";
+import { BITS_RATE_USD } from "../../data/bitsConfig";
 
 export interface RevenueInput {
-  subs: { tier1: number; tier2: number; tier3: number; prime: number; gift: number };
-  split: number;            // share the streamer keeps (0.5 default)
+  subs: {
+    tier1: number;
+    tier2: number;
+    tier3: number;
+    prime: number;
+    gift: number;
+  };
+  split: number; // share the streamer keeps (0.5 default)
   bits: number;
   ads: { cpm: number; minutes: number; viewers: number };
 }
@@ -1723,14 +1981,20 @@ export function estimateRevenue(i: RevenueInput) {
   const split = i.split > 0 && i.split <= 1 ? i.split : 0.5;
   const subsUsd =
     (g(i.subs.tier1) * SUB_PRICES.tier1 +
-     g(i.subs.tier2) * SUB_PRICES.tier2 +
-     g(i.subs.tier3) * SUB_PRICES.tier3 +
-     g(i.subs.prime) * SUB_PRICES.tier1 +
-     g(i.subs.gift) * SUB_PRICES.tier1) * split;
+      g(i.subs.tier2) * SUB_PRICES.tier2 +
+      g(i.subs.tier3) * SUB_PRICES.tier3 +
+      g(i.subs.prime) * SUB_PRICES.tier1 +
+      g(i.subs.gift) * SUB_PRICES.tier1) *
+    split;
   const bitsUsd = g(i.bits) * BITS_RATE_USD;
   const adsUsd = g(i.ads.cpm) * (g(i.ads.minutes) / 1000) * g(i.ads.viewers);
   const monthlyTotal = subsUsd + bitsUsd + adsUsd;
-  const annual = { subs: subsUsd * 12, bits: bitsUsd * 12, ads: adsUsd * 12, total: monthlyTotal * 12 };
+  const annual = {
+    subs: subsUsd * 12,
+    bits: bitsUsd * 12,
+    ads: adsUsd * 12,
+    total: monthlyTotal * 12,
+  };
   // assume ~120 streaming hours/month for hourly equivalent
   const hoursPerMonth = 120;
   const hourlyEquivalent = monthlyTotal / hoursPerMonth;
@@ -1854,28 +2118,34 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 13: TikTok coin calculator
 
 **Files:**
+
 - Create: `src/data/coinConfig.ts`, `src/lib/calculators/tiktok.ts`, `src/components/calculators/TiktokCalculator.astro`, `src/pages/tiktok-coins-to-usd.astro`
 - Test: append to `tests/calculators.test.ts`
 
 **Interfaces:**
+
 - Consumes: `LinearConverter.astro`; `tiktokFaqs`.
 - Produces: `coinsToUsd`, `usdToCoins`, `coinsBulkTable`; `/tiktok-coins-to-usd`.
 
 - [ ] **Step 1: Append failing test**
 
 ```ts
-import { coinsToUsd, diamondsToUsd, usdToCoins } from '../src/lib/calculators/tiktok';
+import {
+  coinsToUsd,
+  diamondsToUsd,
+  usdToCoins,
+} from "../src/lib/calculators/tiktok";
 
-describe('tiktok calculator', () => {
-  it('converts coins to USD at the creator payout rate', () => {
+describe("tiktok calculator", () => {
+  it("converts coins to USD at the creator payout rate", () => {
     // 1 coin ≈ $0.0105 viewer cost; creator earns ~half via diamonds.
     expect(coinsToUsd(1000)).toBeGreaterThan(0);
     expect(usdToCoins(coinsToUsd(1000))).toBe(1000);
   });
-  it('diamonds to USD', () => {
+  it("diamonds to USD", () => {
     expect(diamondsToUsd(1000)).toBeCloseTo(5, 0); // ~$0.005/diamond
   });
-  it('guards bad input', () => {
+  it("guards bad input", () => {
     expect(coinsToUsd(-1)).toBe(0);
     expect(diamondsToUsd(NaN)).toBe(0);
   });
@@ -1890,16 +2160,16 @@ Expected: FAIL — cannot find `../src/lib/calculators/tiktok`.
 - [ ] **Step 3: Create `src/data/coinConfig.ts`**
 
 ```ts
-export const COIN_TO_USD = 0.0105;        // viewer purchase value per coin (approx)
-export const COIN_TO_DIAMOND = 0.5;        // 2 coins → 1 diamond for the creator
-export const DIAMOND_TO_USD = 0.005;       // creator payout per diamond
+export const COIN_TO_USD = 0.0105; // viewer purchase value per coin (approx)
+export const COIN_TO_DIAMOND = 0.5; // 2 coins → 1 diamond for the creator
+export const DIAMOND_TO_USD = 0.005; // creator payout per diamond
 export const COIN_BULK = [100, 500, 1000, 5000, 10000, 50000];
 ```
 
 - [ ] **Step 4: Create `src/lib/calculators/tiktok.ts`**
 
 ```ts
-import { COIN_TO_USD, DIAMOND_TO_USD, COIN_BULK } from '../../data/coinConfig';
+import { COIN_TO_USD, DIAMOND_TO_USD, COIN_BULK } from "../../data/coinConfig";
 
 export function coinsToUsd(coins: number): number {
   if (!Number.isFinite(coins) || coins < 0) return 0;
@@ -1976,28 +2246,33 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 14: YouTube money calculator
 
 **Files:**
+
 - Create: `src/data/youtubeConfig.ts`, `src/lib/calculators/youtube.ts`, `src/components/calculators/YoutubeCalculator.astro`, `src/pages/youtube-money-calculator.astro`
 - Test: append to `tests/calculators.test.ts`
 
 **Interfaces:**
+
 - Consumes: `youtubeFaqs`; `ToolLayout`.
 - Produces: `earningsFromViews`, `rangeFromRpm`; `/youtube-money-calculator`.
 
 - [ ] **Step 1: Append failing test**
 
 ```ts
-import { earningsFromViews, rangeFromRpm } from '../src/lib/calculators/youtube';
+import {
+  earningsFromViews,
+  rangeFromRpm,
+} from "../src/lib/calculators/youtube";
 
-describe('youtube calculator', () => {
-  it('earnings = rpm * views / 1000', () => {
+describe("youtube calculator", () => {
+  it("earnings = rpm * views / 1000", () => {
     expect(earningsFromViews(10_000, 4)).toBe(40);
   });
-  it('returns a low–high range from rpm bounds', () => {
+  it("returns a low–high range from rpm bounds", () => {
     const r = rangeFromRpm(10_000, 2, 8);
     expect(r.low).toBe(20);
     expect(r.high).toBe(80);
   });
-  it('guards bad input', () => {
+  it("guards bad input", () => {
     expect(earningsFromViews(-1, 4)).toBe(0);
     expect(earningsFromViews(1000, NaN)).toBe(0);
   });
@@ -2013,10 +2288,10 @@ Expected: FAIL — cannot find `../src/lib/calculators/youtube`.
 
 ```ts
 export const RPM_BY_NICHE = [
-  { label: 'Gaming', low: 1, high: 4 },
-  { label: 'Vlogs / lifestyle', low: 2, high: 6 },
-  { label: 'Tech / finance', low: 6, high: 18 },
-  { label: 'Education', low: 4, high: 12 },
+  { label: "Gaming", low: 1, high: 4 },
+  { label: "Vlogs / lifestyle", low: 2, high: 6 },
+  { label: "Tech / finance", low: 6, high: 18 },
+  { label: "Education", low: 4, high: 12 },
 ] as const;
 export const DEFAULT_RPM = { low: 2, high: 8 };
 ```
@@ -2025,11 +2300,16 @@ export const DEFAULT_RPM = { low: 2, high: 8 };
 
 ```ts
 export function earningsFromViews(views: number, rpm: number): number {
-  if (!Number.isFinite(views) || !Number.isFinite(rpm) || views < 0 || rpm < 0) return 0;
+  if (!Number.isFinite(views) || !Number.isFinite(rpm) || views < 0 || rpm < 0)
+    return 0;
   return (views / 1000) * rpm;
 }
 export function rangeFromRpm(views: number, low: number, high: number) {
-  return { low: earningsFromViews(views, low), high: earningsFromViews(views, high), mid: earningsFromViews(views, (low + high) / 2) };
+  return {
+    low: earningsFromViews(views, low),
+    high: earningsFromViews(views, high),
+    mid: earningsFromViews(views, (low + high) / 2),
+  };
 }
 ```
 
@@ -2115,9 +2395,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 15: Programmatic SEO variant pages (region + pack-size)
 
 **Files:**
+
 - Create: `src/pages/twitch-bits-to-gbp.astro`, `twitch-bits-to-eur.astro`, `twitch-bits-to-cad.astro`, `twitch-bits-to-aud.astro`, `how-much-is-1000-bits-on-twitch.astro`, `how-much-is-10000-bits-on-twitch.astro`
 
 **Interfaces:**
+
 - Consumes: `LinearConverter`, `bitsFaqs`, `bitsToUsd`/`usdToBits`/`bulkTable`, `REGIONS`, `BULK_TABLE`.
 
 - [ ] **Step 1: Create `src/pages/twitch-bits-to-gbp.astro`**
@@ -2200,18 +2482,20 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 16: Blog — content collection + 3 posts + index/slug pages
 
 **Files:**
+
 - Create: `src/content/config.ts`, `src/content/blog/twitch-bits-to-usd-2026-guide.md`, `src/content/blog/bits-vs-subs-vs-ads.md`, `src/content/blog/tiktok-coins-vs-twitch-bits.md`, `src/layouts/BlogLayout.astro`, `src/pages/blog/index.astro`, `src/pages/blog/[...slug].astro`
 
 **Interfaces:**
+
 - Consumes: `BaseLayout`.
 - Produces: `/blog` index + `/blog/<slug>` posts with `Article` + `Breadcrumb` schema.
 
 - [ ] **Step 1: Create `src/content/config.ts`**
 
 ```ts
-import { defineCollection, z } from 'astro:content';
+import { defineCollection, z } from "astro:content";
 const blog = defineCollection({
-  type: 'content',
+  type: "content",
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -2262,15 +2546,19 @@ title: "Twitch Bits to USD: The 2026 Guide for New Streamers"
 description: "How Bits work, what streamers earn per Bit, viewer pricing, and how to estimate Bits revenue in 2026."
 pubDate: 2026-07-19
 ---
+
 Bits are Twitch's virtual currency. Viewers buy them and cheer them in chat to support streamers. Here's what you actually keep.
 
 ## How much do streamers make per Bit?
+
 Streamers receive **$0.01 per Bit** — 100% of the Bits value. 1,000 Bits = $10. This rate is the same for Affiliates and Partners.
 
 ## What do viewers pay?
+
 Viewers pay a premium: roughly **$0.0123–$0.0140 per Bit** depending on pack size. That spread is Twitch's margin.
 
 ## Estimating your Bits revenue
+
 Use our [Twitch Bits to USD calculator](/twitch-bits-to-usd) to convert a monthly Bits total into dollars, then combine it with subs and ads in the [revenue calculator](/twitch-revenue-calculator).
 ```
 
@@ -2282,15 +2570,19 @@ title: "Bits vs Subs vs Ads: Which Earns More for Streamers?"
 description: "Compare the three main Twitch revenue streams and learn which to prioritize at different channel sizes."
 pubDate: 2026-07-19
 ---
+
 Twitch creators earn three ways: subscriptions, Bits, and ads. Each scales differently.
 
 ## Subscriptions — the foundation
+
 A Tier 1 sub is $4.99/month; on the standard 50/50 split you keep ~$2.50. Recurring and predictable.
 
 ## Bits — high-margin tips
+
 You keep 100% of Bits value ($0.01 each). Less predictable, but no platform cut.
 
 ## Ads — scales with viewership
+
 Ad revenue = CPM × minutes × viewers. High once you have consistent concurrent viewers.
 
 Run all three through the [Twitch revenue calculator](/twitch-revenue-calculator) to model your mix.
@@ -2304,12 +2596,15 @@ title: "TikTok Coins vs Twitch Bits: Creator Economics Compared"
 description: "How TikTok coins and Twitch Bits differ in payout rate, platform cut, and creator experience."
 pubDate: 2026-07-19
 ---
+
 Both platforms let viewers pay to support creators, but the economics differ.
 
 ## Twitch Bits
+
 Creators keep 100% of the Bits value — $0.01 per Bit.
 
 ## TikTok coins
+
 Viewers buy coins; gifts convert to diamonds, worth roughly $0.005 each. TikTok keeps about half.
 
 Compare both with our [TikTok coins calculator](/tiktok-coins-to-usd) and [Twitch Bits calculator](/twitch-bits-to-usd).
@@ -2377,10 +2672,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 17: Legal pages + 404
 
 **Files:**
+
 - Create: `src/pages/affiliate-disclosure.astro`, `src/pages/privacy.astro`, `src/pages/terms.astro`, `src/pages/404.astro`
 - Modify: `src/data/affiliateLinks.ts` (wire the real Streamlabs link placeholder note — left as-is; real link added by user)
 
 **Interfaces:**
+
 - Consumes: `AFFILIATES` from `affiliateLinks.ts`; `BaseLayout`; `SITE`.
 
 - [ ] **Step 1: Create `src/pages/affiliate-disclosure.astro`** (auto-renders from config)
@@ -2491,10 +2788,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ## Task 18: Hub homepage + analytics + CLAUDE.md + add-tool skill + Lighthouse
 
 **Files:**
+
 - Modify: `src/pages/index.astro` (full hub landing), `src/components/layout/Base.astro` (add Cloudflare Web Analytics)
 - Create: `src/components/Newsletter.astro`, `CLAUDE.md`, `.claude/skills/add-calculator-tool/SKILL.md`, `public/og-default.png` (text note — actual image is a design asset)
 
 **Interfaces:**
+
 - Consumes: `TOOLS`, `SITE`; blog collection (latest posts); `BaseLayout`.
 
 - [ ] **Step 1: Create `src/components/Newsletter.astro`** (Tally embed placeholder)
@@ -2569,24 +2868,27 @@ const jsonLd = [buildOrganizationSchema(), buildWebSiteSchema()];
 
 (Replace `REPLACE_WITH_CLOUDFLARE_TOKEN` with the token from Cloudflare → Web Analytics → your site, after the domain is added. The script is `defer` so it never blocks render.)
 
-**SRI note (deliberate omission):** This beacon is *not* pinned with `integrity="sha384-..."`. We'd normally add SRI to any external script to block CDN-compromise attacks, but Cloudflare does not publish a stable integrity hash for `beacon.min.js` and the URL isn't versioned — pinning a hash would silently break analytics on Cloudflare's next silent update. Acceptable here because (a) it's Cloudflare's own first-party CDN, (b) the script carries no auth/session data (cookieless, token-only), and (c) it's `defer`-loaded after paint so a compromised beacon can't block rendering. If you later switch to a versioned, hash-publishing provider (e.g. Plausible self-host), add `integrity` + `crossorigin="anonymous"` at that time. The Tally `<iframe>` in `Newsletter.astro` is sandboxed content loaded `lazy` — no script tag, so SRI doesn't apply.
+**SRI note (deliberate omission):** This beacon is _not_ pinned with `integrity="sha384-..."`. We'd normally add SRI to any external script to block CDN-compromise attacks, but Cloudflare does not publish a stable integrity hash for `beacon.min.js` and the URL isn't versioned — pinning a hash would silently break analytics on Cloudflare's next silent update. Acceptable here because (a) it's Cloudflare's own first-party CDN, (b) the script carries no auth/session data (cookieless, token-only), and (c) it's `defer`-loaded after paint so a compromised beacon can't block rendering. If you later switch to a versioned, hash-publishing provider (e.g. Plausible self-host), add `integrity` + `crossorigin="anonymous"` at that time. The Tally `<iframe>` in `Newsletter.astro` is sandboxed content loaded `lazy` — no script tag, so SRI doesn't apply.
 
 - [ ] **Step 4: Create `public/og-default.png`** — generate a 1200×630 branded image (Twitch-purple background, white "Twitch Bits Calculator" wordmark). If no image tool is available, create a placeholder note file `public/og-default.txt` describing the asset and leave `og-default.png` as a TODO for a design pass; the site still builds (OG image is referenced but its absence only affects social previews).
 
 - [ ] **Step 5: Create `CLAUDE.md`**
 
-````markdown
+```markdown
 # CLAUDE.md — Twitch Bits Calculator Hub
 
 ## What this is
+
 A zero-backend Creator Calculator Hub (Twitch Bits→USD, Twitch Revenue, TikTok Coins→USD, YouTube Money) + blog, on Astro 6 static + Tailwind 4 + vanilla JS, deployed to Cloudflare Pages.
 
 ## Stack & key files
+
 - Astro 6 static output. Tailwind 4 via `@tailwindcss/vite` (no JS config; tokens in `src/styles/global.css` `@theme`).
 - Vanilla-JS islands in `src/scripts/`; pure calculator math in `src/lib/calculators/`.
 - Config (rates, splits, affiliate links) lives in `src/data/` — the single editable source of truth.
 
 ## Non-negotiable rules
+
 1. **Zero backend.** No DB, no auth, no API keys, no SSR/edge. All math client-side.
 2. **Rates never hardcoded in components.** Every calculator reads constants from `src/data/*.ts`. A rate change is a one-line data edit that propagates to all programmatic-SEO variants at build.
 3. **`src/lib/calculators/` is pure.** No DOM, no Astro imports, no side effects. Input guards: NaN/negative/Infinity → 0. All calculator functions have Vitest tests.
@@ -2597,29 +2899,33 @@ A zero-backend Creator Calculator Hub (Twitch Bits→USD, Twitch Revenue, TikTok
 8. **Affiliate IDs are config, not env vars** (`src/data/affiliateLinks.ts`). The disclosure page auto-renders from the same source.
 
 ## Commands
+
 \`\`\`bash
-npm run dev        # http://localhost:4321
-npm run build      # -> dist/
+npm run dev # http://localhost:4321
+npm run build # -> dist/
 npm run preview
-npm test           # vitest (pure functions)
-npm run lint       # prettier + eslint
+npm test # vitest (pure functions)
+npm run lint # prettier + eslint
 \`\`\`
 
 ## Branch
+
 Work on `build/twitch-bits-hub` (default branch is `develop`). Don't push a red build.
 
 ## Adding a new calculator tool or programmatic variant
+
 See `.claude/skills/add-calculator-tool/SKILL.md`.
 
 ## Docs
+
 - Design: `docs/superpowers/specs/2026-07-19-twitch-bits-hub-design.md`
 - Plan: `docs/superpowers/plans/2026-07-19-twitch-bits-hub.md`
 - Research: `../research-engine/output/2026-07-19/twitch-bits-calculator-build-plan-DEEP.md`
-````
+```
 
 - [ ] **Step 6: Create `.claude/skills/add-calculator-tool/SKILL.md`**
 
-````markdown
+```markdown
 ---
 name: add-calculator-tool
 description: Add a new calculator tool or programmatic-SEO variant to the Twitch Bits Hub, following the data→pure-fn→component→page pattern. Use when extending the hub.
@@ -2630,33 +2936,42 @@ description: Add a new calculator tool or programmatic-SEO variant to the Twitch
 Follow this exact order. Never hardcode rates in a component.
 
 ## 1. Data — `src/data/<thing>Config.ts`
+
 Export typed constants (rate, bulk rows, region overrides if relevant). Rates only here.
 
 ## 2. Pure function — `src/lib/calculators/<thing>.ts`
+
 Export `<thing>ToUsd` / `usdTo<Thing>` / `<thing>BulkTable`. Input guards: `NaN`/negative/`Infinity` → 0. No DOM, no Astro.
 
 ## 3. Tests — append to `tests/calculators.test.ts`
+
 TDD: write the test, watch it fail, implement, watch it pass. Add a `.toMatchSnapshot()` on a representative input.
 
 ## 4. Component — `src/components/calculators/<Thing>Calculator.astro`
+
 - If it's a linear unit converter (1 input, 1 rate, dual-direction): reuse `LinearConverter.astro`, pass a config with `tool`, `unitName`, `paramKey`, `toUsd`, `fromUsd`, `bulkRows`, `toBulkRows`. Also add the tool string to the function-resolution map in `LinearConverter.astro`'s `<script>`.
 - If multi-input: write a bespoke component with its own inline `<script>` calling the pure function, like `RevenueCalculator.astro`.
 
 ## 5. FAQ — `src/data/faqs.ts`
+
 Add an exported array of 5–8 `{ q, a }` items. This single source feeds both the visible FAQ and `FAQPage` schema.
 
 ## 6. Page — `src/pages/<slug>.astro`
+
 Wrap in `ToolLayout` with `title`, `description`, `slug`, `crumbs`, `faqs`. `ToolLayout` auto-adds `WebApplication` + `Breadcrumb` schema and renders `RelatedTools` + `AffiliateCTA`.
 
 ## 7. Wire internal links
+
 Add the tool to `TOOLS` in `src/lib/site.ts` so it appears in the Tools dropdown, the hub homepage grid, and `RelatedTools` on other calculators.
 
 ## 8. Verify
+
 `npm run build && npm test`. Smoke-test the live page. Commit.
 
 ## Programmatic variants (region/pack-size)
+
 Skip steps 1–2 (reuse existing data + pure fns). Create only the page in step 6, passing `region`/`currency`/`defaultAmount` to `LinearConverter`. Add region-specific FAQ phrasing via the region arg to the faqs function.
-````
+```
 
 - [ ] **Step 7: Verify build + all tests**
 

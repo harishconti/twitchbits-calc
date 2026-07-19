@@ -4,6 +4,7 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import FaqSection from '../components/FaqSection.astro';
 import RelatedTools from '../components/RelatedTools.astro';
 import AffiliateCTA from '../components/AffiliateCTA.astro';
+import Newsletter from '../components/Newsletter.astro';
 import { buildWebAppSchema, buildBreadcrumbSchema } from '../lib/schema';
 interface Props {
   title: string; description: string; slug: string;
@@ -14,17 +15,52 @@ const { title, description, slug, crumbs, faqs } = Astro.props;
 const jsonLd = [buildWebAppSchema(title), buildBreadcrumbSchema(crumbs)];
 ---
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
-  <article>
+  <div class="container">
     <Breadcrumbs crumbs={crumbs} />
-    <h1>{title}</h1>
-    <p class="subhead">{description}</p>
-    <slot />
+    <section class="hero-tool">
+      <div class="hero-copy stack">
+        <p class="eyebrow">Creator calculator</p>
+        <h1>{title}</h1>
+        <p class="lead">{description}</p>
+      </div>
+      <article class="panel">
+        <slot />
+      </article>
+    </section>
     <FaqSection faqs={faqs} />
     <RelatedTools exclude={slug} />
     <AffiliateCTA />
-  </article>
+    <Newsletter />
+  </div>
 </BaseLayout>
 <style>
-  .subhead { color:var(--color-text-muted); margin-bottom:1.5rem; }
-  article { max-width:760px; margin:0 auto; }
+  .stack > * + * { margin-block-start: var(--spacing-4); }
+  .eyebrow { color: var(--color-meta); font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+  h1 { font-size: var(--text-3xl); font-weight: 800; }
+  .lead { max-width: 560px; color: var(--color-fg-2); font-size: var(--text-lg); }
+  .hero-tool {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    gap: var(--spacing-8);
+    align-items: start;
+    padding-block: var(--section-y-phone);
+  }
+  .panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-raised);
+    padding: var(--spacing-6);
+    overflow: hidden;
+  }
+  .panel > :global(.edu) {
+    margin-top: var(--spacing-6);
+    padding-top: var(--spacing-6);
+    border-top: 1px solid var(--color-border-soft);
+  }
+  .panel > :global(.edu h2) { font-size: var(--text-xl); font-weight: 700; margin-bottom: var(--spacing-3); }
+  .panel > :global(.edu p) { color: var(--color-muted); line-height: var(--leading-body); }
+  @media (min-width: 640px) { .hero-tool { padding-block: var(--section-y-tablet); } }
+  @media (min-width: 1024px) { .hero-tool { padding-block: var(--section-y-desktop); } }
+  @media (max-width: 860px) { .hero-tool { grid-template-columns: 1fr; } }
 </style>

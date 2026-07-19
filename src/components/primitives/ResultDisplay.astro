@@ -5,7 +5,11 @@ const { id = 'result' } = Astro.props;
 <div class="result-display" id={id} data-result aria-live="polite">$0.00</div>
 <style>
   .result-display {
-    font-family:var(--font-mono); font-size:2.5rem; font-weight:600;
-    color:var(--color-accent); margin:1rem 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--color-accent);
+    margin: var(--spacing-5) 0;
+    line-height: var(--leading-tight);
   }
 </style>

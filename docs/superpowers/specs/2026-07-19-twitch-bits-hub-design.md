@@ -125,29 +125,35 @@ twitchbits-calc/
 Each config file exports typed constants. Example — `bitsConfig.ts`:
 
 ```ts
-export const BITS_RATE_USD = 0.01;          // streamer payout per Bit (100%)
-export const VIEWER_PACKS = [              // viewer cost context
-  { bits: 100,  priceUsd: 1.40, perBitUsd: 0.0140 },
-  { bits: 500,  priceUsd: 7.00, perBitUsd: 0.0140 },
+export const BITS_RATE_USD = 0.01; // streamer payout per Bit (100%)
+export const VIEWER_PACKS = [
+  // viewer cost context
+  { bits: 100, priceUsd: 1.4, perBitUsd: 0.014 },
+  { bits: 500, priceUsd: 7.0, perBitUsd: 0.014 },
   { bits: 1500, priceUsd: 19.95, perBitUsd: 0.0133 },
   // ...
 ];
 export const REGIONS = {
-  us: { label: 'United States', currency: 'USD', rate: 1.0 },
-  gb: { label: 'United Kingdom', currency: 'GBP', rate: 0.79 },
+  us: { label: "United States", currency: "USD", rate: 1.0 },
+  gb: { label: "United Kingdom", currency: "GBP", rate: 0.79 },
   // static rates, weekly manual update, no API dependency
 };
-export const BULK_TABLE = [1, 10, 100, 500, 1_000, 5_000, 10_000, 25_000, 50_000, 100_000];
+export const BULK_TABLE = [
+  1, 10, 100, 500, 1_000, 5_000, 10_000, 25_000, 50_000, 100_000,
+];
 ```
 
 Pure functions consume these and never hardcode a rate:
 
 ```ts
 // src/lib/calculators/bits.ts
-import { BITS_RATE_USD, BULK_TABLE } from '../../data/bitsConfig';
-export const bitsToUsd = (bits: number) => (Number.isFinite(bits) && bits >= 0 ? bits * BITS_RATE_USD : 0);
-export const usdToBits = (usd: number) => (Number.isFinite(usd) && usd >= 0 ? Math.round(usd / BITS_RATE_USD) : 0);
-export const bulkTable = (rows = BULK_TABLE) => rows.map(b => ({ bits: b, usd: bitsToUsd(b) }));
+import { BITS_RATE_USD, BULK_TABLE } from "../../data/bitsConfig";
+export const bitsToUsd = (bits: number) =>
+  Number.isFinite(bits) && bits >= 0 ? bits * BITS_RATE_USD : 0;
+export const usdToBits = (usd: number) =>
+  Number.isFinite(usd) && usd >= 0 ? Math.round(usd / BITS_RATE_USD) : 0;
+export const bulkTable = (rows = BULK_TABLE) =>
+  rows.map((b) => ({ bits: b, usd: bitsToUsd(b) }));
 ```
 
 `affiliateLinks.ts` centralizes every monetization URL + disclosure label so disclosure and CTA copy stay consistent and a program change is a one-line edit.
@@ -158,12 +164,12 @@ export const bulkTable = (rows = BULK_TABLE) => rows.map(b => ({ bits: b, usd: b
 
 ### Two calculator "shapes"
 
-| Tool | Shape | Component | Shared engine? |
-|------|-------|-----------|----------------|
-| Bits → USD | Linear unit converter (1 input, 1 rate, dual-direction) | `BitsCalculator.astro` | `LinearConverter.astro` |
-| TikTok Coins → USD | Linear unit converter | `TiktokCalculator.astro` | `LinearConverter.astro` |
-| Twitch Revenue | Multi-input aggregate (subs×split + bits + ads×CPM×min×viewers, mo/yr) | `RevenueCalculator.astro` | Bespoke |
-| YouTube Money | Multi-input (RPM × views + memberships/CPM) | `YoutubeCalculator.astro` | Bespoke |
+| Tool               | Shape                                                                  | Component                 | Shared engine?          |
+| ------------------ | ---------------------------------------------------------------------- | ------------------------- | ----------------------- |
+| Bits → USD         | Linear unit converter (1 input, 1 rate, dual-direction)                | `BitsCalculator.astro`    | `LinearConverter.astro` |
+| TikTok Coins → USD | Linear unit converter                                                  | `TiktokCalculator.astro`  | `LinearConverter.astro` |
+| Twitch Revenue     | Multi-input aggregate (subs×split + bits + ads×CPM×min×viewers, mo/yr) | `RevenueCalculator.astro` | Bespoke                 |
+| YouTube Money      | Multi-input (RPM × views + memberships/CPM)                            | `YoutubeCalculator.astro` | Bespoke                 |
 
 ### `LinearConverter.astro` — shared engine (Bits + TikTok)
 
@@ -204,11 +210,12 @@ const { config } = Astro.props;
 ### `RevenueCalculator.astro` — bespoke (complex tool)
 
 Inputs/layout:
+
 - **Subs panel:** Tier 1/2/3 counts + Prime + gift subs, each editable; split selector (50/50 default, 60/40, 70/30, custom).
 - **Bits panel:** Bits count → USD via shared `bitsToUsd` (reuses the tested function).
 - **Ads panel:** CPM × minutes watched × avg viewers (region-defaulted, editable).
 - **Output:** Monthly + annual estimate, "vs. minimum wage / hourly rate" comparison.
-- **CTA:** Streamlabs Ultra block placed *after* result.
+- **CTA:** Streamlabs Ultra block placed _after_ result.
 
 Pure function signature:
 
@@ -251,21 +258,21 @@ Pure functions guard inputs: `NaN`/negative/`Infinity` → return `0`; UI shows 
 
 ### Page inventory (v1)
 
-| Route | Type | Purpose | Layout | Primary schema |
-|-------|------|---------|--------|----------------|
-| `/` | Landing | Hub directory + hero + tool cards + latest posts + newsletter | BaseLayout | Organization + WebSite |
-| `/twitch-bits-to-usd` | Tool (hero) | Bits↔USD calculator | ToolLayout | WebApplication + FAQPage + Breadcrumb |
-| `/twitch-revenue-calculator` | Tool | Revenue estimator | ToolLayout | WebApplication + FAQPage + Breadcrumb |
-| `/tiktok-coins-to-usd` | Tool | Coins↔USD + diamonds | ToolLayout | WebApplication + FAQPage + Breadcrumb |
-| `/youtube-money-calculator` | Tool | RPM×views estimator | ToolLayout | WebApplication + FAQPage + Breadcrumb |
-| `/twitch-bits-to-{gbp,eur,cad,aud}` | Programmatic | Same engine, region preset | ToolLayout | WebApplication + FAQPage + Breadcrumb |
-| `/how-much-is-{1000,10000}-bits-on-twitch` | Programmatic | LinearConverter with `defaultAmount` | ToolLayout | FAQPage + Breadcrumb |
-| `/blog` | Index | Post listing | BlogLayout | Blog + ItemList |
-| `/blog/[slug]` | Content | Cornerstone posts | BlogLayout | Article + Breadcrumb |
-| `/affiliate-disclosure` | Legal | FTC affiliate disclosure (auto-rendered from config) | BaseLayout | — |
-| `/privacy` | Legal | No-cookies privacy policy | BaseLayout | — |
-| `/terms` | Legal | Terms of use | BaseLayout | — |
-| `/404` | Error | Helpful not-found | BaseLayout | — |
+| Route                                      | Type         | Purpose                                                       | Layout     | Primary schema                        |
+| ------------------------------------------ | ------------ | ------------------------------------------------------------- | ---------- | ------------------------------------- |
+| `/`                                        | Landing      | Hub directory + hero + tool cards + latest posts + newsletter | BaseLayout | Organization + WebSite                |
+| `/twitch-bits-to-usd`                      | Tool (hero)  | Bits↔USD calculator                                           | ToolLayout | WebApplication + FAQPage + Breadcrumb |
+| `/twitch-revenue-calculator`               | Tool         | Revenue estimator                                             | ToolLayout | WebApplication + FAQPage + Breadcrumb |
+| `/tiktok-coins-to-usd`                     | Tool         | Coins↔USD + diamonds                                          | ToolLayout | WebApplication + FAQPage + Breadcrumb |
+| `/youtube-money-calculator`                | Tool         | RPM×views estimator                                           | ToolLayout | WebApplication + FAQPage + Breadcrumb |
+| `/twitch-bits-to-{gbp,eur,cad,aud}`        | Programmatic | Same engine, region preset                                    | ToolLayout | WebApplication + FAQPage + Breadcrumb |
+| `/how-much-is-{1000,10000}-bits-on-twitch` | Programmatic | LinearConverter with `defaultAmount`                          | ToolLayout | FAQPage + Breadcrumb                  |
+| `/blog`                                    | Index        | Post listing                                                  | BlogLayout | Blog + ItemList                       |
+| `/blog/[slug]`                             | Content      | Cornerstone posts                                             | BlogLayout | Article + Breadcrumb                  |
+| `/affiliate-disclosure`                    | Legal        | FTC affiliate disclosure (auto-rendered from config)          | BaseLayout | —                                     |
+| `/privacy`                                 | Legal        | No-cookies privacy policy                                     | BaseLayout | —                                     |
+| `/terms`                                   | Legal        | Terms of use                                                  | BaseLayout | —                                     |
+| `/404`                                     | Error        | Helpful not-found                                             | BaseLayout | —                                     |
 
 ### Three layout types
 
@@ -314,7 +321,7 @@ import { buildWebAppSchema } from '../lib/schema';
 </ToolLayout>
 ```
 
-Pack-size pages use `defaultAmount: 1000` + a FAQ answering "how much is 1000 Bits". Each variant reads the *same* `bitsConfig` + `bitsToUsd`, so a rate change updates every variant at build automatically.
+Pack-size pages use `defaultAmount: 1000` + a FAQ answering "how much is 1000 Bits". Each variant reads the _same_ `bitsConfig` + `bitsToUsd`, so a rate change updates every variant at build automatically.
 
 **Why variants are pages, not dynamic routes:** Astro static pre-renders each route to fully-formed HTML with variant-specific title/H1/FAQ/canonical — the strongest indexable unit. Per-file variants keep the SEO target (one page = one keyword) physically visible in the repo, making cannibalization easy to audit.
 
@@ -327,7 +334,7 @@ Pack-size pages use `defaultAmount: 1000` + a FAQ answering "how much is 1000 Bi
 `lib/schema.ts` builds four JSON-LD blocks injected per layout:
 
 1. **`WebApplication`** on every tool page — `applicationCategory: 'UtilityApplication'`, `operatingSystem: 'Web'`, `offers: { price: 0 }`.
-2. **`FAQPage`** — generated from `faqs.ts` (single content source → visible FAQ *and* schema, can never drift).
+2. **`FAQPage`** — generated from `faqs.ts` (single content source → visible FAQ _and_ schema, can never drift).
 3. **`BreadcrumbList`** — from the breadcrumbs array per page.
 4. **`Organization` + `WebSite`** on `/`, with `potentialAction` SearchAction.
 
@@ -353,7 +360,7 @@ FAQ content in `faqs.ts` is parameterized by region where relevant (`/twitch-bit
 
 ### Aesthetic & brand rationale
 
-"Clean, fast, trustworthy — not 'gaming bro.' Streamers are professionals." Restraint: near-monochrome dark surface, Twitch purple used sparingly as the single accent, monospace reserved for the numbers that matter, generous spacing. The purple is a *signal*, not a wash.
+"Clean, fast, trustworthy — not 'gaming bro.' Streamers are professionals." Restraint: near-monochrome dark surface, Twitch purple used sparingly as the single accent, monospace reserved for the numbers that matter, generous spacing. The purple is a _signal_, not a wash.
 
 ### Color tokens (Tailwind 4 `@theme`)
 
@@ -430,17 +437,17 @@ Desktop: card centered max-width 480px; reference table + related-tools become a
 
 ### Component-level UX specs
 
-| Primitive | Spec |
-|-----------|------|
-| `NumberInput` | 56px tall, 1.125rem mono, right-aligned, live comma grouping, `aria-label`, `inputmode="decimal"`, autofocus on primary, red ring + message when invalid |
-| `ResultDisplay` | 2.5rem mono, accent/success color, 150ms rAF count-up, `aria-live="polite"` |
-| `Tabs` | pill style, active = accent fill, inactive = surface-2; arrow-key nav, `role="tablist"` |
-| `CopyButton` | full-width mobile, "Copy result" → "Copied ✓" 1.5s, copies `"1000 Bits = $10.00 USD"` |
-| `ShareButton` | builds `?bits=…&region=…` URL, copies, toast "Link copied" |
-| `ReferenceTable` | zebra surface-2 stripes, mono numbers, sticky header, responsive |
-| `AffiliateCTA` | distinct surface-2 card, accent border-left, "Sponsored/affiliate" micro-label, single CTA — placed *after* result |
-| `ThemeToggle` | sun/moon icon, persists to `localStorage`, no-flash via `ThemeScript` |
-| `Tooltip` (ⓘ) | `aria-describedby`, focusable, dismissible — for "viewer cost"/"platform cut" jargon |
+| Primitive        | Spec                                                                                                                                                     |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NumberInput`    | 56px tall, 1.125rem mono, right-aligned, live comma grouping, `aria-label`, `inputmode="decimal"`, autofocus on primary, red ring + message when invalid |
+| `ResultDisplay`  | 2.5rem mono, accent/success color, 150ms rAF count-up, `aria-live="polite"`                                                                              |
+| `Tabs`           | pill style, active = accent fill, inactive = surface-2; arrow-key nav, `role="tablist"`                                                                  |
+| `CopyButton`     | full-width mobile, "Copy result" → "Copied ✓" 1.5s, copies `"1000 Bits = $10.00 USD"`                                                                    |
+| `ShareButton`    | builds `?bits=…&region=…` URL, copies, toast "Link copied"                                                                                               |
+| `ReferenceTable` | zebra surface-2 stripes, mono numbers, sticky header, responsive                                                                                         |
+| `AffiliateCTA`   | distinct surface-2 card, accent border-left, "Sponsored/affiliate" micro-label, single CTA — placed _after_ result                                       |
+| `ThemeToggle`    | sun/moon icon, persists to `localStorage`, no-flash via `ThemeScript`                                                                                    |
+| `Tooltip` (ⓘ)    | `aria-describedby`, focusable, dismissible — for "viewer cost"/"platform cut" jargon                                                                     |
 
 ### Conversion micro-optimizations (plan → components)
 
@@ -470,34 +477,34 @@ Revenue logic is **config, not code**: `affiliateLinks.ts` is the source of trut
 // src/data/affiliateLinks.ts
 export const AFFILIATES = {
   streamlabs: {
-    id: 'streamlabs-ultra',
-    label: 'Streamlabs Ultra',
-    url: 'https://streamlabs.com/...?aff_id=...',
-    disclosure: 'We earn a commission when you sign up for Streamlabs Ultra.',
-    cta: { primary: 'Upgrade your stream', alt: 'Start free trial' },
-    placement: 'after-result',
+    id: "streamlabs-ultra",
+    label: "Streamlabs Ultra",
+    url: "https://streamlabs.com/...?aff_id=...",
+    disclosure: "We earn a commission when you sign up for Streamlabs Ultra.",
+    cta: { primary: "Upgrade your stream", alt: "Start free trial" },
+    placement: "after-result",
   },
   amazon: {
-    id: 'amazon-streaming-gear',
-    label: 'Amazon Associates',
-    url: '...',
-    disclosure: 'As an Amazon Associate we earn from qualifying purchases.',
-    placement: 'blog-only',
+    id: "amazon-streaming-gear",
+    label: "Amazon Associates",
+    url: "...",
+    disclosure: "As an Amazon Associate we earn from qualifying purchases.",
+    placement: "blog-only",
   },
 };
 ```
 
-**Placement:** `AffiliateCTA` renders *after* the result (the attention gap). Calculator pages: Streamlabs only. Blog/gear guides: Amazon Associates. **AdSense deferred** to post-10K sessions — no ad slots wired in v1 (keeps above-the-fold clean, Lighthouse high).
+**Placement:** `AffiliateCTA` renders _after_ the result (the attention gap). Calculator pages: Streamlabs only. Blog/gear guides: Amazon Associates. **AdSense deferred** to post-10K sessions — no ad slots wired in v1 (keeps above-the-fold clean, Lighthouse high).
 
 **A/B-ready CTA:** `AffiliateCTA` accepts a `variant` prop (`'primary' | 'alt'`) so the plan's Week-4 CTA copy test is a prop swap. No A/B backend; round-robin via `localStorage` bucket or hard-swap for now.
 
 ### Legal / trust pages
 
-| Page | Content | Why |
-|------|---------|-----|
-| `/affiliate-disclosure` | FTC-compliant; auto-renders every program in `affiliateLinks.ts` + how commissions work + last-updated date | Required by Streamlabs/Impact + FTC; auto-generated so it never lies |
-| `/privacy` | No-cookies: Cloudflare Web Analytics cookieless; no personal data; query-param share URLs client-only; Tally email note | Minimal but AdSense-ready |
-| `/terms` | Calculators are estimates not financial advice; accuracy disclaimers; rate-update cadence | Liability protection |
+| Page                    | Content                                                                                                                 | Why                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `/affiliate-disclosure` | FTC-compliant; auto-renders every program in `affiliateLinks.ts` + how commissions work + last-updated date             | Required by Streamlabs/Impact + FTC; auto-generated so it never lies |
+| `/privacy`              | No-cookies: Cloudflare Web Analytics cookieless; no personal data; query-param share URLs client-only; Tally email note | Minimal but AdSense-ready                                            |
+| `/terms`                | Calculators are estimates not financial advice; accuracy disclaimers; rate-update cadence                               | Liability protection                                                 |
 
 Footer links all three; every `AffiliateCTA` has a micro "affiliate" label linking to disclosure.
 
@@ -533,13 +540,20 @@ Footer links all three; every `AffiliateCTA` has a micro "affiliate" label linki
 Pure calculator functions are the entire business logic and trivially unit-testable without a DOM — highest leverage.
 
 **`tests/calculators.test.ts` (Vitest):**
+
 ```ts
-expect(bitsToUsd(1000)).toBe(10);          // $0.01/Bits
+expect(bitsToUsd(1000)).toBe(10); // $0.01/Bits
 expect(usdToBits(10)).toBe(1000);
-expect(bitsToUsd(NaN)).toBe(0);             // input guard
+expect(bitsToUsd(NaN)).toBe(0); // input guard
 expect(bitsToUsd(-5)).toBe(0);
-expect(estimateRevenue({subs:{tier1:50,tier2:0,tier3:0,prime:5,gift:0},
-  split:0.5, bits:5000, ads:{cpm:2,minutes:120,viewers:50}}).monthly.total).toMatchSnapshot();
+expect(
+  estimateRevenue({
+    subs: { tier1: 50, tier2: 0, tier3: 0, prime: 5, gift: 0 },
+    split: 0.5,
+    bits: 5000,
+    ads: { cpm: 2, minutes: 120, viewers: 50 },
+  }).monthly.total,
+).toMatchSnapshot();
 ```
 
 - **Snapshot tests** on output objects lock the math when rates are edited — a snapshot diff in review is exactly the "rate change propagated as expected" (or "oops") signal.
@@ -550,11 +564,11 @@ expect(estimateRevenue({subs:{tier1:50,tier2:0,tier3:0,prime:5,gift:0},
 
 ### Build sequence (3-day sprint)
 
-| Day | Build | Verifiable outcome |
-|-----|-------|--------------------|
-| **1** | Scaffold Astro 6 + Tailwind 4; `data/bitsConfig.ts` + `lib/calculators/bits.ts`; `LinearConverter.astro` + primitives; `ToolLayout` + `/twitch-bits-to-usd`; `ThemeScript`; Vitest on bits fn; deploy to `*.pages.dev` | Live hero calculator, math unit-tested, dark mode no-flash |
-| **2** | `RevenueCalculator` + `TiktokCalculator` (wrapper over `LinearConverter`) + `YoutubeCalculator`; `RelatedTools`; `lib/schema.ts`; `faqs.ts`; region + pack-size variants; blog content collection + 3 cornerstone posts | 4-tool hub + variants + blog, all with schema |
-| **3** | `AffiliateCTA` + `affiliateLinks.ts` + auto-rendered `/affiliate-disclosure`; `/privacy` `/terms` `/404`; Cloudflare Web Analytics; custom domain; sitemap to Search Console + Bing; Lighthouse pass | Production hub, legally compliant, indexed |
+| Day   | Build                                                                                                                                                                                                                   | Verifiable outcome                                         |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| **1** | Scaffold Astro 6 + Tailwind 4; `data/bitsConfig.ts` + `lib/calculators/bits.ts`; `LinearConverter.astro` + primitives; `ToolLayout` + `/twitch-bits-to-usd`; `ThemeScript`; Vitest on bits fn; deploy to `*.pages.dev`  | Live hero calculator, math unit-tested, dark mode no-flash |
+| **2** | `RevenueCalculator` + `TiktokCalculator` (wrapper over `LinearConverter`) + `YoutubeCalculator`; `RelatedTools`; `lib/schema.ts`; `faqs.ts`; region + pack-size variants; blog content collection + 3 cornerstone posts | 4-tool hub + variants + blog, all with schema              |
+| **3** | `AffiliateCTA` + `affiliateLinks.ts` + auto-rendered `/affiliate-disclosure`; `/privacy` `/terms` `/404`; Cloudflare Web Analytics; custom domain; sitemap to Search Console + Bing; Lighthouse pass                    | Production hub, legally compliant, indexed                 |
 
 Post-launch (week 1, marketing not code): Streamlabs links live, Product Hunt + Reddit + X posts, first cornerstone post promoted.
 
@@ -569,13 +583,13 @@ Post-launch (week 1, marketing not code): Streamlabs links live, Product Hunt + 
 
 ### Risks revisited (architecture's response)
 
-| Plan risk | Architecture response |
-|-----------|----------------------|
-| Twitch changes Bits economics | One-line edit in `bitsConfig.ts`; pure fns + every variant re-render at build |
-| Affiliate program terms change | One-line edit in `affiliateLinks.ts`; disclosure auto-re-renders |
-| Competitors outrank | Programmatic variants + FAQ schema + speed + shareable URLs |
-| Low conversion rate | A/B-ready `AffiliateCTA` variant prop; CTA after result |
-| Seasonality | 4-tool hub spans Twitch/TikTok/YouTube already |
+| Plan risk                      | Architecture response                                                         |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| Twitch changes Bits economics  | One-line edit in `bitsConfig.ts`; pure fns + every variant re-render at build |
+| Affiliate program terms change | One-line edit in `affiliateLinks.ts`; disclosure auto-re-renders              |
+| Competitors outrank            | Programmatic variants + FAQ schema + speed + shareable URLs                   |
+| Low conversion rate            | A/B-ready `AffiliateCTA` variant prop; CTA after result                       |
+| Seasonality                    | 4-tool hub spans Twitch/TikTok/YouTube already                                |
 
 ---
 

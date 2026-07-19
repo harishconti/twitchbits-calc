@@ -2,7 +2,15 @@
 interface Props { id?: string; label?: string; }
 const { id = 'share', label = 'Share link' } = Astro.props;
 ---
-<button id={id} type="button" class="share-btn" data-share>{label}</button>
+<button id={id} type="button" class="btn btn-primary" data-share>{label}</button>
 <style>
-  .share-btn { padding:.75rem 1.25rem; border-radius:8px; border:1px solid var(--color-accent); background:var(--color-accent); color:#fff; cursor:pointer; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 var(--spacing-5);
+    border: 1px solid transparent; border-radius: var(--radius-md); font: 700 var(--text-sm) / 1 var(--font-body);
+    color: inherit; text-decoration: none; cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .btn:focus-visible { outline: none; box-shadow: var(--shadow-focus-ring); }
+  .btn-primary { background: var(--color-accent); color: var(--color-accent-on); }
+  .btn-primary:hover { background: var(--color-accent-hover); transform: translateY(-1px); }
 </style>

@@ -1,4 +1,4 @@
-import { COIN_TO_USD, DIAMOND_TO_USD, COIN_BULK } from '../../data/coinConfig';
+import { COIN_TO_USD, DIAMOND_TO_USD, COIN_BULK } from "../../data/coinConfig";
 
 export function coinsToUsd(coins: number): number {
   if (!Number.isFinite(coins) || coins < 0) return 0;

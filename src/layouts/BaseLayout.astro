@@ -7,7 +7,7 @@ interface Props { title: string; description: string; canonical?: string; ogImag
 const props = Astro.props;
 ---
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
   <head>
     <Base {...props} />
   </head>
@@ -20,5 +20,5 @@ const props = Astro.props;
   </body>
 </html>
 <style>
-  .main { max-width:1080px; margin:0 auto; padding:1.5rem 1.25rem; }
+  .main { width: 100%; }
 </style>
