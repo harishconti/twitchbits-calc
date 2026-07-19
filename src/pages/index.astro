@@ -1,7 +1,10 @@
 ---
-import '../styles/global.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../lib/site';
 ---
-<html lang="en">
-  <head><meta charset="utf-8" /><title>Twitch Bits Calculator</title></head>
-  <body><main><h1>Hub landing (placeholder)</h1></main></body>
-</html>
+<BaseLayout title={`${SITE.name} — ${SITE.tagline}`} description={SITE.tagline}>
+  <section>
+    <h1>{SITE.tagline}</h1>
+    <p>Know exactly what you earn — Twitch, TikTok, and YouTube.</p>
+  </section>
+</BaseLayout>
