@@ -1,0 +1,22 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import LinearConverter from '../components/calculators/LinearConverter.astro';
+import { bitsToUsd, usdToBits, bulkTable } from '../lib/calculators/bits';
+import { BULK_TABLE, VIEWER_PACKS, REGIONS } from '../data/bitsConfig';
+import { bitsFaqs } from '../data/faqs';
+const region = REGIONS.ca;
+---
+<ToolLayout
+  title="Twitch Bits to CAD Calculator"
+  description={`Convert Twitch Bits to Canadian Dollars (CAD). See streamer payout and viewer cost at the ${region.rate}:1 USD rate.`}
+  slug="twitch-bits-to-cad"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: '/twitch-bits-to-cad' }]}
+  faqs={bitsFaqs('ca')}
+>
+  <LinearConverter config={{
+    tool: 'bits', unitName: 'Bits', paramKey: 'bits', region: 'ca', currency: 'CAD',
+    toUsd: (n) => bitsToUsd(n, 'ca'), fromUsd: (u) => usdToBits(u, 'ca'),
+    bulkRows: BULK_TABLE, toBulkRows: (rows) => bulkTable(rows, 'ca'),
+    viewerContext: { perUnitCostUsd: VIEWER_PACKS[0].perBitUsd, label: 'Viewer pays' },
+  }} />
+</ToolLayout>

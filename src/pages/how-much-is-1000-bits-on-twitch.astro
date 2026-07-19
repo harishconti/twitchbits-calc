@@ -1,0 +1,21 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import LinearConverter from '../components/calculators/LinearConverter.astro';
+import { bitsToUsd, usdToBits, bulkTable } from '../lib/calculators/bits';
+import { BULK_TABLE, VIEWER_PACKS } from '../data/bitsConfig';
+import { bitsFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="How Much Is 1000 Bits on Twitch?"
+  description="1000 Bits on Twitch equals $10.00 USD for the streamer. See the full breakdown, viewer cost, and bulk reference table."
+  slug="how-much-is-1000-bits-on-twitch"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: '/how-much-is-1000-bits-on-twitch' }]}
+  faqs={bitsFaqs('us')}
+>
+  <LinearConverter config={{
+    tool: 'bits', unitName: 'Bits', paramKey: 'bits',
+    toUsd: bitsToUsd, fromUsd: usdToBits, defaultAmount: 1000,
+    bulkRows: BULK_TABLE, toBulkRows: (rows) => bulkTable(rows),
+    viewerContext: { perUnitCostUsd: VIEWER_PACKS[0].perBitUsd, label: 'Viewer pays' },
+  }} />
+</ToolLayout>
