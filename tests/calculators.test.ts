@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { bitsToUsd, usdToBits, bulkTable } from '../src/lib/calculators/bits';
 import { estimateRevenue } from '../src/lib/calculators/revenue';
+import { coinsToUsd, diamondsToUsd, usdToCoins } from '../src/lib/calculators/tiktok';
 
 describe('bits calculator', () => {
   it('converts bits to USD at $0.01/Bits', () => {
@@ -51,5 +52,20 @@ describe('revenue calculator', () => {
 
   it('snapshots a typical partner estimate', () => {
     expect(estimateRevenue({ subs: { tier1: 200, tier2: 10, tier3: 2, prime: 20, gift: 5 }, split: 0.7, bits: 50000, ads: { cpm: 4, minutes: 300, viewers: 150 } })).toMatchSnapshot();
+  });
+});
+
+describe('tiktok calculator', () => {
+  it('converts coins to USD at the creator payout rate', () => {
+    // 1 coin ≈ $0.0105 viewer cost; creator earns ~half via diamonds.
+    expect(coinsToUsd(1000)).toBeGreaterThan(0);
+    expect(usdToCoins(coinsToUsd(1000))).toBe(1000);
+  });
+  it('diamonds to USD', () => {
+    expect(diamondsToUsd(1000)).toBeCloseTo(5, 0); // ~$0.005/diamond
+  });
+  it('guards bad input', () => {
+    expect(coinsToUsd(-1)).toBe(0);
+    expect(diamondsToUsd(NaN)).toBe(0);
   });
 });

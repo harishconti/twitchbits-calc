@@ -24,7 +24,7 @@ export const revenueFaqs = [
 export const tiktokFaqs = [
   { q: 'How much is a TikTok coin worth in USD for creators?', a: 'Creators earn diamonds from gifts; each diamond is typically worth about $0.005, and coins convert to diamonds at roughly a 2:1 ratio.' },
   { q: 'What are TikTok diamonds?', a: 'Diamonds are the creator-facing unit. When a viewer sends a gift bought with coins, the creator receives diamonds, redeemable for cash.' },
-  { q: 'How much does TikTok take?', a: 'Twitch-style: TikTok keeps roughly 50% of the coin value; creators receive the remainder as diamonds.' },
+  { q: 'How much does TikTok take?', a: 'TikTok keeps roughly 50% of the coin value; creators receive the remainder as diamonds.' },
   { q: 'Is the TikTok coin rate the same in every country?', a: 'No. Coin prices and payout rates vary by region and currency; this calculator uses approximate USD rates.' },
   { q: 'How do I withdraw TikTok diamonds?', a: 'Diamonds are converted to cash once you meet the minimum withdrawal threshold and link a supported payment method.' },
 ];

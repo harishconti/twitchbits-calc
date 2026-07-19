@@ -62,11 +62,12 @@ const rows = config.toBulkRows(config.bulkRows);
   // `npm run build`. Each tool is wired in the task that creates its calculator.
   import { initLinearConverter } from '../../scripts/calculator-behavior';
   import { bitsToUsd, usdToBits } from '../../lib/calculators/bits';
+  import { coinsToUsd, usdToCoins } from '../../lib/calculators/tiktok';
   const root = document.querySelector('[data-tool]');
   const meta = JSON.parse(document.getElementById('__lc_config__')?.textContent ?? '{}');
   const FNS = {
     bits: { toUsd: bitsToUsd, fromUsd: usdToBits },
-    // tiktok: { toUsd: coinsToUsd, fromUsd: usdToCoins },   // added in Task 13
+    tiktok: { toUsd: coinsToUsd, fromUsd: usdToCoins },
   };
   const fns = FNS[meta.tool];
   if (!fns) throw new Error(`LinearConverter: no functions registered for tool "${meta.tool}"`);

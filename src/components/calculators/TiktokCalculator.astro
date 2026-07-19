@@ -1,0 +1,10 @@
+---
+import LinearConverter from './LinearConverter.astro';
+import { coinsToUsd, usdToCoins, coinsBulkTable } from '../../lib/calculators/tiktok';
+import { COIN_BULK } from '../../data/coinConfig';
+---
+<LinearConverter config={{
+  tool: 'tiktok', unitName: 'TikTok Coins', paramKey: 'coins',
+  toUsd: coinsToUsd, fromUsd: usdToCoins,
+  bulkRows: COIN_BULK, toBulkRows: (rows) => coinsBulkTable(rows),
+}} />
