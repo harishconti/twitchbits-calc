@@ -1,0 +1,13 @@
+---
+interface Props { id: string; text: string; }
+const { id, text } = Astro.props;
+---
+<span class="tooltip">
+  <button type="button" aria-describedby={id} aria-label="More info">ⓘ</button>
+  <span role="tooltip" id={id} class="tip">{text}</span>
+</span>
+<style>
+  .tooltip { position:relative; display:inline-block; }
+  .tip { position:absolute; bottom:1.4em; left:50%; transform:translateX(-50%); background:var(--color-surface-2); border:1px solid var(--color-border); padding:.4rem .6rem; border-radius:6px; font-size:.75rem; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .15s; }
+  .tooltip:focus-within .tip, .tooltip:hover .tip { opacity:1; }
+</style>

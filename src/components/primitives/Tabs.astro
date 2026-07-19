@@ -1,0 +1,14 @@
+---
+interface Props { id: string; tabs: string[]; active?: number; }
+const { id, tabs, active = 0 } = Astro.props;
+---
+<div class="tabs" role="tablist" data-tabs={id}>
+  {tabs.map((t, i) => (
+    <button role="tab" type="button" aria-selected={i === active ? 'true' : 'false'} data-tab-index={i} class={i === active ? 'tab active' : 'tab'}>{t}</button>
+  ))}
+</div>
+<style>
+  .tabs { display:inline-flex; gap:.25rem; background:var(--color-surface-2); border-radius:8px; padding:.25rem; }
+  .tab { padding:.5rem 1rem; border:none; background:transparent; color:var(--color-text-muted); border-radius:6px; cursor:pointer; font:inherit; }
+  .tab.active { background:var(--color-accent); color:#fff; }
+</style>

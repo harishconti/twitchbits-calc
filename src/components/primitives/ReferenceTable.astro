@@ -1,0 +1,18 @@
+---
+interface Props { rows: { bits: number; usd: number }[]; currency?: string; }
+const { rows, currency = 'USD' } = Astro.props;
+---
+<table class="ref-table">
+  <thead><tr><th>Bits</th><th>{currency}</th></tr></thead>
+  <tbody>
+    {rows.map(r => (
+      <tr><td class="mono">{r.bits.toLocaleString('en-US')}</td><td class="mono">{r.usd.toLocaleString('en-US',{style:'currency',currency})}</td></tr>
+    ))}
+  </tbody>
+</table>
+<style>
+  .ref-table { width:100%; border-collapse:collapse; margin-top:1rem; }
+  .ref-table th, .ref-table td { padding:.5rem .75rem; text-align:right; border-bottom:1px solid var(--color-border); }
+  .ref-table thead th { color:var(--color-text-muted); font-weight:600; }
+  .ref-table tbody tr:nth-child(even) { background:var(--color-surface-2); }
+</style>
