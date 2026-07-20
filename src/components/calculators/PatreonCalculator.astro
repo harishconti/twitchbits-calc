@@ -1,0 +1,156 @@
+---
+import { estimatePatreonRevenue, patreonPatronsForGoal } from '../../lib/calculators/patreon';
+import { PATREON_PLAN_PRESETS, PATREON_PROCESSING_DEFAULT, PATREON_TIER_DEFAULTS } from '../../data/patreonConfig';
+import { formatCurrency } from '../../lib/format';
+import RangeSlider from '../primitives/RangeSlider.astro';
+---
+<form class="patreon-calc" data-tool="patreon-revenue">
+  <div class="tiers">
+    <fieldset class="panel-mini">
+      <legend>Tier 1</legend>
+      <label>Patrons
+        <RangeSlider id="t1-patrons" label="" min={0} max={5000} step={1} value={PATREON_TIER_DEFAULTS.tier1.patrons} compact />
+      </label>
+      <label>Price ($)
+        <RangeSlider id="t1-price" label="" min={0} max={100} step={1} value={PATREON_TIER_DEFAULTS.tier1.price} prefix="$" compact />
+      </label>
+    </fieldset>
+    <fieldset class="panel-mini">
+      <legend>Tier 2</legend>
+      <label>Patrons
+        <RangeSlider id="t2-patrons" label="" min={0} max={5000} step={1} value={PATREON_TIER_DEFAULTS.tier2.patrons} compact />
+      </label>
+      <label>Price ($)
+        <RangeSlider id="t2-price" label="" min={0} max={100} step={1} value={PATREON_TIER_DEFAULTS.tier2.price} prefix="$" compact />
+      </label>
+    </fieldset>
+    <fieldset class="panel-mini">
+      <legend>Tier 3</legend>
+      <label>Patrons
+        <RangeSlider id="t3-patrons" label="" min={0} max={5000} step={1} value={PATREON_TIER_DEFAULTS.tier3.patrons} compact />
+      </label>
+      <label>Price ($)
+        <RangeSlider id="t3-price" label="" min={0} max={100} step={1} value={PATREON_TIER_DEFAULTS.tier3.price} prefix="$" compact />
+      </label>
+    </fieldset>
+  </div>
+
+  <label class="plan-row">Plan
+    <select data-plan>
+      {PATREON_PLAN_PRESETS.map(p => <option value={p.value} selected={p.value === 'standard'}>{p.label}</option>)}
+    </select>
+  </label>
+  <p class="processing-line">Processing: {(PATREON_PROCESSING_DEFAULT.percent * 100).toFixed(1)}% + {formatCurrency(PATREON_PROCESSING_DEFAULT.fixedPerTransaction, "USD")}/pledge</p>
+
+  <div class="result" data-result aria-live="polite">$0.00 / month</div>
+  <div class="sub" data-subresult></div>
+
+  <div class="breakdown" data-breakdown>
+    <strong>Where your money goes</strong>
+    <div class="breakdown-grid" data-breakdown-grid></div>
+  </div>
+
+  <div class="goal-calc" data-goal>
+    <label>Tier
+      <select data-goal-tier>
+        <option value="tier1" selected>Tier 1</option>
+        <option value="tier2">Tier 2</option>
+        <option value="tier3">Tier 3</option>
+      </select>
+    </label>
+    <label>Monthly goal ($)
+      <input type="number" min="0" data-goal-input value="1000" />
+    </label>
+    <p data-goal-output>At the Standard plan you need ~<strong>247</strong> $5 patrons/month.</p>
+  </div>
+</form>
+<script>
+  import { estimatePatreonRevenue, patreonPatronsForGoal } from '../../lib/calculators/patreon';
+  import { formatCurrency } from '../../lib/format';
+  import { PATREON_PLAN_PRESETS } from '../../data/patreonConfig';
+
+  const form = document.querySelector('[data-tool="patreon-revenue"]') as HTMLFormElement;
+  const sliderValue = (id: string) => Number(form.querySelector(`[data-range-slider="${id}"]`)?.dataset.value ?? 0);
+
+  const tierPriceSlider = (tierKey: string) =>
+    tierKey === 'tier1' ? 't1-price' : tierKey === 'tier2' ? 't2-price' : 't3-price';
+
+  const read = () => ({
+    tiers: {
+      tier1: { patrons: sliderValue('t1-patrons'), price: sliderValue('t1-price') },
+      tier2: { patrons: sliderValue('t2-patrons'), price: sliderValue('t2-price') },
+      tier3: { patrons: sliderValue('t3-patrons'), price: sliderValue('t3-price') },
+    },
+    plan: (form.querySelector('[data-plan]') as HTMLSelectElement)?.value ?? 'standard',
+  });
+
+  const render = () => {
+    const r = estimatePatreonRevenue(read());
+    form.querySelector('[data-result]')!.textContent = `${formatCurrency(r.net, 'USD')} / month`;
+    form.querySelector('[data-subresult]')!.textContent = `≈ ${formatCurrency(r.annual, 'USD')} / year · ${(r.effectiveRate * 100).toFixed(1)}% in fees`;
+
+    const grid = form.querySelector('[data-breakdown-grid]') as HTMLElement;
+    const rows = [
+      { label: 'Gross', value: r.gross },
+      { label: 'Platform fee', value: r.platformFee },
+      { label: 'Processing fee', value: r.processingFee },
+      { label: 'Net', value: r.net },
+      { label: 'Tier 1 net', value: r.perTier.tier1 },
+      { label: 'Tier 2 net', value: r.perTier.tier2 },
+      { label: 'Tier 3 net', value: r.perTier.tier3 },
+    ];
+    grid.innerHTML = rows.map(row => `
+      <div class="breakdown-cell">
+        <span>${row.label}</span>
+        <strong>${formatCurrency(row.value, 'USD')}</strong>
+      </div>
+    `).join('');
+
+    renderGoal();
+  };
+
+  const renderGoal = () => {
+    const goal = Number((form.querySelector('[data-goal-input]') as HTMLInputElement)?.value ?? 0);
+    const plan = (form.querySelector('[data-plan]') as HTMLSelectElement)?.value ?? 'standard';
+    const tierKey = (form.querySelector('[data-goal-tier]') as HTMLSelectElement)?.value ?? 'tier1';
+    const price = sliderValue(tierPriceSlider(tierKey));
+    const needed = patreonPatronsForGoal(goal, price, plan);
+    const planLabel = PATREON_PLAN_PRESETS.find(p => p.value === plan)?.label ?? 'Standard 10% (new creators)';
+    form.querySelector('[data-goal-output]')!.innerHTML = `At the ${planLabel} you need <strong>${needed.toLocaleString()}</strong> ${formatCurrency(price, 'USD')} patrons/month to hit ${formatCurrency(goal, 'USD')}.`;
+  };
+
+  form.querySelectorAll('[data-range-slider]').forEach(slider => {
+    slider.addEventListener('input', render);
+  });
+  form.querySelector('[data-plan]')?.addEventListener('change', render);
+  form.querySelector('[data-goal-tier]')?.addEventListener('change', renderGoal);
+  form.querySelector('[data-goal-input]')?.addEventListener('input', renderGoal);
+
+  render();
+</script>
+<style>
+  .patreon-calc { display: flex; flex-direction: column; gap: var(--spacing-6); }
+  .tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--spacing-4); }
+  .panel-mini { border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); padding: var(--spacing-4); display: grid; gap: var(--spacing-4); }
+  legend { font-weight: 800; font-size: var(--text-sm); color: var(--color-fg); padding: 0 var(--spacing-2); }
+  label { display: grid; gap: var(--spacing-2); color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
+  .plan-row { display: grid; gap: var(--spacing-2); color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
+  select { width: 100%; min-height: 44px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+  select:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .processing-line { color: var(--color-muted); font-size: var(--text-sm); margin: 0; }
+  .result { font-family: var(--font-mono); font-size: clamp(28px, 4vw, 48px); font-weight: 700; color: var(--color-accent); line-height: var(--leading-tight); white-space: nowrap; }
+  .sub { color: var(--color-muted); font-size: var(--text-sm); }
+  .breakdown { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); }
+  .breakdown strong { font-size: var(--text-sm); color: var(--color-fg); }
+  .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--spacing-3); }
+  .breakdown-cell { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); }
+  .breakdown-cell span { font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
+  .breakdown-cell strong { font-family: var(--font-mono); font-size: var(--text-base); color: var(--color-fg); }
+  .goal-calc { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: var(--spacing-4); align-items: center; padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); }
+  .goal-calc label { margin: 0; }
+  .goal-calc input { width: 100%; min-height: 44px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; }
+  .goal-calc input:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .goal-calc p { color: var(--color-fg-2); font-size: var(--text-sm); margin: 0; }
+  .goal-calc p strong { color: var(--color-accent); }
+  @media (max-width: 860px) { .tiers, .goal-calc { grid-template-columns: 1fr; } }
+</style>

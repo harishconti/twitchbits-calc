@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import PatreonCalculator from '../components/calculators/PatreonCalculator.astro';
+import { patreonRevenueFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="Patreon Revenue Calculator"
+  description="Estimate Patreon take-home from membership tiers after Patreon's plan fee and per-transaction processing. See effective fee rate by tier."
+  slug="patreon-revenue-calculator"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Patreon Tools', url: '/patreon-revenue-calculator' }]}
+  faqs={patreonRevenueFaqs}
+>
+  <PatreonCalculator />
+</ToolLayout>

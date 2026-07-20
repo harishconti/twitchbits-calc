@@ -194,3 +194,26 @@ export const adRevenueFaqs = [
     a: "The Twitch Revenue Calculator estimates your full income mix (subs + Bits + ads). This tool focuses only on ad earnings with finer ad-slot inputs (ads per hour, streams per month).",
   },
 ];
+
+export const patreonRevenueFaqs = [
+  {
+    q: "How much does Patreon take from creators?",
+    a: "New creators (published after August 4, 2025) pay a flat 10% platform fee. Legacy creators may still be on Lite (5%), Pro (8%), or Premium (12%) if their page stayed continuously published.",
+  },
+  {
+    q: "What are Patreon's payment processing fees?",
+    a: "On the Standard plan, processing is 2.9% + $0.30 per pledge (USD credit card/PayPal). The fixed $0.30 hits low-tier pledges harder — a $5 pledge loses about 19% effective, a $25 pledge about 5%.",
+  },
+  {
+    q: "How is Patreon revenue calculated?",
+    a: "Monthly take-home = Σ (patrons × tier price) − platform fee (plan % of gross) − processing fee (2.9% of gross + $0.30 per pledge). Annual is monthly × 12.",
+  },
+  {
+    q: "Do Patreon payouts include taxes?",
+    a: "No. These estimates are pre-tax. VAT/GST/sales tax may apply on the platform fee in some regions, and you handle your own income tax on payouts.",
+  },
+  {
+    q: "How many patrons do I need to hit a monthly goal?",
+    a: "The goal calc solves for patrons at one tier's price after fees. At the Standard plan with $5 tiers, each patron nets about $4.06, so $1,000/month needs roughly 247 patrons.",
+  },
+];

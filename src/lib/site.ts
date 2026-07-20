@@ -54,4 +54,10 @@ export const TOOLS = [
     short: "Ad Rev",
     desc: "Estimate Twitch ad revenue from CPM, viewers, and ad slots.",
   },
+  {
+    slug: "patreon-revenue-calculator",
+    name: "Patreon Revenue Calculator",
+    short: "Patreon",
+    desc: "Estimate Patreon take-home by tier after plan fee + processing.",
+  },
 ] as const;
