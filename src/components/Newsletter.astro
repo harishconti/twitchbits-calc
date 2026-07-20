@@ -1,19 +1,126 @@
 ---
-// Replace data-tally-src with your Tally form URL when created.
+import { NEWSLETTER } from "../data/newsletterConfig";
 ---
 <aside class="newsletter" aria-label="Newsletter signup">
   <div class="newsletter-inner">
-    <h2>Get new creator tools + monetization tips</h2>
-    <p>Occasional emails. No spam. Unsubscribe anytime.</p>
-    <iframe src="about:blank" data-tally-src="https://tally.so/embed/REPLACE" loading="lazy" width="100%" height="240" frameborder="0" marginheight="0" marginwidth="0" title="Newsletter"></iframe>
+    <h2>{NEWSLETTER.heading}</h2>
+    <p>{NEWSLETTER.body}</p>
+    <form class="newsletter-form" data-newsletter action="/api/subscribe" method="POST">
+      <div class="email-row">
+        <label for="newsletter-email">{NEWSLETTER.emailLabel}</label>
+        <input
+          id="newsletter-email"
+          type="email"
+          name="email"
+          inputmode="email"
+          autocomplete="email"
+          placeholder={NEWSLETTER.emailPlaceholder}
+          required
+        />
+        <button type="submit" class="cta" data-newsletter-submit>
+          {NEWSLETTER.ctaLabel}
+        </button>
+      </div>
+      <label class="consent">
+        <input type="checkbox" name="consent" value="true" required />
+        <span>{NEWSLETTER.consentLabel}</span>
+      </label>
+      <a class="privacy-link" href={NEWSLETTER.privacyUrl}>Read our Privacy Policy</a>
+      <input
+        type="text"
+        name={NEWSLETTER.honeypotField}
+        class="hp"
+        tabindex="-1"
+        autocomplete="off"
+        aria-hidden="true"
+      />
+      <input type="hidden" name="source" value={NEWSLETTER.source} />
+      <p class="newsletter-status" data-newsletter-status role="status" aria-live="polite" hidden></p>
+    </form>
   </div>
 </aside>
+<script>
+  const ERROR_COPY: Record<string, string> = {
+    "invalid-input": "Please check your details and try again.",
+    "consent-required": "Please tick the consent box to subscribe.",
+    "invalid-email": "That email doesn't look right — try again.",
+    "rate-limited": "Too many attempts — please wait a minute and try again.",
+    "bad-request": "We couldn't read your submission — try again.",
+    "not-configured": "Newsletter signup isn't configured right now.",
+    "upstream-error": "Something went wrong — try again shortly.",
+  };
+
+  function initNewsletter(root: HTMLFormElement) {
+    const status = root.querySelector<HTMLElement>("[data-newsletter-status]");
+    const submit = root.querySelector<HTMLButtonElement>(
+      "[data-newsletter-submit]",
+    );
+    if (!status || !submit) return;
+
+    const setStatus = (msg: string, isError = false) => {
+      status.textContent = msg;
+      status.hidden = !msg;
+      status.dataset.error = isError ? "true" : "false";
+    };
+
+    root.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = new FormData(root);
+      const payload: Record<string, unknown> = {};
+      for (const [k, v] of data.entries()) payload[k] = v;
+      submit.disabled = true;
+      setStatus("Subscribing…");
+      try {
+        const res = await fetch("/api/subscribe", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        const body = (await res.json()) as { ok: boolean; error?: string };
+        if (!res.ok || !body.ok) {
+          setStatus(
+            ERROR_COPY[body.error ?? ""] ??
+              "Something went wrong — try again.",
+            true,
+          );
+        } else {
+          setStatus("You're subscribed. Watch the site for new tools and tips.");
+          root.reset();
+        }
+      } catch {
+        setStatus("Network error — try again.", true);
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  }
+
+  document
+    .querySelectorAll<HTMLFormElement>("[data-newsletter]")
+    .forEach(initNewsletter);
+</script>
 <style>
   .newsletter { padding-block: var(--section-y-phone); }
   .newsletter-inner { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); padding: var(--spacing-6); }
   h2 { font-size: var(--text-2xl); font-weight: 800; margin-bottom: var(--spacing-3); }
   p { color: var(--color-muted); font-size: var(--text-base); margin-bottom: var(--spacing-4); }
-  iframe { border-radius: var(--radius-sm); background: var(--color-bg); }
+  .newsletter-form { display: flex; flex-direction: column; gap: var(--spacing-3); }
+  .email-row { display: flex; flex-wrap: wrap; gap: var(--spacing-2); align-items: end; }
+  .email-row label { flex-basis: 100%; color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
+  .email-row input { flex: 1 1 240px; min-height: 40px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; }
+  .email-row input:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .cta { padding: 0 var(--spacing-4); min-height: 40px; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); background: var(--color-accent); color: var(--color-accent-on); font: 700 var(--text-sm)/1 var(--font-body); cursor: pointer; }
+  .cta:hover { filter: brightness(1.05); }
+  .cta:disabled { opacity: 0.6; cursor: progress; }
+  .consent { display: flex; gap: var(--spacing-2); align-items: start; font-size: var(--text-sm); color: var(--color-fg-2); }
+  .consent input { margin-top: 0.15em; }
+  .privacy-link { font-size: var(--text-sm); color: var(--color-accent); }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .newsletter-status { font-size: var(--text-sm); color: var(--color-muted); }
+  .newsletter-status[data-error="true"] { color: var(--color-fg); }
   @media (min-width: 640px) { .newsletter { padding-block: var(--section-y-tablet); } }
   @media (min-width: 1024px) { .newsletter { padding-block: var(--section-y-desktop); } }
 </style>
