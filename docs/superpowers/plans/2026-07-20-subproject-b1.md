@@ -45,7 +45,7 @@
 
 ---
 
-## Task B1-1: Kick config + pure calculator + tests
+## Task 1: Kick config + pure calculator + tests
 
 **Files:**
 - Create: `src/data/kickConfig.ts`
@@ -321,7 +321,7 @@ EOF
 
 ---
 
-## Task B1-2: Kick island + page + registry + FAQs
+## Task 2: Kick island + page + registry + FAQs
 
 **Files:**
 - Create: `src/components/calculators/KickRevenueCalculator.astro`
@@ -594,7 +594,7 @@ EOF
 
 ---
 
-## Task B1-3: Ad config defaults + pure ad calculator + tests
+## Task 3: Ad config defaults + pure ad calculator + tests
 
 **Files:**
 - Modify: `src/data/adConfig.ts` (append `AD_INPUT_DEFAULTS`; existing exports untouched)
@@ -786,7 +786,7 @@ EOF
 
 ---
 
-## Task B1-4: Ad island + page + registry + FAQs
+## Task 4: Ad island + page + registry + FAQs
 
 **Files:**
 - Create: `src/components/calculators/AdRevenueCalculator.astro`
