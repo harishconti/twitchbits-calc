@@ -102,9 +102,13 @@ async function getTwitchToken(env: Env): Promise<string> {
   const body = (await res.json()) as { access_token?: string };
   if (!body.access_token) throw new UpstreamError("twitch-token");
   // Cache ~50 days (token lives ~60 days); refresh on 401 at call sites.
-  await env.CHANNEL_CACHE.put(KV_KEYS.twitchAppToken, body.access_token, {
-    expirationTtl: 50 * 24 * 60 * 60,
-  });
+  try {
+    await env.CHANNEL_CACHE.put(KV_KEYS.twitchAppToken, body.access_token, {
+      expirationTtl: 50 * 24 * 60 * 60,
+    });
+  } catch {
+    // Token cache write failure is non-fatal; return the token uncached.
+  }
   return body.access_token;
 }
 
@@ -126,7 +130,11 @@ async function liveTwitch(
   );
   if (usersRes.status === 401) {
     // token expired — purge and surface a retryable error
-    await env.CHANNEL_CACHE.delete(KV_KEYS.twitchAppToken);
+    try {
+      await env.CHANNEL_CACHE.delete(KV_KEYS.twitchAppToken);
+    } catch {
+      // Purge failure is non-fatal; the expired token will simply be re-fetched.
+    }
     throw new UpstreamError("twitch-token");
   }
   if (usersRes.status === 429) throw new UpstreamError("quota-exceeded");
