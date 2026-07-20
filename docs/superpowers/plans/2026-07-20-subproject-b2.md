@@ -351,7 +351,8 @@ export function estimatePatreonRevenue(
     // per pledge: price * percent + fixed; summed over patrons ->
     // tierGross * percent + patrons * fixed
     const tierProcessing =
-      tierGross * processing.percent + t.patrons * processing.fixedPerTransaction;
+      tierGross * processing.percent +
+      t.patrons * processing.fixedPerTransaction;
     const tierNet = tierGross - tierPlatform - tierProcessing;
     gross += tierGross;
     platformFee += tierPlatform;
@@ -362,21 +363,34 @@ export function estimatePatreonRevenue(
   if (net < 0) net = 0;
   const annual = net * 12;
   const effectiveRate = gross > 0 ? (gross - net) / gross : 0;
-  return { gross, platformFee, processingFee, net, annual, effectiveRate, perTier };
+  return {
+    gross,
+    platformFee,
+    processingFee,
+    net,
+    annual,
+    effectiveRate,
+    perTier,
+  };
 }
 
 export function patreonPatronsForGoal(
   goalUsd: number,
   tierPrice: number,
   plan: keyof typeof PATREON_PLAN_RATES,
-  processing: { percent: number; fixedPerTransaction: number } = PATREON_PROCESSING_DEFAULT,
+  processing: {
+    percent: number;
+    fixedPerTransaction: number;
+  } = PATREON_PROCESSING_DEFAULT,
 ): number {
   if (!Number.isFinite(goalUsd) || goalUsd <= 0) return 0;
   const price = g(tierPrice);
   if (price <= 0) return 0;
   const planRate = PATREON_PLAN_RATES[plan] ?? PATREON_PLAN_RATES.standard;
   const netPerPatron =
-    price - price * planRate - (price * processing.percent + processing.fixedPerTransaction);
+    price -
+    price * planRate -
+    (price * processing.percent + processing.fixedPerTransaction);
   if (netPerPatron <= 0) return 0;
   return Math.ceil(goalUsd / netPerPatron);
 }
@@ -759,18 +773,30 @@ Append this `describe` block at the end of the file (after the `patreon revenue 
 ```ts
 describe("spotify royalties calculator", () => {
   it("computes gross = streams x rate, net = gross x share/100 for US", () => {
-    const r = estimateSpotifyRoyalties({ streams: 100000, region: "us", creatorShare: 70 });
+    const r = estimateSpotifyRoyalties({
+      streams: 100000,
+      region: "us",
+      creatorShare: 70,
+    });
     expect(r.gross).toBeCloseTo(100000 * 0.0044, 4); // 440
     expect(r.net).toBeCloseTo(440 * 0.7, 4); // 308
   });
 
   it("annual is net x 12", () => {
-    const r = estimateSpotifyRoyalties({ streams: 100000, region: "us", creatorShare: 70 });
+    const r = estimateSpotifyRoyalties({
+      streams: 100000,
+      region: "us",
+      creatorShare: 70,
+    });
     expect(r.annual).toBeCloseTo(r.net * 12, 4);
   });
 
   it("per1000 is rate x 1000 x share/100", () => {
-    const r = estimateSpotifyRoyalties({ streams: 100000, region: "us", creatorShare: 70 });
+    const r = estimateSpotifyRoyalties({
+      streams: 100000,
+      region: "us",
+      creatorShare: 70,
+    });
     expect(r.per1000).toBeCloseTo(0.0044 * 1000 * 0.7, 4); // 3.08
   });
 
@@ -786,31 +812,51 @@ describe("spotify royalties calculator", () => {
       { region: "global", rate: 0.003 },
     ] as const;
     for (const c of cases) {
-      const r = estimateSpotifyRoyalties({ streams: 1000, region: c.region, creatorShare: 100 });
+      const r = estimateSpotifyRoyalties({
+        streams: 1000,
+        region: c.region,
+        creatorShare: 100,
+      });
       expect(r.gross).toBeCloseTo(1000 * c.rate, 6);
       expect(r.rate).toBeCloseTo(c.rate, 6);
     }
   });
 
   it("falls back to global for an invalid region", () => {
-    const r = estimateSpotifyRoyalties({ streams: 1000, region: "mars" as any, creatorShare: 100 });
+    const r = estimateSpotifyRoyalties({
+      streams: 1000,
+      region: "mars" as any,
+      creatorShare: 100,
+    });
     expect(r.rate).toBeCloseTo(0.003, 6);
     expect(r.gross).toBeCloseTo(3, 4);
   });
 
   it("clamps creatorShare > 100 to 100", () => {
-    const r = estimateSpotifyRoyalties({ streams: 1000, region: "us", creatorShare: 150 });
+    const r = estimateSpotifyRoyalties({
+      streams: 1000,
+      region: "us",
+      creatorShare: 150,
+    });
     expect(r.net).toBeCloseTo(r.gross, 4);
   });
 
   it("guards NaN/negative/Infinity streams to 0", () => {
-    const r = estimateSpotifyRoyalties({ streams: NaN, region: "us", creatorShare: 70 });
+    const r = estimateSpotifyRoyalties({
+      streams: NaN,
+      region: "us",
+      creatorShare: 70,
+    });
     expect(r.gross).toBe(0);
     expect(r.net).toBe(0);
   });
 
   it("share 0 yields 0 net", () => {
-    const r = estimateSpotifyRoyalties({ streams: 100000, region: "us", creatorShare: 0 });
+    const r = estimateSpotifyRoyalties({
+      streams: 100000,
+      region: "us",
+      creatorShare: 0,
+    });
     expect(r.net).toBe(0);
     expect(r.per1000).toBe(0);
   });
@@ -839,9 +885,7 @@ Expected: FAIL — `Cannot find module '../src/lib/calculators/spotify'`. The ex
 - [ ] **Step 4: Write `src/lib/calculators/spotify.ts`**
 
 ```ts
-import {
-  SPOTIFY_REGION_RATES,
-} from "../../data/spotifyConfig";
+import { SPOTIFY_REGION_RATES } from "../../data/spotifyConfig";
 
 export interface SpotifyRoyaltiesInput {
   streams: number; // monthly

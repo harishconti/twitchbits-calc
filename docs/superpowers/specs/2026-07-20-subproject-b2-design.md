@@ -28,16 +28,16 @@ Both ship as **single tool pages only** — no programmatic-SEO variant pages, n
 
 ### New files (8)
 
-| File | Purpose |
-| --- | --- |
-| `src/data/patreonConfig.ts` | Plan rates (Standard 10% + legacy Lite/Pro/Premium), processing fee (2.9% + $0.30), default tiers |
-| `src/lib/calculators/patreon.ts` | Pure `estimatePatreonRevenue` + `patreonPatronsForGoal` |
-| `src/components/calculators/PatreonCalculator.astro` | Tier-rows + plan `<select>` + processing display; goal calc |
-| `src/pages/patreon-revenue-calculator.astro` | ToolLayout page |
-| `src/data/spotifyConfig.ts` | Per-stream rate by region (sourced), creator-share default, region presets |
-| `src/lib/calculators/spotify.ts` | Pure `estimateSpotifyRoyalties` + `spotifyStreamsForGoal` |
-| `src/components/calculators/SpotifyCalculator.astro` | Streams + region `<select>` + share slider; goal calc |
-| `src/pages/spotify-royalties-calculator.astro` | ToolLayout page |
+| File                                                 | Purpose                                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `src/data/patreonConfig.ts`                          | Plan rates (Standard 10% + legacy Lite/Pro/Premium), processing fee (2.9% + $0.30), default tiers |
+| `src/lib/calculators/patreon.ts`                     | Pure `estimatePatreonRevenue` + `patreonPatronsForGoal`                                           |
+| `src/components/calculators/PatreonCalculator.astro` | Tier-rows + plan `<select>` + processing display; goal calc                                       |
+| `src/pages/patreon-revenue-calculator.astro`         | ToolLayout page                                                                                   |
+| `src/data/spotifyConfig.ts`                          | Per-stream rate by region (sourced), creator-share default, region presets                        |
+| `src/lib/calculators/spotify.ts`                     | Pure `estimateSpotifyRoyalties` + `spotifyStreamsForGoal`                                         |
+| `src/components/calculators/SpotifyCalculator.astro` | Streams + region `<select>` + share slider; goal calc                                             |
+| `src/pages/spotify-royalties-calculator.astro`       | ToolLayout page                                                                                   |
 
 ### Modified files (3)
 
@@ -58,8 +58,8 @@ Sourced from Patreon Help Center (see Sources). Patreon eliminated the Lite/Pro/
 ```ts
 export const PATREON_PLAN_RATES = {
   standard: 0.1, // new creators (post-Aug 4 2025)
-  lite: 0.05,    // legacy
-  pro: 0.08,     // legacy
+  lite: 0.05, // legacy
+  pro: 0.08, // legacy
   premium: 0.12, // legacy (Pro + Merch, ~11-12%)
 } as const;
 
@@ -71,7 +71,7 @@ export const PATREON_PLAN_PRESETS = [
 ] as const;
 
 export const PATREON_PROCESSING_DEFAULT = {
-  percent: 0.029,            // 2.9% (USD credit card / PayPal / Venmo)
+  percent: 0.029, // 2.9% (USD credit card / PayPal / Venmo)
   fixedPerTransaction: 0.3, // $0.30 per pledge
 };
 
@@ -169,7 +169,7 @@ import {
 } from "../../data/spotifyConfig";
 
 export interface SpotifyRoyaltiesInput {
-  streams: number;       // monthly
+  streams: number; // monthly
   region: keyof typeof SPOTIFY_REGION_RATES;
   creatorShare: number; // 0-100 (%)
 }
@@ -178,7 +178,7 @@ export interface SpotifyRoyaltiesResult {
   net: number;
   annual: number;
   per1000: number; // net $ per 1,000 streams
-  rate: number;    // resolved per-stream rate (echo for display)
+  rate: number; // resolved per-stream rate (echo for display)
 }
 ```
 
@@ -249,12 +249,12 @@ Suite total: 65 → ~87 tests.
 
 ## 10. SDD task plan (Approach A — per-calculator vertical slices)
 
-| Task | Scope | Model | Depends on |
-| --- | --- | --- | --- |
-| **B2-1** | `patreonConfig.ts` + `patreon.ts` + append `describe("patreon revenue calculator")` to `tests/calculators.test.ts` | haiku (mechanical, single-file, complete spec) | — |
-| **B2-2** | `PatreonCalculator.astro` + `patreon-revenue-calculator.astro` + `TOOLS[]` entry + FAQs | sonnet (integration, multi-file, parity) | B2-1 |
-| **B2-3** | `spotifyConfig.ts` + `spotify.ts` + append `describe("spotify royalties calculator")` to `tests/calculators.test.ts` | haiku (mechanical, single-file) | — |
-| **B2-4** | `SpotifyCalculator.astro` + `spotify-royalties-calculator.astro` + `TOOLS[]` entry + FAQs | sonnet (integration) | B2-3 |
+| Task     | Scope                                                                                                                | Model                                          | Depends on |
+| -------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ---------- |
+| **B2-1** | `patreonConfig.ts` + `patreon.ts` + append `describe("patreon revenue calculator")` to `tests/calculators.test.ts`   | haiku (mechanical, single-file, complete spec) | —          |
+| **B2-2** | `PatreonCalculator.astro` + `patreon-revenue-calculator.astro` + `TOOLS[]` entry + FAQs                              | sonnet (integration, multi-file, parity)       | B2-1       |
+| **B2-3** | `spotifyConfig.ts` + `spotify.ts` + append `describe("spotify royalties calculator")` to `tests/calculators.test.ts` | haiku (mechanical, single-file)                | —          |
+| **B2-4** | `SpotifyCalculator.astro` + `spotify-royalties-calculator.astro` + `TOOLS[]` entry + FAQs                            | sonnet (integration)                           | B2-3       |
 
 Per task: implementer subagent with curated brief → task reviewer (spec + quality) → fix loop for Critical/Important → commit with `Co-Authored-By: Claude <noreply@anthropic.com>` trailer. Continuous execution (no check-ins between tasks); stop only on BLOCKED or genuine ambiguity. Artifacts: `.superpowers/sdd/task-N-{brief,report}-b2.md`; ledger: `.superpowers/sdd/progress-b2.md`. No PR after B2. Final whole-branch review (opus) at B2 end covers `3f114ff..HEAD` (B1 + B2 combined) for the cumulative branch — but B2's per-task reviews are scoped to B2 commits.
 
