@@ -27,6 +27,10 @@ import {
   kickSubsForGoal,
 } from "../src/lib/calculators/kick";
 import { estimateAdRevenue } from "../src/lib/calculators/ads";
+import {
+  estimatePatreonRevenue,
+  patreonPatronsForGoal,
+} from "../src/lib/calculators/patreon";
 
 describe("bits calculator", () => {
   it("converts bits to USD at $0.01/Bits", () => {
@@ -525,5 +529,174 @@ describe("ad revenue calculator", () => {
     });
     expect(r.monthly).toBeGreaterThan(0);
     expect(r.impressionsPerStream).toBeGreaterThan(0);
+  });
+});
+
+describe("patreon revenue calculator", () => {
+  it("computes net = gross - platform fee - processing for a single tier at standard plan", () => {
+    const r = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 0, price: 0 },
+        tier3: { patrons: 0, price: 0 },
+      },
+      plan: "standard",
+    });
+    // gross 500, platform 50, processing 500*0.029 + 100*0.30 = 14.50 + 30 = 44.50
+    expect(r.gross).toBeCloseTo(500, 2);
+    expect(r.platformFee).toBeCloseTo(50, 2);
+    expect(r.processingFee).toBeCloseTo(44.5, 2);
+    expect(r.net).toBeCloseTo(405.5, 2);
+  });
+
+  it("applies the legacy Pro 8% plan rate when selected", () => {
+    const r = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 0, price: 0 },
+        tier3: { patrons: 0, price: 0 },
+      },
+      plan: "pro",
+    });
+    // platform 500 * 0.08 = 40
+    expect(r.platformFee).toBeCloseTo(40, 2);
+  });
+
+  it("falls back to standard 10% for an invalid plan", () => {
+    const r = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 0, price: 0 },
+        tier3: { patrons: 0, price: 0 },
+      },
+      plan: "nonexistent" as any,
+    });
+    expect(r.platformFee).toBeCloseTo(50, 2);
+  });
+
+  it("sums gross, fees, and net across all three tiers", () => {
+    const r = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 50, price: 10 },
+        tier3: { patrons: 20, price: 25 },
+      },
+      plan: "standard",
+    });
+    // gross = 500 + 500 + 500 = 1500
+    expect(r.gross).toBeCloseTo(1500, 2);
+    // platform = 1500 * 0.10 = 150
+    expect(r.platformFee).toBeCloseTo(150, 2);
+    // processing = (14.50 + 30) + (14.50 + 15) + (14.50 + 6) = 94.50
+    expect(r.processingFee).toBeCloseTo(94.5, 2);
+    expect(r.net).toBeCloseTo(1500 - 150 - 94.5, 2);
+  });
+
+  it("annual is net x 12", () => {
+    const r = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 0, price: 0 },
+        tier3: { patrons: 0, price: 0 },
+      },
+      plan: "standard",
+    });
+    expect(r.annual).toBeCloseTo(r.net * 12, 4);
+  });
+
+  it("effectiveRate is (gross - net) / gross", () => {
+    const r = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 0, price: 0 },
+        tier3: { patrons: 0, price: 0 },
+      },
+      plan: "standard",
+    });
+    expect(r.effectiveRate).toBeCloseTo((500 - 405.5) / 500, 4);
+  });
+
+  it("perTier nets sum to total net", () => {
+    const r = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 50, price: 10 },
+        tier3: { patrons: 20, price: 25 },
+      },
+      plan: "standard",
+    });
+    expect(r.perTier.tier1 + r.perTier.tier2 + r.perTier.tier3).toBeCloseTo(
+      r.net,
+      4,
+    );
+  });
+
+  it("guards NaN/negative/Infinity patrons and price to 0", () => {
+    const r = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: NaN, price: 5 },
+        tier2: { patrons: -10, price: 10 },
+        tier3: { patrons: 20, price: Infinity },
+      },
+      plan: "standard",
+    });
+    expect(r.gross).toBe(0);
+    expect(r.net).toBe(0);
+  });
+
+  it("uses default processing when processing is omitted", () => {
+    const a = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 0, price: 0 },
+        tier3: { patrons: 0, price: 0 },
+      },
+      plan: "standard",
+    });
+    const b = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 0, price: 0 },
+        tier3: { patrons: 0, price: 0 },
+      },
+      plan: "standard",
+      processing: { percent: 0.029, fixedPerTransaction: 0.3 },
+    });
+    expect(a.net).toBeCloseTo(b.net, 4);
+  });
+
+  it("low-tier pledges have a higher effective rate than high-tier", () => {
+    const low = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 100, price: 5 },
+        tier2: { patrons: 0, price: 0 },
+        tier3: { patrons: 0, price: 0 },
+      },
+      plan: "standard",
+    });
+    const high = estimatePatreonRevenue({
+      tiers: {
+        tier1: { patrons: 20, price: 25 },
+        tier2: { patrons: 0, price: 0 },
+        tier3: { patrons: 0, price: 0 },
+      },
+      plan: "standard",
+    });
+    // low eff ~18.9%, high eff ~14.1%
+    expect(low.effectiveRate).toBeGreaterThan(high.effectiveRate);
+  });
+
+  it("patreonPatronsForGoal returns 0 for goal <= 0", () => {
+    expect(patreonPatronsForGoal(0, 5, "standard")).toBe(0);
+    expect(patreonPatronsForGoal(-100, 5, "standard")).toBe(0);
+  });
+
+  it("patreonPatronsForGoal returns 0 when net per patron <= 0", () => {
+    expect(patreonPatronsForGoal(1000, 0, "standard")).toBe(0);
+  });
+
+  it("patreonPatronsForGoal ceils the patrons needed", () => {
+    // netPerPatron at $5 standard = 5 - 0.50 - (0.145 + 0.30) = 4.055; 1000/4.055 = 246.61 -> 247
+    expect(patreonPatronsForGoal(1000, 5, "standard")).toBe(247);
   });
 });
