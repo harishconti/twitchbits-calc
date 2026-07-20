@@ -31,6 +31,10 @@ import {
   estimatePatreonRevenue,
   patreonPatronsForGoal,
 } from "../src/lib/calculators/patreon";
+import {
+  estimateSpotifyRoyalties,
+  spotifyStreamsForGoal,
+} from "../src/lib/calculators/spotify";
 
 describe("bits calculator", () => {
   it("converts bits to USD at $0.01/Bits", () => {
@@ -698,5 +702,110 @@ describe("patreon revenue calculator", () => {
   it("patreonPatronsForGoal ceils the patrons needed", () => {
     // netPerPatron at $5 standard = 5 - 0.50 - (0.145 + 0.30) = 4.055; 1000/4.055 = 246.61 -> 247
     expect(patreonPatronsForGoal(1000, 5, "standard")).toBe(247);
+  });
+});
+
+describe("spotify royalties calculator", () => {
+  it("computes gross = streams x rate, net = gross x share/100 for US", () => {
+    const r = estimateSpotifyRoyalties({
+      streams: 100000,
+      region: "us",
+      creatorShare: 70,
+    });
+    expect(r.gross).toBeCloseTo(100000 * 0.0044, 4); // 440
+    expect(r.net).toBeCloseTo(440 * 0.7, 4); // 308
+  });
+
+  it("annual is net x 12", () => {
+    const r = estimateSpotifyRoyalties({
+      streams: 100000,
+      region: "us",
+      creatorShare: 70,
+    });
+    expect(r.annual).toBeCloseTo(r.net * 12, 4);
+  });
+
+  it("per1000 is rate x 1000 x share/100", () => {
+    const r = estimateSpotifyRoyalties({
+      streams: 100000,
+      region: "us",
+      creatorShare: 70,
+    });
+    expect(r.per1000).toBeCloseTo(0.0044 * 1000 * 0.7, 4); // 3.08
+  });
+
+  it("resolves each region to its sourced rate", () => {
+    const cases = [
+      { region: "us", rate: 0.0044 },
+      { region: "uk", rate: 0.0044 },
+      { region: "eu", rate: 0.004 },
+      { region: "canada", rate: 0.004 },
+      { region: "nordic", rate: 0.0066 },
+      { region: "latin_america", rate: 0.0019 },
+      { region: "india", rate: 0.0008 },
+      { region: "global", rate: 0.003 },
+    ] as const;
+    for (const c of cases) {
+      const r = estimateSpotifyRoyalties({
+        streams: 1000,
+        region: c.region,
+        creatorShare: 100,
+      });
+      expect(r.gross).toBeCloseTo(1000 * c.rate, 6);
+      expect(r.rate).toBeCloseTo(c.rate, 6);
+    }
+  });
+
+  it("falls back to global for an invalid region", () => {
+    const r = estimateSpotifyRoyalties({
+      streams: 1000,
+      region: "mars" as any,
+      creatorShare: 100,
+    });
+    expect(r.rate).toBeCloseTo(0.003, 6);
+    expect(r.gross).toBeCloseTo(3, 4);
+  });
+
+  it("clamps creatorShare > 100 to 100", () => {
+    const r = estimateSpotifyRoyalties({
+      streams: 1000,
+      region: "us",
+      creatorShare: 150,
+    });
+    expect(r.net).toBeCloseTo(r.gross, 4);
+  });
+
+  it("guards NaN/negative/Infinity streams to 0", () => {
+    const r = estimateSpotifyRoyalties({
+      streams: NaN,
+      region: "us",
+      creatorShare: 70,
+    });
+    expect(r.gross).toBe(0);
+    expect(r.net).toBe(0);
+  });
+
+  it("share 0 yields 0 net", () => {
+    const r = estimateSpotifyRoyalties({
+      streams: 100000,
+      region: "us",
+      creatorShare: 0,
+    });
+    expect(r.net).toBe(0);
+    expect(r.per1000).toBe(0);
+  });
+
+  it("spotifyStreamsForGoal returns 0 for goal <= 0", () => {
+    expect(spotifyStreamsForGoal(0, "us", 70)).toBe(0);
+    expect(spotifyStreamsForGoal(-500, "us", 70)).toBe(0);
+  });
+
+  it("spotifyStreamsForGoal returns 0 when share is 0", () => {
+    expect(spotifyStreamsForGoal(1000, "us", 0)).toBe(0);
+  });
+
+  it("spotifyStreamsForGoal ceils the streams needed", () => {
+    // netPerStream = 0.0044 * 0.70 = 0.00308; 1000/0.00308 = 324675.32 -> 324676
+    expect(spotifyStreamsForGoal(1000, "us", 70)).toBe(324676);
   });
 });
