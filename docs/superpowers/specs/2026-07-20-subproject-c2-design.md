@@ -69,12 +69,16 @@ export function applyCpmModifiers(
   s: CpmModifierSelection,
 ): number {
   const b = Number.isFinite(base) && base >= 0 ? base : 0;
-  const clamp = (n: number, lo: number, hi: number) =>
-    Number.isFinite(n) && n >= 0 ? Math.min(hi, Math.max(lo, n)) : lo;
-  const season = clamp(s.seasonFactor ?? 1, 0, 5);
-  const niche = clamp(s.nicheFactor ?? 1, 0, 5);
-  const fill = clamp(s.fillRatePct ?? 100, 0, 100) / 100;
-  const skip = clamp(s.skippableFactor ?? 1, 0, 5);
+  // Factors are multipliers: missing/NaN → neutral (1); fill → 100. The base
+  // is a quantity: NaN/negative/Infinity → 0. Negative-finite clamps to lo.
+  const clampFactor = (n: number | undefined, fallback: number): number =>
+    n == null || !Number.isFinite(n) ? fallback : Math.min(5, Math.max(0, n));
+  const clampFill = (n: number | undefined): number =>
+    n == null || !Number.isFinite(n) ? 100 : Math.min(100, Math.max(0, n));
+  const season = clampFactor(s.seasonFactor, 1);
+  const niche = clampFactor(s.nicheFactor, 1);
+  const fill = clampFill(s.fillRatePct) / 100;
+  const skip = clampFactor(s.skippableFactor, 1);
   return b * season * niche * fill * skip;
 }
 
