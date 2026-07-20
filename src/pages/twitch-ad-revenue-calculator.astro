@@ -2,6 +2,7 @@
 import ToolLayout from '../layouts/ToolLayout.astro';
 import AdRevenueCalculator from '../components/calculators/AdRevenueCalculator.astro';
 import { adRevenueFaqs, cpmModifierFaqs } from '../data/faqs';
+import ChannelImport from '../components/ChannelImport.astro';
 ---
 <ToolLayout
   title="Twitch Ad Revenue Calculator"
@@ -10,5 +11,6 @@ import { adRevenueFaqs, cpmModifierFaqs } from '../data/faqs';
   crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: '/twitch-ad-revenue-calculator' }]}
   faqs={[...adRevenueFaqs, ...cpmModifierFaqs]}
 >
+  <ChannelImport platform="twitch" />
   <AdRevenueCalculator />
 </ToolLayout>

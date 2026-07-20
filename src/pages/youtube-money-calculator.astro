@@ -2,6 +2,7 @@
 import ToolLayout from '../layouts/ToolLayout.astro';
 import YoutubeCalculator from '../components/calculators/YoutubeCalculator.astro';
 import { youtubeFaqs, cpmModifierFaqs } from '../data/faqs';
+import ChannelImport from '../components/ChannelImport.astro';
 ---
 <ToolLayout
   title="YouTube Money Calculator"
@@ -10,5 +11,6 @@ import { youtubeFaqs, cpmModifierFaqs } from '../data/faqs';
   crumbs={[{ name: 'Home', url: '/' }, { name: 'YouTube Tools', url: '/youtube-money-calculator' }]}
   faqs={[...youtubeFaqs, ...cpmModifierFaqs]}
 >
+  <ChannelImport platform="youtube" />
   <YoutubeCalculator />
 </ToolLayout>

@@ -1,6 +1,7 @@
 ---
 import ToolLayout from '../layouts/ToolLayout.astro';
 import RevenueCalculator from '../components/calculators/RevenueCalculator.astro';
+import ChannelImport from '../components/ChannelImport.astro';
 import { revenueFaqs } from '../data/faqs';
 ---
 <ToolLayout
@@ -10,5 +11,6 @@ import { revenueFaqs } from '../data/faqs';
   crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: '/twitch-revenue-calculator' }]}
   faqs={revenueFaqs}
 >
+  <ChannelImport platform="twitch" />
   <RevenueCalculator />
 </ToolLayout>

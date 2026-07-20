@@ -1,0 +1,144 @@
+---
+import type { PlatformKey } from "../data/channelConfig";
+interface Props { platform: PlatformKey; }
+const { platform } = Astro.props;
+const label = platform === "twitch" ? "Twitch channel URL" : "YouTube channel URL";
+const placeholder = platform === "twitch" ? "twitch.tv/yourchannel" : "youtube.com/@yourchannel";
+---
+<form class="channel-import" data-channel-import data-platform={platform}>
+  <div class="import-row">
+    <label for={`channel-url-${platform}`}>Import your {platform === "twitch" ? "Twitch" : "YouTube"} channel</label>
+    <div class="import-input">
+      <input
+        id={`channel-url-${platform}`}
+        type="url"
+        inputmode="url"
+        autocomplete="off"
+        placeholder={placeholder}
+        data-channel-url
+      />
+      <button type="submit" class="import-btn" data-import-btn>Import</button>
+    </div>
+  </div>
+  <p class="import-hint" data-import-hint hidden></p>
+  <div class="channel-card" data-channel-card hidden></div>
+</form>
+<script>
+  type PlatformKey = "twitch" | "youtube";
+  interface ChannelStats {
+    platform: PlatformKey; id: string; displayName: string; thumbnailUrl: string;
+    broadcasterType?: string; subscribers?: number; hiddenSubscribers?: boolean;
+    lifetimeViews: number; videoCount?: number; isLive?: boolean; concurrentViewers?: number;
+    fetchedAt: number;
+  }
+
+  const fmt = (n: number | undefined): string => {
+    if (n == null) return "—";
+    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`;
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+    return String(n);
+  };
+
+  function initChannelImport(root: HTMLElement) {
+    const platform = (root.dataset.platform ?? "") as PlatformKey;
+    const input = root.querySelector<HTMLInputElement>("[data-channel-url]");
+    const btn = root.querySelector<HTMLButtonElement>("[data-import-btn]");
+    const hint = root.querySelector<HTMLElement>("[data-import-hint]");
+    const card = root.querySelector<HTMLElement>("[data-channel-card]");
+    if (!input || !btn || !hint || !card) return;
+
+    const setHint = (msg: string, isError = false) => {
+      hint.textContent = msg;
+      hint.hidden = !msg;
+      hint.dataset.error = isError ? "true" : "false";
+    };
+
+    const renderCard = (s: ChannelStats) => {
+      const rows: string[] = [];
+      if (s.platform === "twitch") {
+        rows.push(`<span class="stat"><em>Broadcaster</em><b>${s.broadcasterType || "standard"}</b></span>`);
+        rows.push(`<span class="stat"><em>Lifetime views</em><b>${fmt(s.lifetimeViews)}</b></span>`);
+        if (s.isLive) rows.push(`<span class="stat live"><em>Live now</em><b>${fmt(s.concurrentViewers)} viewers</b></span>`);
+        else rows.push(`<span class="stat"><em>Status</em><b>Offline</b></span>`);
+      } else {
+        rows.push(`<span class="stat"><em>Subscribers</em><b>${s.hiddenSubscribers ? "Hidden" : fmt(s.subscribers)}</b></span>`);
+        rows.push(`<span class="stat"><em>Lifetime views</em><b>${fmt(s.lifetimeViews)}</b></span>`);
+        if (s.videoCount != null) rows.push(`<span class="stat"><em>Videos</em><b>${fmt(s.videoCount)}</b></span>`);
+      }
+      card.innerHTML = `
+        <img src="${s.thumbnailUrl}" alt="" width="48" height="48" loading="lazy" decoding="async" />
+        <div class="card-body">
+          <strong>${s.displayName || s.id}</strong>
+          <div class="card-stats">${rows.join("")}</div>
+        </div>`;
+      card.hidden = false;
+    };
+
+    // Pre-fill the calculator's "avg viewers" RangeSlider when Twitch & live.
+    const prefillViewers = (s: ChannelStats) => {
+      if (s.platform !== "twitch" || !s.isLive || s.concurrentViewers == null) return;
+      const slider = document.querySelector<HTMLElement>('[data-range-slider="viewers"]');
+      const num = slider?.querySelector<HTMLInputElement>(".number-input");
+      if (!slider || !num) return;
+      const max = Number(slider.dataset.max ?? 5000);
+      const value = Math.min(max, Math.max(0, s.concurrentViewers));
+      num.value = String(value);
+      num.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const url = input.value.trim();
+      if (!url) { setHint("Paste a channel URL first.", true); return; }
+      setHint("Looking up channel…");
+      card.hidden = true;
+      try {
+        const res = await fetch(`/api/channel?url=${encodeURIComponent(url)}`);
+        const body = await res.json() as { ok: boolean; stats?: ChannelStats; error?: string };
+        if (!res.ok || !body.ok || !body.stats) {
+          const map: Record<string, string> = {
+            "invalid-url": "Couldn't read that channel URL.",
+            "unsupported-platform": "Supported: Twitch and YouTube.",
+            "not-found": "No channel found at that URL.",
+            "quota-exceeded": "We've hit our lookup limit — try again shortly.",
+            "upstream-error": "Couldn't reach the platform. Try again.",
+            "not-configured": "Channel import isn't configured.",
+            "forbidden-origin": "Channel import isn't available here.",
+          };
+          setHint(map[body.error ?? ""] ?? "Couldn't import that channel.", true);
+          return;
+        }
+        setHint("");
+        renderCard(body.stats);
+        prefillViewers(body.stats);
+      } catch {
+        setHint("Network error — try again.", true);
+      }
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-channel-import]").forEach(initChannelImport);
+</script>
+<style>
+  .channel-import { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); margin-bottom: var(--spacing-5); }
+  .import-row { display: grid; gap: var(--spacing-2); }
+  .import-row label { color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
+  .import-input { display: flex; gap: var(--spacing-2); }
+  .import-input input { flex: 1; min-height: 40px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; }
+  .import-input input:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .import-btn { padding: 0 var(--spacing-4); min-height: 40px; border: 1px solid var(--color-accent); border-radius: var(--radius-sm); background: var(--color-accent); color: var(--color-accent-on); font: 700 var(--text-sm)/1 var(--font-body); cursor: pointer; }
+  .import-btn:hover { filter: brightness(1.05); }
+  .import-hint { font-size: var(--text-sm); color: var(--color-muted); }
+  .import-hint[data-error="true"] { color: var(--color-fg); }
+  .channel-card { display: flex; gap: var(--spacing-3); align-items: center; padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); }
+  .channel-card img { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--color-border); }
+  .card-body { display: flex; flex-direction: column; gap: var(--spacing-1); }
+  .card-body strong { font-size: var(--text-sm); color: var(--color-fg); }
+  .card-stats { display: flex; flex-wrap: wrap; gap: var(--spacing-3); }
+  .stat { display: flex; flex-direction: column; }
+  .stat em { font-size: var(--text-xs); font-style: normal; color: var(--color-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat b { font-size: var(--text-sm); color: var(--color-fg); }
+  .stat.live b { color: var(--color-accent); }
+  @media (max-width: 560px) { .import-input { flex-direction: column; } }
+</style>
