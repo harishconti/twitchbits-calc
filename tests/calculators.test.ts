@@ -36,6 +36,13 @@ import {
   spotifyStreamsForGoal,
 } from "../src/lib/calculators/spotify";
 import { estimateNetIncome } from "../src/lib/calculators/netIncome";
+import {
+  applyCpmModifiers,
+  NEUTRAL,
+  seasonFactor,
+  nicheFactor,
+  skippableFactor,
+} from "../src/lib/calculators/cpmModifiers";
 
 describe("bits calculator", () => {
   it("converts bits to USD at $0.01/Bits", () => {
@@ -1056,5 +1063,72 @@ describe("net income / tax calculator", () => {
     expect(uk.breakdown.some((row) => row.label === "QBI deduction")).toBe(
       false,
     );
+  });
+});
+
+describe("cpmModifiers", () => {
+  it("neutral selection returns base unchanged", () => {
+    expect(applyCpmModifiers(4, NEUTRAL)).toBe(4);
+    expect(applyCpmModifiers(0, NEUTRAL)).toBe(0);
+  });
+
+  it("applies season factor", () => {
+    expect(applyCpmModifiers(4, { ...NEUTRAL, seasonFactor: 1.25 })).toBe(5);
+  });
+
+  it("applies niche factor", () => {
+    expect(applyCpmModifiers(4, { ...NEUTRAL, nicheFactor: 1.15 })).toBe(4.6);
+  });
+
+  it("applies fill rate as a percentage", () => {
+    expect(applyCpmModifiers(4, { ...NEUTRAL, fillRatePct: 50 })).toBe(2);
+    expect(applyCpmModifiers(4, { ...NEUTRAL, fillRatePct: 100 })).toBe(4);
+  });
+
+  it("applies skippability factor", () => {
+    expect(applyCpmModifiers(4, { ...NEUTRAL, skippableFactor: 1.25 })).toBe(5);
+  });
+
+  it("combines all factors multiplicatively", () => {
+    // Q4 (1.25) x non-skippable (1.25) x 80% fill (0.8) = 1.25
+    const sel = {
+      seasonFactor: 1.25,
+      nicheFactor: 1,
+      fillRatePct: 80,
+      skippableFactor: 1.25,
+    };
+    expect(applyCpmModifiers(4, sel)).toBeCloseTo(5, 10);
+  });
+
+  it("clamps fill rate to 0-100", () => {
+    expect(applyCpmModifiers(4, { ...NEUTRAL, fillRatePct: 150 })).toBe(4);
+    expect(applyCpmModifiers(4, { ...NEUTRAL, fillRatePct: -10 })).toBe(0);
+  });
+
+  it("clamps factors to 0-5", () => {
+    expect(applyCpmModifiers(4, { ...NEUTRAL, seasonFactor: 99 })).toBe(20);
+  });
+
+  it("guards NaN/negative/Infinity base to 0", () => {
+    expect(applyCpmModifiers(NaN, NEUTRAL)).toBe(0);
+    expect(applyCpmModifiers(-5, NEUTRAL)).toBe(0);
+    expect(applyCpmModifiers(Infinity, NEUTRAL)).toBe(0);
+  });
+
+  it("guards NaN factor to neutral", () => {
+    expect(applyCpmModifiers(4, { ...NEUTRAL, seasonFactor: NaN })).toBe(4);
+  });
+
+  it("resolvers return the correct factor for named keys", () => {
+    expect(seasonFactor("q4")).toBe(1.25);
+    expect(seasonFactor("q1")).toBe(0.8);
+    expect(nicheFactor("tech")).toBe(1.15);
+    expect(skippableFactor("nonskippable")).toBe(1.25);
+  });
+
+  it("resolvers return neutral for unknown keys", () => {
+    expect(seasonFactor("nope" as never)).toBe(1);
+    expect(nicheFactor("nope" as never)).toBe(1);
+    expect(skippableFactor("nope" as never)).toBe(1);
   });
 });
