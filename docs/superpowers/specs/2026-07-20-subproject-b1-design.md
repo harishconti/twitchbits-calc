@@ -26,15 +26,15 @@ Both ship as **single tool pages only** — no programmatic-SEO variant pages, n
 
 ### New files (7)
 
-| File | Purpose |
-|---|---|
-| `src/data/kickConfig.ts` | Kick sub prices, 95/5 split default + presets, Kicks face value |
-| `src/lib/calculators/kick.ts` | Pure `estimateKickRevenue` + `kickSubsForGoal` |
-| `src/components/calculators/KickRevenueCalculator.astro` | Three-panel island (subs/kicks/ads) |
-| `src/pages/kick-revenue-calculator.astro` | ToolLayout page |
-| `src/lib/calculators/ads.ts` | Pure `estimateAdRevenue` (impressions-based) |
-| `src/components/calculators/AdRevenueCalculator.astro` | Focused ad island |
-| `src/pages/twitch-ad-revenue-calculator.astro` | ToolLayout page |
+| File                                                     | Purpose                                                         |
+| -------------------------------------------------------- | --------------------------------------------------------------- |
+| `src/data/kickConfig.ts`                                 | Kick sub prices, 95/5 split default + presets, Kicks face value |
+| `src/lib/calculators/kick.ts`                            | Pure `estimateKickRevenue` + `kickSubsForGoal`                  |
+| `src/components/calculators/KickRevenueCalculator.astro` | Three-panel island (subs/kicks/ads)                             |
+| `src/pages/kick-revenue-calculator.astro`                | ToolLayout page                                                 |
+| `src/lib/calculators/ads.ts`                             | Pure `estimateAdRevenue` (impressions-based)                    |
+| `src/components/calculators/AdRevenueCalculator.astro`   | Focused ad island                                               |
+| `src/pages/twitch-ad-revenue-calculator.astro`           | ToolLayout page                                                 |
 
 ### Modified files (4)
 
@@ -50,17 +50,21 @@ Both ship as **single tool pages only** — no programmatic-SEO variant pages, n
 Sourced from Kick.com Help Center and streamhub.world (see Sources).
 
 ```ts
-export const KICK_SUB_PRICES = { tier1: 4.99, tier2: 9.99, tier3: 24.99 } as const;
-export const KICK_SPLIT_DEFAULT = 0.95;             // streamer keeps 95%
+export const KICK_SUB_PRICES = {
+  tier1: 4.99,
+  tier2: 9.99,
+  tier3: 24.99,
+} as const;
+export const KICK_SPLIT_DEFAULT = 0.95; // streamer keeps 95%
 export const KICK_SPLIT_PRESETS = [
   { value: 0.95, label: "95/5 (Kick standard)" },
-  { value: 0.50, label: "50/50" },
-  { value: 1.00, label: "100% (custom deal)" },
+  { value: 0.5, label: "50/50" },
+  { value: 1.0, label: "100% (custom deal)" },
 ];
-export const KICKS_FACE_USD_PER_100 = 1.09;        // 100 KICKs face value
+export const KICKS_FACE_USD_PER_100 = 1.09; // 100 KICKs face value
 ```
 
-Design note: `KICKS_FACE_USD_PER_100` is stored as **face value**; the 95/5 split is applied in the calc (`kicks × face/100 × split`), not pre-baked into a net rate. This keeps the split as a single editable lever that propagates to subs *and* Kicks (CLAUDE.md Rule 2). No Prime entry (Kick has no Prime). Gift subs use tier1 price, matching `revenue.ts` convention.
+Design note: `KICKS_FACE_USD_PER_100` is stored as **face value**; the 95/5 split is applied in the calc (`kicks × face/100 × split`), not pre-baked into a net rate. This keeps the split as a single editable lever that propagates to subs _and_ Kicks (CLAUDE.md Rule 2). No Prime entry (Kick has no Prime). Gift subs use tier1 price, matching `revenue.ts` convention.
 
 ### `src/data/adConfig.ts` (extend — existing constants untouched)
 
@@ -82,13 +86,17 @@ All pure functions follow CLAUDE.md Rule 3: no DOM, no Astro imports, no side ef
 ### `src/lib/calculators/kick.ts`
 
 ```ts
-import { KICK_SUB_PRICES, KICK_SPLIT_DEFAULT, KICKS_FACE_USD_PER_100 } from "../../data/kickConfig";
+import {
+  KICK_SUB_PRICES,
+  KICK_SPLIT_DEFAULT,
+  KICKS_FACE_USD_PER_100,
+} from "../../data/kickConfig";
 import { MIN_WAGE_USD_HOURLY } from "../../data/adConfig";
 
 export interface KickRevenueInput {
   subs: { tier1: number; tier2: number; tier3: number; gift: number };
-  split: number;                 // 0.95 default
-  kicks: number;                // KICKs received
+  split: number; // 0.95 default
+  kicks: number; // KICKs received
   ads: { cpm: number; minutes: number; viewers: number };
 }
 ```
@@ -96,8 +104,8 @@ export interface KickRevenueInput {
 - `estimateKickRevenue(i)`:
   - `split = (i.split > 0 && i.split <= 1) ? i.split : KICK_SPLIT_DEFAULT`
   - `subsUsd = (g(tier1)×4.99 + g(tier2)×9.99 + g(tier3)×24.99 + g(gift)×4.99) × split`
-  - `kicksUsd = g(i.kicks) × (KICKS_FACE_USD_PER_100 / 100) × split`  (95/5 applies to Kicks)
-  - `adsUsd = g(cpm) × (g(minutes)/1000) × g(viewers)`  — **no split** (Kick pays 100% on ads; mirrors existing Twitch combined calc)
+  - `kicksUsd = g(i.kicks) × (KICKS_FACE_USD_PER_100 / 100) × split` (95/5 applies to Kicks)
+  - `adsUsd = g(cpm) × (g(minutes)/1000) × g(viewers)` — **no split** (Kick pays 100% on ads; mirrors existing Twitch combined calc)
   - `hoursPerMonth = 120`; `hourlyEquivalent = monthlyTotal / 120`
   - returns `{monthly:{subs,kicks,ads,total}, annual:{subs,kicks,ads,total}, hourlyEquivalent, minWageMultiple, subsBreakdown:{tier1,tier2,tier3,gift,total}}`
 - `kickSubsForGoal(goalUsd, split = KICK_SPLIT_DEFAULT)`: guards `goalUsd` finite/>0 else 0; clamps split; returns `Math.ceil(goalUsd / (KICK_SUB_PRICES.tier1 × split))`
@@ -106,8 +114,11 @@ export interface KickRevenueInput {
 
 ```ts
 export interface AdRevenueInput {
-  cpm: number; viewers: number; adsPerHour: number;
-  hoursPerStream: number; streamsPerMonth: number;
+  cpm: number;
+  viewers: number;
+  adsPerHour: number;
+  hoursPerStream: number;
+  streamsPerMonth: number;
 }
 ```
 
@@ -133,6 +144,7 @@ Suite total: 45 → ~65 tests.
 ### `src/components/calculators/KickRevenueCalculator.astro`
 
 Three-panel grid mirroring `RevenueCalculator.astro`:
+
 - **Subs panel**: Tier 1 ($4.99), Tier 2 ($9.99), Tier 3 ($24.99), Gift — `RangeSlider` each; Split `<select>` bound to `KICK_SPLIT_PRESETS` (95/5 selected)
 - **Kicks panel**: Kicks received `RangeSlider`
 - **Ads panel**: CPM (default `AD_CPM_DEFAULTS.us`), Minutes/stream, Avg viewers — `RangeSlider` each
@@ -144,6 +156,7 @@ Three-panel grid mirroring `RevenueCalculator.astro`:
 ### `src/components/calculators/AdRevenueCalculator.astro`
 
 Focused single panel:
+
 - Inputs: CPM (default `AD_CPM_DEFAULTS.us`), Avg concurrent viewers, Ads/hour (default 3), Hours/stream (default 4), Streams/month (default 20) — all `RangeSlider`
 - Result: `{monthly}/month`; subresult: `≈ {annual}/year · {rpmPerViewer}/viewer/month`
 - Breakdown: per-stream impressions, monthly impressions, effective CPM
@@ -152,6 +165,7 @@ Focused single panel:
 ## 7. Pages / SEO (CLAUDE.md Rule 7 — structural)
 
 `kick-revenue-calculator.astro` & `twitch-ad-revenue-calculator.astro` via `ToolLayout`:
+
 - Exact H1: "Kick Revenue Calculator", "Twitch Ad Revenue Calculator" (one page = one keyword)
 - One H2 per section; canonical bare-URL (no query params)
 - JSON-LD: WebApplication + FAQPage + Breadcrumb on both (FAQ content from `faqs.ts`)
@@ -174,18 +188,18 @@ Focused single panel:
 
 ## 10. SDD task plan (Approach 1 — per-calculator vertical slices)
 
-| Task | Scope | Model | Depends on |
-|---|---|---|---|
-| **B1-1** | `kickConfig.ts` + `kick.ts` + append `describe("kick revenue calculator")` to `tests/calculators.test.ts` | cheap (mechanical, single-file, complete spec) | — |
-| **B1-2** | `KickRevenueCalculator.astro` + `kick-revenue-calculator.astro` + `TOOLS[]` entry + FAQs | sonnet (integration, multi-file, parity with RevenueCalculator) | B1-1 |
-| **B1-3** | `adConfig.ts` `AD_INPUT_DEFAULTS` + `ads.ts` + append `describe("ad revenue calculator")` to `tests/calculators.test.ts` | cheap (mechanical, single-file) | — |
-| **B1-4** | `AdRevenueCalculator.astro` + `twitch-ad-revenue-calculator.astro` + `TOOLS[]` entry + FAQs | sonnet (integration) | B1-3 |
+| Task     | Scope                                                                                                                    | Model                                                           | Depends on |
+| -------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- | ---------- |
+| **B1-1** | `kickConfig.ts` + `kick.ts` + append `describe("kick revenue calculator")` to `tests/calculators.test.ts`                | cheap (mechanical, single-file, complete spec)                  | —          |
+| **B1-2** | `KickRevenueCalculator.astro` + `kick-revenue-calculator.astro` + `TOOLS[]` entry + FAQs                                 | sonnet (integration, multi-file, parity with RevenueCalculator) | B1-1       |
+| **B1-3** | `adConfig.ts` `AD_INPUT_DEFAULTS` + `ads.ts` + append `describe("ad revenue calculator")` to `tests/calculators.test.ts` | cheap (mechanical, single-file)                                 | —          |
+| **B1-4** | `AdRevenueCalculator.astro` + `twitch-ad-revenue-calculator.astro` + `TOOLS[]` entry + FAQs                              | sonnet (integration)                                            | B1-3       |
 
 Per task: implementer subagent with curated brief → task reviewer (spec + quality) → fix loop for Critical/Important → commit with `Co-Authored-By: Claude <noreply@anthropic.com>` trailer. Continuous execution (no check-ins between tasks); stop only on BLOCKED or genuine ambiguity. Artifacts: `.superpowers/sdd/task-B1-{n}-{brief,report}.md`; ledger: `.superpowers/sdd/progress-b1.md`. No PR after B1.
 
 ## Sources
 
-- Kick.com Help Center — *Understanding KICK's revenue split* (95/5 subs + Kicks, 100% ad revenue to streamer): https://help.kick.com/en/articles/15159722-understanding-kick-s-revenue-split
-- Kick.com Help Center — *KICK payout schedule, thresholds, and methods*: https://help.kick.com/en/articles/15159725-kick-payout-schedule-thresholds-and-methods
-- win.gg — *All about the KICKs currency* (100 KICKs = $1.09 face value): https://win.gg/kicks-currency-buy-kick-gifts/
-- streamhub.world — *Kick Streamer Payouts Explained*: https://streamhub.world/streamer-blog/kick/1121-kick-streamer-payouts-explained-how-to-earn-and-withdraw-money/
+- Kick.com Help Center — _Understanding KICK's revenue split_ (95/5 subs + Kicks, 100% ad revenue to streamer): https://help.kick.com/en/articles/15159722-understanding-kick-s-revenue-split
+- Kick.com Help Center — _KICK payout schedule, thresholds, and methods_: https://help.kick.com/en/articles/15159725-kick-payout-schedule-thresholds-and-methods
+- win.gg — _All about the KICKs currency_ (100 KICKs = $1.09 face value): https://win.gg/kicks-currency-buy-kick-gifts/
+- streamhub.world — _Kick Streamer Payouts Explained_: https://streamhub.world/streamer-blog/kick/1121-kick-streamer-payouts-explained-how-to-earn-and-withdraw-money/

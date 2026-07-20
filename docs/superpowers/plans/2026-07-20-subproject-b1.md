@@ -27,6 +27,7 @@
 ## File Structure
 
 **New files (7):**
+
 - `src/data/kickConfig.ts` — Kick sub prices, 95/5 split default + presets, Kicks face value. Single editable source of truth for Kick economics.
 - `src/lib/calculators/kick.ts` — pure `estimateKickRevenue(i: KickRevenueInput)` + `kickSubsForGoal(goalUsd, split)`. Mirrors `src/lib/calculators/revenue.ts` shape with Kick economics.
 - `src/components/calculators/KickRevenueCalculator.astro` — three-panel vanilla-JS island (Subs / Kicks / Ads) mirroring `RevenueCalculator.astro`.
@@ -36,6 +37,7 @@
 - `src/pages/twitch-ad-revenue-calculator.astro` — `ToolLayout` page, H1 "Twitch Ad Revenue Calculator".
 
 **Modified files (4):**
+
 - `src/data/adConfig.ts` — append `AD_INPUT_DEFAULTS` (existing `AD_CPM_DEFAULTS` + `MIN_WAGE_USD_HOURLY` untouched).
 - `src/lib/site.ts` — append 2 entries to `TOOLS[]`.
 - `src/data/faqs.ts` — append `kickRevenueFaqs` + `adRevenueFaqs` exports.
@@ -48,11 +50,13 @@
 ## Task 1: Kick config + pure calculator + tests
 
 **Files:**
+
 - Create: `src/data/kickConfig.ts`
 - Create: `src/lib/calculators/kick.ts`
 - Modify: `tests/calculators.test.ts` (append imports + one `describe` block)
 
 **Interfaces:**
+
 - Consumes: `MIN_WAGE_USD_HOURLY` from `src/data/adConfig.ts` (existing export, value `7.25`).
 - Produces:
   - `KICK_SUB_PRICES`, `KICK_SPLIT_DEFAULT`, `KICK_SPLIT_PRESETS`, `KICKS_FACE_USD_PER_100` (from `kickConfig.ts`)
@@ -64,7 +68,11 @@
 - [ ] **Step 1: Write `src/data/kickConfig.ts`**
 
 ```ts
-export const KICK_SUB_PRICES = { tier1: 4.99, tier2: 9.99, tier3: 24.99 } as const;
+export const KICK_SUB_PRICES = {
+  tier1: 4.99,
+  tier2: 9.99,
+  tier3: 24.99,
+} as const;
 export const KICK_SPLIT_DEFAULT = 0.95; // streamer keeps 95%
 export const KICK_SPLIT_PRESETS = [
   { value: 0.95, label: "95/5 (Kick standard)" },
@@ -79,7 +87,10 @@ export const KICKS_FACE_USD_PER_100 = 1.09; // 100 KICKs face value; split appli
 Add to the import block at the top of `tests/calculators.test.ts` (after the existing `sponsorship` import):
 
 ```ts
-import { estimateKickRevenue, kickSubsForGoal } from "../src/lib/calculators/kick";
+import {
+  estimateKickRevenue,
+  kickSubsForGoal,
+} from "../src/lib/calculators/kick";
 ```
 
 Append this `describe` block at the end of the file:
@@ -196,7 +207,11 @@ describe("kick revenue calculator", () => {
       kicks: 0,
       ads: { cpm: 0, minutes: 0, viewers: 0 },
     });
-    const sum = r.subsBreakdown.tier1 + r.subsBreakdown.tier2 + r.subsBreakdown.tier3 + r.subsBreakdown.gift;
+    const sum =
+      r.subsBreakdown.tier1 +
+      r.subsBreakdown.tier2 +
+      r.subsBreakdown.tier3 +
+      r.subsBreakdown.gift;
     expect(sum).toBeCloseTo(r.monthly.subs, 4);
     expect(r.subsBreakdown.total).toBeCloseTo(r.monthly.subs, 4);
   });
@@ -235,7 +250,11 @@ Expected: FAIL — `estimateKickRevenue` and `kickSubsForGoal` not exported (mod
 - [ ] **Step 4: Write `src/lib/calculators/kick.ts`**
 
 ```ts
-import { KICK_SUB_PRICES, KICK_SPLIT_DEFAULT, KICKS_FACE_USD_PER_100 } from "../../data/kickConfig";
+import {
+  KICK_SUB_PRICES,
+  KICK_SPLIT_DEFAULT,
+  KICKS_FACE_USD_PER_100,
+} from "../../data/kickConfig";
 import { MIN_WAGE_USD_HOURLY } from "../../data/adConfig";
 
 export interface KickRevenueInput {
@@ -250,7 +269,13 @@ export interface KickRevenueResult {
   annual: { subs: number; kicks: number; ads: number; total: number };
   hourlyEquivalent: number;
   minWageMultiple: number;
-  subsBreakdown: { tier1: number; tier2: number; tier3: number; gift: number; total: number };
+  subsBreakdown: {
+    tier1: number;
+    tier2: number;
+    tier3: number;
+    gift: number;
+    total: number;
+  };
 }
 
 const g = (n: number): number => (Number.isFinite(n) && n >= 0 ? n : 0);
@@ -263,15 +288,26 @@ export function estimateKickRevenue(i: KickRevenueInput): KickRevenueResult {
     tier3: g(i.subs.tier3) * KICK_SUB_PRICES.tier3,
     gift: g(i.subs.gift) * KICK_SUB_PRICES.tier1,
   };
-  const subsUsd = (rawSubs.tier1 + rawSubs.tier2 + rawSubs.tier3 + rawSubs.gift) * split;
+  const subsUsd =
+    (rawSubs.tier1 + rawSubs.tier2 + rawSubs.tier3 + rawSubs.gift) * split;
   const kicksUsd = g(i.kicks) * (KICKS_FACE_USD_PER_100 / 100) * split; // 95/5 applies to Kicks
   const adsUsd = g(i.ads.cpm) * (g(i.ads.minutes) / 1000) * g(i.ads.viewers); // 100% to streamer, no split
   const monthlyTotal = subsUsd + kicksUsd + adsUsd;
   const hoursPerMonth = 120;
   const hourlyEquivalent = monthlyTotal / hoursPerMonth;
   return {
-    monthly: { subs: subsUsd, kicks: kicksUsd, ads: adsUsd, total: monthlyTotal },
-    annual: { subs: subsUsd * 12, kicks: kicksUsd * 12, ads: adsUsd * 12, total: monthlyTotal * 12 },
+    monthly: {
+      subs: subsUsd,
+      kicks: kicksUsd,
+      ads: adsUsd,
+      total: monthlyTotal,
+    },
+    annual: {
+      subs: subsUsd * 12,
+      kicks: kicksUsd * 12,
+      ads: adsUsd * 12,
+      total: monthlyTotal * 12,
+    },
     hourlyEquivalent,
     minWageMultiple: hourlyEquivalent / MIN_WAGE_USD_HOURLY,
     subsBreakdown: {
@@ -284,7 +320,10 @@ export function estimateKickRevenue(i: KickRevenueInput): KickRevenueResult {
   };
 }
 
-export function kickSubsForGoal(goalUsd: number, split: number = KICK_SPLIT_DEFAULT): number {
+export function kickSubsForGoal(
+  goalUsd: number,
+  split: number = KICK_SPLIT_DEFAULT,
+): number {
   if (!Number.isFinite(goalUsd) || goalUsd <= 0) return 0;
   if (split <= 0 || split > 1) split = KICK_SPLIT_DEFAULT;
   const perSub = KICK_SUB_PRICES.tier1 * split;
@@ -324,12 +363,14 @@ EOF
 ## Task 2: Kick island + page + registry + FAQs
 
 **Files:**
+
 - Create: `src/components/calculators/KickRevenueCalculator.astro`
 - Create: `src/pages/kick-revenue-calculator.astro`
 - Modify: `src/lib/site.ts` (append 1 entry to `TOOLS[]`)
 - Modify: `src/data/faqs.ts` (append `kickRevenueFaqs` export)
 
 **Interfaces:**
+
 - Consumes:
   - `estimateKickRevenue`, `kickSubsForGoal` from `src/lib/calculators/kick.ts` (Task B1-1)
   - `KICK_SPLIT_PRESETS`, `KICK_SUB_PRICES` from `src/data/kickConfig.ts` (Task B1-1)
@@ -597,11 +638,13 @@ EOF
 ## Task 3: Ad config defaults + pure ad calculator + tests
 
 **Files:**
+
 - Modify: `src/data/adConfig.ts` (append `AD_INPUT_DEFAULTS`; existing exports untouched)
 - Create: `src/lib/calculators/ads.ts`
 - Modify: `tests/calculators.test.ts` (append import + one `describe` block)
 
 **Interfaces:**
+
 - Consumes: nothing from earlier B1 tasks (standalone). `adConfig.ts` already exports `AD_CPM_DEFAULTS` and `MIN_WAGE_USD_HOURLY`.
 - Produces:
   - `AD_INPUT_DEFAULTS` from `src/data/adConfig.ts` — `{ adsPerHour: 3; hoursPerStream: 4; streamsPerMonth: 20; viewers: 50 }`
@@ -612,6 +655,7 @@ EOF
 - [ ] **Step 1: Append `AD_INPUT_DEFAULTS` to `src/data/adConfig.ts`**
 
 The existing file is:
+
 ```ts
 export const AD_CPM_DEFAULTS: Record<string, number> = {
   us: 4.0,
@@ -626,7 +670,6 @@ export const MIN_WAGE_USD_HOURLY = 7.25;
 Append at the end (do not modify existing lines):
 
 ```ts
-
 export const AD_INPUT_DEFAULTS = {
   adsPerHour: 3,
   hoursPerStream: 4,
@@ -679,36 +722,84 @@ describe("ad revenue calculator", () => {
   });
 
   it("monthly is proportional to CPM", () => {
-    const low = estimateAdRevenue({ cpm: 2, viewers: 50, adsPerHour: 3, hoursPerStream: 4, streamsPerMonth: 20 });
-    const high = estimateAdRevenue({ cpm: 8, viewers: 50, adsPerHour: 3, hoursPerStream: 4, streamsPerMonth: 20 });
+    const low = estimateAdRevenue({
+      cpm: 2,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
+    const high = estimateAdRevenue({
+      cpm: 8,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
     expect(high.monthly).toBeCloseTo(low.monthly * 4, 4);
   });
 
   it("annual equals monthly times 12", () => {
-    const r = estimateAdRevenue({ cpm: 4, viewers: 50, adsPerHour: 3, hoursPerStream: 4, streamsPerMonth: 20 });
+    const r = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
     expect(r.annual).toBeCloseTo(r.monthly * 12, 4);
   });
 
   it("rpmPerViewer is monthly revenue per average viewer", () => {
-    const r = estimateAdRevenue({ cpm: 4, viewers: 50, adsPerHour: 3, hoursPerStream: 4, streamsPerMonth: 20 });
+    const r = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
     // monthly 48 / 50 viewers = 0.96
     expect(r.rpmPerViewer).toBeCloseTo(0.96, 4);
   });
 
   it("rpmPerViewer is 0 when viewers is 0 (no division by zero)", () => {
-    const r = estimateAdRevenue({ cpm: 4, viewers: 0, adsPerHour: 3, hoursPerStream: 4, streamsPerMonth: 20 });
+    const r = estimateAdRevenue({
+      cpm: 4,
+      viewers: 0,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
     expect(r.monthly).toBe(0); // 0 viewers → 0 impressions → 0 revenue
     expect(r.rpmPerViewer).toBe(0);
   });
 
   it("monthly scales with streams per month", () => {
-    const r10 = estimateAdRevenue({ cpm: 4, viewers: 50, adsPerHour: 3, hoursPerStream: 4, streamsPerMonth: 10 });
-    const r40 = estimateAdRevenue({ cpm: 4, viewers: 50, adsPerHour: 3, hoursPerStream: 4, streamsPerMonth: 40 });
+    const r10 = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 10,
+    });
+    const r40 = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 40,
+    });
     expect(r40.monthly).toBeCloseTo(r10.monthly * 4, 4);
   });
 
   it("default inputs produce a sane positive monthly estimate", () => {
-    const r = estimateAdRevenue({ cpm: 4, viewers: 50, adsPerHour: 3, hoursPerStream: 4, streamsPerMonth: 20 });
+    const r = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
     expect(r.monthly).toBeGreaterThan(0);
     expect(r.impressionsPerStream).toBeGreaterThan(0);
   });
@@ -742,7 +833,8 @@ export interface AdRevenueResult {
 const g = (n: number): number => (Number.isFinite(n) && n >= 0 ? n : 0);
 
 export function estimateAdRevenue(i: AdRevenueInput): AdRevenueResult {
-  const impressionsPerStream = g(i.adsPerHour) * g(i.hoursPerStream) * g(i.viewers);
+  const impressionsPerStream =
+    g(i.adsPerHour) * g(i.hoursPerStream) * g(i.viewers);
   const monthlyImpressions = impressionsPerStream * g(i.streamsPerMonth);
   const monthly = (monthlyImpressions / 1000) * g(i.cpm);
   const annual = monthly * 12;
@@ -789,12 +881,14 @@ EOF
 ## Task 4: Ad island + page + registry + FAQs
 
 **Files:**
+
 - Create: `src/components/calculators/AdRevenueCalculator.astro`
 - Create: `src/pages/twitch-ad-revenue-calculator.astro`
 - Modify: `src/lib/site.ts` (append 1 entry to `TOOLS[]`)
 - Modify: `src/data/faqs.ts` (append `adRevenueFaqs` export)
 
 **Interfaces:**
+
 - Consumes:
   - `estimateAdRevenue` from `src/lib/calculators/ads.ts` (Task B1-3)
   - `AD_INPUT_DEFAULTS`, `AD_CPM_DEFAULTS` from `src/data/adConfig.ts` (Task B1-3 + existing)
@@ -1002,6 +1096,7 @@ EOF
 ## Self-Review (run after writing the full plan)
 
 **1. Spec coverage:** Every spec section maps to a task.
+
 - §3 file plan (7 new + 4 modified) → B1-1 creates kickConfig/kick.ts + modifies tests; B1-2 creates island/page + modifies site.ts/faqs.ts; B1-3 creates ads.ts + modifies adConfig.ts/tests; B1-4 creates island/page + modifies site.ts/faqs.ts. ✓
 - §4 data config (kickConfig.ts, AD_INPUT_DEFAULTS) → B1-1 Step 1, B1-3 Step 1. ✓
 - §5 pure functions + tests → B1-1 Steps 1-5, B1-3 Steps 1-5. ✓
@@ -1015,6 +1110,7 @@ EOF
 **2. Placeholder scan:** No TBD/TODO/"add appropriate error handling"/"similar to Task N" — every step has complete code. ✓
 
 **3. Type consistency:**
+
 - `KickRevenueInput` (B1-1 Step 2 tests, Step 4 impl) matches: `subs:{tier1,tier2,tier3,gift}`, `split`, `kicks`, `ads:{cpm,minutes,viewers}`. ✓
 - `KickRevenueResult` fields used in B1-2 island (`r.monthly.total`, `r.annual.total`, `r.hourlyEquivalent`, `r.minWageMultiple`, `r.subsBreakdown.{tier1,tier2,tier3,gift}`, `r.monthly.kicks`, `r.monthly.ads`) all defined in B1-1 Step 4. ✓
 - `kickSubsForGoal(goalUsd, split)` signature consistent across B1-1 tests/impl and B1-2 island. ✓

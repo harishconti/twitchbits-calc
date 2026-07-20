@@ -42,4 +42,10 @@ export const TOOLS = [
     short: "Sponsor",
     desc: "Estimate brand deal rates by followers + niche.",
   },
+  {
+    slug: "kick-revenue-calculator",
+    name: "Kick Revenue Calculator",
+    short: "Kick",
+    desc: "Estimate Kick earnings from subs, KICKs, and ads at 95/5.",
+  },
 ] as const;

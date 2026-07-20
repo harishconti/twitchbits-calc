@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import KickRevenueCalculator from '../components/calculators/KickRevenueCalculator.astro';
+import { kickRevenueFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="Kick Revenue Calculator"
+  description="Estimate monthly and annual Kick earnings from subs, KICKs, and ads at the 95/5 split. Compare to minimum wage by the hour."
+  slug="kick-revenue-calculator"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Kick Tools', url: '/kick-revenue-calculator' }]}
+  faqs={kickRevenueFaqs}
+>
+  <KickRevenueCalculator />
+</ToolLayout>

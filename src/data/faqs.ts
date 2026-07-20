@@ -148,3 +148,26 @@ export const youtubeFaqs = [
     a: "No. Shorts RPM is much lower than long-form; treat Shorts revenue separately when forecasting.",
   },
 ];
+
+export const kickRevenueFaqs = [
+  {
+    q: "How much do Kick streamers make per sub?",
+    a: "Kick pays a 95/5 split by default, so a $4.99 Tier 1 sub pays the streamer about $4.74 (vs $2.50 at Twitch's 50/50). Tier 2 ($9.99) pays ~$9.49 and Tier 3 ($24.99) pays ~$23.74.",
+  },
+  {
+    q: "What are KICKs worth on Kick?",
+    a: "100 KICKs have a face value of about $1.09, and the streamer keeps 95% of that — roughly $1.04 per 100 KICKs received.",
+  },
+  {
+    q: "Does Kick take a cut of ad revenue?",
+    a: "No. Kick pays streamers 100% of ad revenue, unlike Twitch's split. This calculator applies no split to the ads panel.",
+  },
+  {
+    q: "Does Kick have Prime subs?",
+    a: "No. Kick has no Prime sub equivalent. It has standard paid subs, gift subs, and KICKs (its Bits-analog) as the main support channels.",
+  },
+  {
+    q: "Is this Kick revenue calculator accurate?",
+    a: "It estimates gross pre-tax earnings from current Kick rates and your inputs. Real payouts vary by region, Stripe fees, and program terms.",
+  },
+];
