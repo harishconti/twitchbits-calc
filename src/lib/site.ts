@@ -66,4 +66,10 @@ export const TOOLS = [
     short: "Spotify",
     desc: "Estimate Spotify royalties by region rate × creator share.",
   },
+  {
+    slug: "net-income-tax-calculator",
+    name: "Net Income Tax Calculator",
+    short: "Net Income",
+    desc: "Estimate creator take-home pay after income tax and self-employment tax (US/UK/CA/AU).",
+  },
 ] as const;

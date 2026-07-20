@@ -240,3 +240,26 @@ export const spotifyRoyaltiesFaqs = [
     a: "No. Since April 2024, tracks need 1,000 streams in a 12-month period to earn royalties. This calculator estimates gross earnings and does not model that eligibility threshold.",
   },
 ];
+
+export const netIncomeFaqs = [
+  {
+    q: "How is net income calculated for a creator?",
+    a: "Net income = gross revenue minus business expenses minus income tax minus self-employment/social tax. This calculator estimates each piece using 2026 brackets for your jurisdiction.",
+  },
+  {
+    q: "What is self-employment tax?",
+    a: "In the US, self-employment tax is 15.3% (12.4% Social Security + 2.9% Medicare) applied to 92.35% of your net earnings, separate from income tax. The UK has Class 4 NIC, Canada has CPP (both halves = 11.9%), and Australia has the 2% Medicare levy.",
+  },
+  {
+    q: "Why does take-home vary so much by country?",
+    a: "Each country has different brackets, allowances, and social contributions. The same $60,000 gross can leave you with materially different net pay across the US, UK, Canada, and Australia — switch the jurisdiction selector to compare.",
+  },
+  {
+    q: "What is the QBI deduction?",
+    a: "US-only: the Qualified Business Income deduction lets many self-employed people deduct 20% of their net business income (after half of SE tax) before income tax is calculated. This calculator applies it without the high-income phaseout.",
+  },
+  {
+    q: "Is this calculator tax advice?",
+    a: "No — estimates only. The model is deliberately simplified (no state tax, no itemized deductions, no phaseouts, and Canada's BPA and Australia's LITO are not modeled as credits). For real figures, use your jurisdiction's official tax tool or a CPA.",
+  },
+];

@@ -1,0 +1,115 @@
+---
+import { estimateNetIncome } from '../../lib/calculators/netIncome';
+import { JURISDICTION_PRESETS, FILING_STATUS_PRESETS, TAX_DEFAULTS } from '../../data/taxConfig';
+import RangeSlider from '../primitives/RangeSlider.astro';
+---
+<form class="net-income-calc" data-tool="net-income-tax">
+  <fieldset class="panel-mini">
+    <legend>Income & expenses</legend>
+    <label>Jurisdiction
+      <select data-jurisdiction>
+        {JURISDICTION_PRESETS.map(j => <option value={j.value} selected={j.value === TAX_DEFAULTS.jurisdiction}>{j.label}</option>)}
+      </select>
+    </label>
+    <label class="filing-wrap" data-filing-wrap>
+      Filing status (US only)
+      <select data-filing>
+        {FILING_STATUS_PRESETS.map(f => <option value={f.value} selected={f.value === TAX_DEFAULTS.filingStatus}>{f.label}</option>)}
+      </select>
+    </label>
+    <label>Gross income
+      <RangeSlider id="gross" label="" min={0} max={500000} step={1000} value={TAX_DEFAULTS.gross} prefix="$" compact />
+    </label>
+    <label>Business expenses
+      <RangeSlider id="expenses" label="" min={0} max={100000} step={500} value={TAX_DEFAULTS.expenses} prefix="$" compact />
+    </label>
+    <label class="override-row">Flat tax rate % (optional, overrides brackets)
+      <input type="number" min={0} max={100} step={0.1} data-override placeholder="blank = brackets" />
+    </label>
+  </fieldset>
+
+  <p class="disclaimer-line">Estimates only — not tax advice. Simplified model; see the FAQ below.</p>
+
+  <div class="result" data-result aria-live="polite">$0.00 take-home</div>
+  <div class="sub" data-subresult></div>
+
+  <div class="breakdown" data-breakdown>
+    <strong>Where your money goes</strong>
+    <div class="breakdown-grid" data-breakdown-grid></div>
+  </div>
+</form>
+<script>
+  import { estimateNetIncome } from '../../lib/calculators/netIncome';
+  import { formatCurrency } from '../../lib/format';
+
+  const CURRENCY_SYMBOL: Record<string, string> = { us: '$', uk: '£', ca: 'C$', au: 'A$' };
+
+  const form = document.querySelector('[data-tool="net-income-tax"]') as HTMLFormElement;
+  const sliderValue = (id: string) => Number(form.querySelector(`[data-range-slider="${id}"]`)?.dataset.value ?? 0);
+
+  const read = () => {
+    const jurisdiction = (form.querySelector('[data-jurisdiction]') as HTMLSelectElement)?.value ?? 'us';
+    const filingStatus = (form.querySelector('[data-filing]') as HTMLSelectElement)?.value ?? 'single';
+    const rawOverride = Number((form.querySelector('[data-override]') as HTMLInputElement)?.value);
+    const overrideRate = Number.isFinite(rawOverride) && rawOverride > 0 ? rawOverride : undefined;
+    return {
+      gross: sliderValue('gross'),
+      expenses: sliderValue('expenses'),
+      jurisdiction: jurisdiction as 'us' | 'uk' | 'ca' | 'au',
+      filingStatus,
+      overrideRate,
+    };
+  };
+
+  const updateJurisdictionUI = (jurisdiction: string) => {
+    const sym = CURRENCY_SYMBOL[jurisdiction] ?? '$';
+    form.querySelectorAll<HTMLElement>('[data-range-slider="gross"] .prefix, [data-range-slider="expenses"] .prefix')
+      .forEach((el) => { el.textContent = sym; });
+    const wrap = form.querySelector<HTMLElement>('[data-filing-wrap]');
+    if (wrap) wrap.style.display = jurisdiction === 'us' ? '' : 'none';
+  };
+
+  const render = () => {
+    const input = read();
+    updateJurisdictionUI(input.jurisdiction);
+    const r = estimateNetIncome(input);
+    form.querySelector('[data-result]')!.textContent = `${formatCurrency(r.net, r.currency)} take-home`;
+    form.querySelector('[data-subresult]')!.textContent = `${(r.effectiveRate * 100).toFixed(1)}% total tax · ${(r.marginalRate * 100).toFixed(1)}% marginal bracket`;
+
+    const grid = form.querySelector('[data-breakdown-grid]') as HTMLElement;
+    grid.innerHTML = r.breakdown.map((row) => `
+      <div class="breakdown-cell">
+        <span>${row.label}</span>
+        <strong>${formatCurrency(row.amount, r.currency)}</strong>
+      </div>
+    `).join('');
+  };
+
+  form.querySelectorAll('[data-range-slider]').forEach((slider) => {
+    slider.addEventListener('input', render);
+  });
+  form.querySelector('[data-jurisdiction]')?.addEventListener('change', render);
+  form.querySelector('[data-filing]')?.addEventListener('change', render);
+  form.querySelector('[data-override]')?.addEventListener('input', render);
+
+  render();
+</script>
+<style>
+  .net-income-calc { display: flex; flex-direction: column; gap: var(--spacing-6); }
+  .panel-mini { border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); padding: var(--spacing-4); display: grid; gap: var(--spacing-4); }
+  legend { font-weight: 800; font-size: var(--text-sm); color: var(--color-fg); padding: 0 var(--spacing-2); }
+  label { display: grid; gap: var(--spacing-2); color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
+  select { width: 100%; min-height: 44px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+  select:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .override-row input { width: 100%; min-height: 44px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; }
+  .override-row input:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .disclaimer-line { color: var(--color-muted); font-size: var(--text-sm); margin: 0; }
+  .result { font-family: var(--font-mono); font-size: clamp(28px, 4vw, 48px); font-weight: 700; color: var(--color-accent); line-height: var(--leading-tight); white-space: nowrap; }
+  .sub { color: var(--color-muted); font-size: var(--text-sm); }
+  .breakdown { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); }
+  .breakdown strong { font-size: var(--text-sm); color: var(--color-fg); }
+  .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--spacing-3); }
+  .breakdown-cell { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); }
+  .breakdown-cell span { font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
+  .breakdown-cell strong { font-family: var(--font-mono); font-size: var(--text-base); color: var(--color-fg); }
+</style>
