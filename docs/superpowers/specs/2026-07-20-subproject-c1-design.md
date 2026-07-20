@@ -10,6 +10,7 @@
 Add one new single-page calculator tool — the **Net Income / Tax Calculator** — that estimates a creator's take-home pay after income tax and social contributions across four jurisdictions (US, UK, Canada, Australia). It follows the existing data-driven pattern (config in `src/data/*.ts`, pure guarded math in `src/lib/calculators/*.ts`, vanilla-JS island in `src/components/calculators/*.astro`, `ToolLayout` page).
 
 The calculator foregrounds two real creator-economy realities:
+
 1. **Self-employment social tax is a second tax on top of income tax** — US SE tax (15.3% × 92.35% of net earnings), UK Class 4 NIC, Canada CPP (both halves = 11.9%), AU Medicare levy. A creator earning $60k often pays more in social tax than in income tax.
 2. **Jurisdiction is the single biggest driver of take-home** — the same $60k gross yields materially different net across US/UK/CA/AU. The jurisdiction `<select>` makes this visible in one click.
 
@@ -25,7 +26,7 @@ This ships as a **single tool page only** — no programmatic-SEO variant pages,
 - Do **not** model the following (deliberate simplifications — kept out to fit an estimator's scope and the unified config model):
   - US: QBI high-income phaseout; additional 0.9% Medicare surtax; itemized deductions; state/local tax; the SE-health-insurance deduction; estimated-tax quarterly penalties.
   - UK: Scotland bands; Class 2 NIC (voluntary); the £100k personal-allowance taper; the £1,000 trading allowance; dividend tax; Making Tax Digital compliance.
-  - Canada: provincial brackets + provincial CPP-top-up credits; the Basic Personal Amount as a *credit* (modeled here as a deduction — see §5 simplification note); EI (voluntary for self-employed); CPP2 second additional 4%; the Year's Basic Exemption $3,500 (CPP modeled on full netSE up to YMPE); the Canada Employment Amount (employees only).
+  - Canada: provincial brackets + provincial CPP-top-up credits; the Basic Personal Amount as a _credit_ (modeled here as a deduction — see §5 simplification note); EI (voluntary for self-employed); CPP2 second additional 4%; the Year's Basic Exemption $3,500 (CPP modeled on full netSE up to YMPE); the Canada Employment Amount (employees only).
   - Australia: Medicare Levy Surcharge (MLS) income tiers; the low-income levy phase-in threshold (modeled as full 2% above the threshold, no shade-in); the Low Income Tax Offset (LITO) and SAPTO; the 2026-27 legislated 16%→15% second-bracket drop (this spec uses 2025-26 brackets with 16%); private health insurance rebates.
   - All jurisdictions: corporation tax, VAT/GST registration, currency conversion, joint/household income, dependents, pension contributions, student-loan repayments.
 - Do **not** model the user's specific personal situation or give tax advice — the page carries a "estimates only, not tax advice" disclaimer.
@@ -34,12 +35,12 @@ This ships as a **single tool page only** — no programmatic-SEO variant pages,
 
 ### New files (4)
 
-| File                                                      | Purpose                                                                                       |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `src/data/taxConfig.ts`                                   | Jurisdiction config (US/UK/CA/AU brackets, filing statuses, social contributions, allowances) |
-| `src/lib/calculators/netIncome.ts`                        | Pure `estimateNetIncome`                                                                      |
-| `src/components/calculators/NetIncomeCalculator.astro`    | Jurisdiction + US filing-status `<select>` + gross/expenses/override inputs + breakdown grid  |
-| `src/pages/net-income-tax-calculator.astro`              | ToolLayout page                                                                               |
+| File                                                   | Purpose                                                                                       |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `src/data/taxConfig.ts`                                | Jurisdiction config (US/UK/CA/AU brackets, filing statuses, social contributions, allowances) |
+| `src/lib/calculators/netIncome.ts`                     | Pure `estimateNetIncome`                                                                      |
+| `src/components/calculators/NetIncomeCalculator.astro` | Jurisdiction + US filing-status `<select>` + gross/expenses/override inputs + breakdown grid  |
+| `src/pages/net-income-tax-calculator.astro`            | ToolLayout page                                                                               |
 
 ### Modified files (3, append-only)
 
@@ -72,24 +73,24 @@ export interface TaxBracket {
 }
 
 export interface SocialContribution {
-  name: string;        // "Self-employment tax", "Class 4 NIC (mid)", etc.
-  rate: number;        // fraction of base, e.g. 0.124 for SS
-  cap?: number;        // optional upper bound of the band (SS wage base, YMPE, UK upper limit)
-  floor?: number;      // optional lower bound of the band (UK Class 4 limits 12,570 / 50,270)
+  name: string; // "Self-employment tax", "Class 4 NIC (mid)", etc.
+  rate: number; // fraction of base, e.g. 0.124 for SS
+  cap?: number; // optional upper bound of the band (SS wage base, YMPE, UK upper limit)
+  floor?: number; // optional lower bound of the band (UK Class 4 limits 12,570 / 50,270)
   baseFactor?: number; // optional multiplier on netSE (US 0.9235); defaults to 1
 }
 
 export interface FilingStatus {
-  code: string;        // "single", "mfj", "hoh", "mfs"
-  label: string;       // "Single", "Married filing jointly", ...
+  code: string; // "single", "mfj", "hoh", "mfs"
+  label: string; // "Single", "Married filing jointly", ...
   brackets: TaxBracket[];
   standardDeduction: number;
 }
 
 export interface Jurisdiction {
   code: JurisdictionCode;
-  label: string;       // "United States"
-  currency: string;    // "USD", "GBP", "CAD", "AUD"
+  label: string; // "United States"
+  currency: string; // "USD", "GBP", "CAD", "AUD"
   // US uses filingStatuses (each with its own brackets + standardDeduction);
   // UK/CA/AU use flat brackets (no filing-status dimension).
   filingStatuses?: FilingStatus[];
@@ -115,7 +116,7 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
         label: "Single",
         standardDeduction: 16100,
         brackets: [
-          { min: 0, rate: 0.10 },
+          { min: 0, rate: 0.1 },
           { min: 12400, rate: 0.12 },
           { min: 50400, rate: 0.22 },
           { min: 105700, rate: 0.24 },
@@ -129,7 +130,7 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
         label: "Married filing jointly",
         standardDeduction: 32200,
         brackets: [
-          { min: 0, rate: 0.10 },
+          { min: 0, rate: 0.1 },
           { min: 24800, rate: 0.12 },
           { min: 100800, rate: 0.22 },
           { min: 211400, rate: 0.24 },
@@ -143,7 +144,7 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
         label: "Head of household",
         standardDeduction: 24150,
         brackets: [
-          { min: 0, rate: 0.10 },
+          { min: 0, rate: 0.1 },
           { min: 17700, rate: 0.12 },
           { min: 67450, rate: 0.22 },
           { min: 105700, rate: 0.24 },
@@ -157,7 +158,7 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
         label: "Married filing separately",
         standardDeduction: 16100,
         brackets: [
-          { min: 0, rate: 0.10 },
+          { min: 0, rate: 0.1 },
           { min: 12400, rate: 0.12 },
           { min: 50400, rate: 0.22 },
           { min: 105700, rate: 0.24 },
@@ -171,10 +172,15 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
     // applied to 92.35% of netSE. Encoded as two SocialContribution entries
     // sharing baseFactor 0.9235; only the SS entry carries the cap.
     social: [
-      { name: "Social Security (12.4%)", rate: 0.124, cap: 184500, baseFactor: 0.9235 },
+      {
+        name: "Social Security (12.4%)",
+        rate: 0.124,
+        cap: 184500,
+        baseFactor: 0.9235,
+      },
       { name: "Medicare (2.9%)", rate: 0.029, baseFactor: 0.9235 },
     ],
-    qbiRate: 0.20,
+    qbiRate: 0.2,
     overrideLabel: "Flat tax rate % (optional, overrides brackets)",
   },
   uk: {
@@ -183,16 +189,16 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
     currency: "GBP",
     // England bands (Wales/NI same). Scotland excluded (non-goal).
     brackets: [
-      { min: 0, rate: 0.20 },     // basic rate
-      { min: 37700, rate: 0.40 }, // higher rate
-      { min: 125140, rate: 0.45 },// additional rate
+      { min: 0, rate: 0.2 }, // basic rate
+      { min: 37700, rate: 0.4 }, // higher rate
+      { min: 125140, rate: 0.45 }, // additional rate
     ],
     personalAllowance: 12570, // frozen to 2031; £100k taper excluded (non-goal)
     // Class 4 NIC: 6% on profits 12,570–50,270; 2% above 50,270.
     // Two entries: the first capped at 50,270, the second uncapped starting at 50,270.
     // (base is full netSE; cap is the upper limit of each band — see algorithm note.)
     social: [
-      { name: "Class 4 NIC (6%)", rate: 0.06 },  // band handled via cap logic below
+      { name: "Class 4 NIC (6%)", rate: 0.06 }, // band handled via cap logic below
       { name: "Class 4 NIC (2%)", rate: 0.02 },
     ],
     overrideLabel: "Flat tax rate % (optional, overrides bands)",
@@ -202,7 +208,7 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
     label: "Canada",
     currency: "CAD",
     brackets: [
-      { min: 0, rate: 0.14 },      // 2026 lowest rate (was 15% in 2024, 14.5% in 2025)
+      { min: 0, rate: 0.14 }, // 2026 lowest rate (was 15% in 2024, 14.5% in 2025)
       { min: 58523, rate: 0.205 },
       { min: 117045, rate: 0.26 },
       { min: 181440, rate: 0.29 },
@@ -212,9 +218,7 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
     // Self-employed CPP: both halves = 11.9% on pensionable earnings,
     // capped at YMPE 74,600. YBE ($3,500) and CPP2 (4% on 74,600–85,000)
     // excluded (non-goal) — CPP modeled on full netSE up to YMPE.
-    social: [
-      { name: "CPP self-employed (11.9%)", rate: 0.119, cap: 74600 },
-    ],
+    social: [{ name: "CPP self-employed (11.9%)", rate: 0.119, cap: 74600 }],
     overrideLabel: "Flat tax rate % (optional, overrides brackets)",
   },
   au: {
@@ -226,14 +230,12 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
     brackets: [
       { min: 0, rate: 0.0 },
       { min: 18200, rate: 0.16 },
-      { min: 45000, rate: 0.30 },
+      { min: 45000, rate: 0.3 },
       { min: 135000, rate: 0.37 },
       { min: 190000, rate: 0.45 },
     ],
     // Medicare levy 2% of taxable income (no low-income phase-in modeled — non-goal).
-    social: [
-      { name: "Medicare levy (2%)", rate: 0.02 },
-    ],
+    social: [{ name: "Medicare levy (2%)", rate: 0.02 }],
     overrideLabel: "Flat tax rate % (optional, overrides brackets)",
   },
 } as const;
@@ -260,7 +262,7 @@ export const TAX_DEFAULTS = {
 } as const;
 ```
 
-**Algorithm note on UK Class 4 two-tier bands:** the simple `rate × min(base, cap)` shape fits US/CA/AU directly, but UK's Class 4 has *two* bands over different ranges of the same base. The `floor` field on `SocialContribution` (defined above) handles this without a per-country branch — the UK config encodes Class 4 as two entries:
+**Algorithm note on UK Class 4 two-tier bands:** the simple `rate × min(base, cap)` shape fits US/CA/AU directly, but UK's Class 4 has _two_ bands over different ranges of the same base. The `floor` field on `SocialContribution` (defined above) handles this without a per-country branch — the UK config encodes Class 4 as two entries:
 
 ```ts
 social: [
@@ -293,17 +295,17 @@ export interface NetIncomeInput {
 export interface NetIncomeResult {
   gross: number;
   expenses: number;
-  netSE: number;          // gross − expenses, guarded ≥ 0
-  socialTax: number;      // sum of all SocialContribution entries
-  qbiDeduction: number;   // US only; 0 for UK/CA/AU
-  taxableIncome: number;   // netSE − allowance − qbi, guarded ≥ 0
-  incomeTax: number;       // bracket engine OR overrideRate × taxableIncome
-  overrideTax: number;      // 0 unless overrideRate provided
-  totalTax: number;         // socialTax + incomeTax (where incomeTax already includes overrideTax)
-  net: number;              // netSE − totalTax, guarded ≥ 0
-  effectiveRate: number;    // totalTax / gross, 0–1 (0 if gross ≤ 0)
-  marginalRate: number;     // top bracket rate touched (fraction); 0 if no taxable income
-  currency: string;         // resolved jurisdiction currency
+  netSE: number; // gross − expenses, guarded ≥ 0
+  socialTax: number; // sum of all SocialContribution entries
+  qbiDeduction: number; // US only; 0 for UK/CA/AU
+  taxableIncome: number; // netSE − allowance − qbi, guarded ≥ 0
+  incomeTax: number; // bracket engine OR overrideRate × taxableIncome
+  overrideTax: number; // 0 unless overrideRate provided
+  totalTax: number; // socialTax + incomeTax (where incomeTax already includes overrideTax)
+  net: number; // netSE − totalTax, guarded ≥ 0
+  effectiveRate: number; // totalTax / gross, 0–1 (0 if gross ≤ 0)
+  marginalRate: number; // top bracket rate touched (fraction); 0 if no taxable income
+  currency: string; // resolved jurisdiction currency
   breakdown: { label: string; amount: number }[]; // ordered display rows
 }
 ```
@@ -327,6 +329,7 @@ export interface NetIncomeResult {
 ### Hand-traced test expectations (all at gross 60,000 / expenses 5,000 local currency)
 
 **US, single:**
+
 - netSE = 55,000
 - SE base = 55,000 × 0.9235 = 50,792.50
 - Social Security = 0.124 × min(50,792.50, 184,500) = 6,298.27
@@ -342,6 +345,7 @@ export interface NetIncomeResult {
 - marginalRate = 0.12 (12% bracket; taxableIncome 28,677 < 50,400)
 
 **UK:**
+
 - netSE = 55,000
 - Class 4 mid = 0.06 × (min(55,000, 50,270) − 12,570) = 0.06 × 37,700 = 2,262
 - Class 4 top = 0.02 × (55,000 − 50,270) = 0.02 × 4,730 = 94.60
@@ -356,6 +360,7 @@ export interface NetIncomeResult {
 - marginalRate = 0.40 (40% band; taxableIncome 42,430 > 37,700)
 
 **CA:**
+
 - netSE = 55,000
 - CPP = 0.119 × min(55,000, 74,600) = 0.119 × 55,000 = 6,545
 - socialTax = 6,545
@@ -367,9 +372,10 @@ export interface NetIncomeResult {
 - net = 55,000 − 11,941.72 = 43,058.28
 - effectiveRate ≈ 0.1990 (19.90%)
 - marginalRate = 0.14
-- **Simplification note:** CA BPA is modeled as a *deduction* here; in real Canadian tax it is a non-refundable *credit* (≈ 15% × BPA = $2,467.80 credit, which saves more tax than the 14% × $16,452 = $2,303.28 deduction here). This estimator therefore slightly *overstates* CA tax (understates the BPA benefit) by ~$165 in this case. Documented as a non-goal (§2).
+- **Simplification note:** CA BPA is modeled as a _deduction_ here; in real Canadian tax it is a non-refundable _credit_ (≈ 15% × BPA = $2,467.80 credit, which saves more tax than the 14% × $16,452 = $2,303.28 deduction here). This estimator therefore slightly *overstates* CA tax (understates the BPA benefit) by ~$165 in this case. Documented as a non-goal (§2).
 
 **AU:**
+
 - netSE = 55,000
 - Medicare = 0.02 × 55,000 = 1,100
 - socialTax = 1,100
@@ -442,10 +448,10 @@ The dual frontmatter+inline-script import convention this repo uses (`import { e
 
 ## 10. SDD task plan
 
-| Task     | Scope                                                                                                       | Model                                          | Depends on |
-| -------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ---------- |
+| Task     | Scope                                                                                                             | Model                                                                                                     | Depends on |
+| -------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------- |
 | **C1-1** | `taxConfig.ts` + `netIncome.ts` + append `describe("net income / tax calculator")` to `tests/calculators.test.ts` | sonnet (config is intricate, multi-country hand-tracing + test design — judgment, not pure transcription) | —          |
-| **C1-2** | `NetIncomeCalculator.astro` + `net-income-tax-calculator.astro` + `TOOLS[]` entry + `netIncomeFaqs`         | sonnet (multi-file integration, pattern parity with Spotify/Kick islands) | C1-1       |
+| **C1-2** | `NetIncomeCalculator.astro` + `net-income-tax-calculator.astro` + `TOOLS[]` entry + `netIncomeFaqs`               | sonnet (multi-file integration, pattern parity with Spotify/Kick islands)                                 | C1-1       |
 
 Per task: implementer subagent with curated brief → task reviewer (spec + quality) → fix loop for Critical/Important → commit with `Co-Authored-By: Claude <noreply@anthropic.com>` trailer. Continuous execution (no check-ins between tasks); stop only on BLOCKED or genuine ambiguity. Artifacts: `.superpowers/sdd/task-N-{brief,report}-c1.md`; ledger: `.superpowers/sdd/progress-c1.md`. No PR after C1. Final whole-branch review (opus) at C1 end covers `ff91763..HEAD` (C1 commits only — A/B1/B2 already passed their own final reviews).
 

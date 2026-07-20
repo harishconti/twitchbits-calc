@@ -32,19 +32,19 @@ Copied verbatim from the approved spec (`docs/superpowers/specs/2026-07-20-subpr
 
 ### New files (4)
 
-| File | Responsibility |
-| ---- | -------------- |
-| `src/data/taxConfig.ts` | Single editable source of truth for tax math: `TaxBracket`, `SocialContribution`, `FilingStatus`, `Jurisdiction` interfaces; `JURISDICTIONS` record (US/UK/CA/AU with sourced 2026/2025-26 figures); `JURISDICTION_PRESETS`, `FILING_STATUS_PRESETS`, `TAX_DEFAULTS`. No behavior — data + types only. |
-| `src/lib/calculators/netIncome.ts` | Pure `estimateNetIncome(i)` — guards inputs, resolves jurisdiction + filing status, computes social tax, QBI (US), taxable income, income tax (brackets or flat override), total tax, net, effective/marginal rate, and an ordered breakdown array. No DOM/Astro imports. |
-| `src/components/calculators/NetIncomeCalculator.astro` | Vanilla-JS island: jurisdiction `<select>`, US filing-status `<select>` (hidden for non-US), gross + expenses `RangeSlider`s with dynamic currency prefix, optional flat-tax-override `<input>`, result + subresult + breakdown grid. Dual frontmatter+inline-script import of `estimateNetIncome`. |
-| `src/pages/net-income-tax-calculator.astro` | `ToolLayout` page: exact H1, description, slug, crumbs, `netIncomeFaqs`. Slot renders `<NetIncomeCalculator />`. |
+| File                                                   | Responsibility                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/data/taxConfig.ts`                                | Single editable source of truth for tax math: `TaxBracket`, `SocialContribution`, `FilingStatus`, `Jurisdiction` interfaces; `JURISDICTIONS` record (US/UK/CA/AU with sourced 2026/2025-26 figures); `JURISDICTION_PRESETS`, `FILING_STATUS_PRESETS`, `TAX_DEFAULTS`. No behavior — data + types only. |
+| `src/lib/calculators/netIncome.ts`                     | Pure `estimateNetIncome(i)` — guards inputs, resolves jurisdiction + filing status, computes social tax, QBI (US), taxable income, income tax (brackets or flat override), total tax, net, effective/marginal rate, and an ordered breakdown array. No DOM/Astro imports.                              |
+| `src/components/calculators/NetIncomeCalculator.astro` | Vanilla-JS island: jurisdiction `<select>`, US filing-status `<select>` (hidden for non-US), gross + expenses `RangeSlider`s with dynamic currency prefix, optional flat-tax-override `<input>`, result + subresult + breakdown grid. Dual frontmatter+inline-script import of `estimateNetIncome`.    |
+| `src/pages/net-income-tax-calculator.astro`            | `ToolLayout` page: exact H1, description, slug, crumbs, `netIncomeFaqs`. Slot renders `<NetIncomeCalculator />`.                                                                                                                                                                                       |
 
 ### Modified files (3, append-only)
 
-| File | Change |
-| ---- | ------ |
-| `src/lib/site.ts` | Append one entry to the `TOOLS` array (after the Spotify entry, before the closing `] as const`). |
-| `src/data/faqs.ts` | Append `export const netIncomeFaqs = [ ... ];` at end of file. |
+| File                        | Change                                                                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/site.ts`           | Append one entry to the `TOOLS` array (after the Spotify entry, before the closing `] as const`).                                   |
+| `src/data/faqs.ts`          | Append `export const netIncomeFaqs = [ ... ];` at end of file.                                                                      |
 | `tests/calculators.test.ts` | Add one import line after the Spotify import block; append `describe("net income / tax calculator", () => { ... })` at end of file. |
 
 ### Untouched (no-regression — do not modify)
@@ -56,11 +56,13 @@ All 10 existing calc modules (`bits.ts`, `revenue.ts`, `subs.ts`, `tiktok.ts`, `
 ## Task 1 (C1-1): Tax config + pure calculator + tests
 
 **Files:**
+
 - Create: `src/data/taxConfig.ts`
 - Create: `src/lib/calculators/netIncome.ts`
 - Modify: `tests/calculators.test.ts` (add import + append `describe` block)
 
 **Interfaces:**
+
 - Consumes: nothing (config + calc are the foundation).
 - Produces:
   - `taxConfig.ts` exports: `JurisdictionCode` (type), `TaxBracket` (interface), `SocialContribution` (interface), `FilingStatus` (interface), `Jurisdiction` (interface), `JURISDICTIONS` (Record), `JURISDICTION_PRESETS`, `FILING_STATUS_PRESETS`, `TAX_DEFAULTS`.
@@ -172,7 +174,12 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
     // SE tax 15.3% = 12.4% SS (cap at 2026 wage base $184,500) + 2.9% Medicare (uncapped),
     // applied to 92.35% of netSE. Two entries sharing baseFactor 0.9235; only SS carries the cap.
     social: [
-      { name: "Social Security (12.4%)", rate: 0.124, cap: 184500, baseFactor: 0.9235 },
+      {
+        name: "Social Security (12.4%)",
+        rate: 0.124,
+        cap: 184500,
+        baseFactor: 0.9235,
+      },
       { name: "Medicare (2.9%)", rate: 0.029, baseFactor: 0.9235 },
     ],
     qbiRate: 0.2,
@@ -213,9 +220,7 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
     // Self-employed CPP: both halves = 11.9% on pensionable earnings,
     // capped at 2026 YMPE $74,600. YBE ($3,500) and CPP2 (4% on 74,600–85,000)
     // excluded (non-goal) — CPP modeled on full netSE up to YMPE.
-    social: [
-      { name: "CPP self-employed (11.9%)", rate: 0.119, cap: 74600 },
-    ],
+    social: [{ name: "CPP self-employed (11.9%)", rate: 0.119, cap: 74600 }],
     overrideLabel: "Flat tax rate % (optional, overrides brackets)",
   },
   au: {
@@ -232,9 +237,7 @@ export const JURISDICTIONS: Record<JurisdictionCode, Jurisdiction> = {
       { min: 190000, rate: 0.45 },
     ],
     // Medicare levy 2% of taxable income (no low-income phase-in modeled — non-goal).
-    social: [
-      { name: "Medicare levy (2%)", rate: 0.02 },
-    ],
+    social: [{ name: "Medicare levy (2%)", rate: 0.02 }],
     overrideLabel: "Flat tax rate % (optional, overrides brackets)",
   },
 } as const;
@@ -487,16 +490,20 @@ describe("net income / tax calculator", () => {
 
   it("resolves currency for each jurisdiction", () => {
     expect(
-      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "us" }).currency,
+      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "us" })
+        .currency,
     ).toBe("USD");
     expect(
-      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "uk" }).currency,
+      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "uk" })
+        .currency,
     ).toBe("GBP");
     expect(
-      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "ca" }).currency,
+      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "ca" })
+        .currency,
     ).toBe("CAD");
     expect(
-      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "au" }).currency,
+      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "au" })
+        .currency,
     ).toBe("AUD");
   });
 
@@ -509,15 +516,21 @@ describe("net income / tax calculator", () => {
     });
     expect(us.breakdown[0].label).toBe("Gross");
     expect(us.breakdown[us.breakdown.length - 1].label).toBe("Net");
-    expect(us.breakdown.some((row) => row.label === "QBI deduction")).toBe(true);
-    expect(us.breakdown.some((row) => row.label === "Net SE income")).toBe(true);
+    expect(us.breakdown.some((row) => row.label === "QBI deduction")).toBe(
+      true,
+    );
+    expect(us.breakdown.some((row) => row.label === "Net SE income")).toBe(
+      true,
+    );
 
     const uk = estimateNetIncome({
       gross: 60000,
       expenses: 5000,
       jurisdiction: "uk",
     });
-    expect(uk.breakdown.some((row) => row.label === "QBI deduction")).toBe(false);
+    expect(uk.breakdown.some((row) => row.label === "QBI deduction")).toBe(
+      false,
+    );
   });
 });
 ```
@@ -592,7 +605,10 @@ export function estimateNetIncome(i: NetIncomeInput): NetIncomeResult {
   let socialTax = 0;
   for (const s of j.social) {
     const base = netSE * (s.baseFactor ?? 1);
-    const band = Math.max(0, Math.min(base, s.cap ?? Infinity) - (s.floor ?? 0));
+    const band = Math.max(
+      0,
+      Math.min(base, s.cap ?? Infinity) - (s.floor ?? 0),
+    );
     const amount = s.rate * band;
     socialTax += amount;
     socialEntries.push({ label: s.name, amount });
@@ -703,12 +719,14 @@ EOF
 ## Task 2 (C1-2): Island + page + registry + FAQs
 
 **Files:**
+
 - Create: `src/components/calculators/NetIncomeCalculator.astro`
 - Create: `src/pages/net-income-tax-calculator.astro`
 - Modify: `src/lib/site.ts` (append one `TOOLS` entry)
 - Modify: `src/data/faqs.ts` (append `netIncomeFaqs` export)
 
 **Interfaces:**
+
 - Consumes: `estimateNetIncome` from `src/lib/calculators/netIncome.ts`; `JURISDICTION_PRESETS`, `FILING_STATUS_PRESETS`, `TAX_DEFAULTS` from `src/data/taxConfig.ts`; `formatCurrency` from `src/lib/format.ts`; `RangeSlider` from `src/components/primitives/RangeSlider.astro`; `netIncomeFaqs` from `src/data/faqs.ts`; `ToolLayout` from `src/layouts/ToolLayout.astro`.
 - Produces: the live `/net-income-tax-calculator` page + its island + the registry/FAQ entries that make it discoverable. No exports consumed by later tasks (C1 is the last C1 task).
 
@@ -920,6 +938,7 @@ npm run lint
 ```
 
 Expected:
+
 - `npm test` → 85 tests pass (71 existing + 14 new).
 - `npm run build` → succeeds; page count goes from **46 → 47** (the new `/net-income-tax-calculator/` page). No Astro errors.
 - `npm run lint` → clean (prettier + eslint pass on all four new/modified files).
