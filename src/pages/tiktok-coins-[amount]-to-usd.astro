@@ -1,0 +1,44 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import TiktokCalculator from '../components/calculators/TiktokCalculator.astro';
+import ToolContent from '../components/ToolContent.astro';
+import { coinsToUsd, coinsToDiamonds, diamondsToUsd } from '../lib/calculators/tiktok';
+import { TIKTOK_AMOUNTS } from '../data/programmatic';
+import { toolContent } from '../data/toolContent';
+import { slugFor } from '../lib/slug';
+import { tiktokFaqs } from '../data/faqs';
+
+export function getStaticPaths() {
+  return TIKTOK_AMOUNTS.map((amount) => {
+    const viewerCost = +coinsToUsd(amount).toFixed(2);
+    const diamonds = +coinsToDiamonds(amount).toFixed(2);
+    const creatorUsd = +diamondsToUsd(diamonds).toFixed(2);
+    return {
+      params: { amount: String(amount) },
+      props: { amount, viewerCost, diamonds, creatorUsd },
+    };
+  });
+}
+
+const { amount, viewerCost, diamonds, creatorUsd } = Astro.props;
+const slug = slugFor('tiktokAmount', amount);
+---
+<ToolLayout
+  title={`${amount} TikTok Coins to USD`}
+  description={`${amount} TikTok Coins cost a viewer about $${viewerCost} USD. See what the creator earns in diamonds after TikTok's cut.`}
+  slug={slug}
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'TikTok Tools', url: `/${slug}` }]}
+  faqs={tiktokFaqs}
+>
+  <TiktokCalculator />
+  <ToolContent
+    doc={toolContent.tiktok}
+    values={{
+      amount,
+      viewerCost: viewerCost.toFixed(2),
+      diamonds: diamonds.toLocaleString(),
+      creatorUsd: creatorUsd.toFixed(2),
+    }}
+    slot="below"
+  />
+</ToolLayout>

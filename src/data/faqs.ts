@@ -148,3 +148,141 @@ export const youtubeFaqs = [
     a: "No. Shorts RPM is much lower than long-form; treat Shorts revenue separately when forecasting.",
   },
 ];
+
+export const kickRevenueFaqs = [
+  {
+    q: "How much do Kick streamers make per sub?",
+    a: "Kick pays a 95/5 split by default, so a $4.99 Tier 1 sub pays the streamer about $4.74 (vs $2.50 at Twitch's 50/50). Tier 2 ($9.99) pays ~$9.49 and Tier 3 ($24.99) pays ~$23.74.",
+  },
+  {
+    q: "What are KICKs worth on Kick?",
+    a: "100 KICKs have a face value of about $1.09, and the streamer keeps 95% of that — roughly $1.04 per 100 KICKs received.",
+  },
+  {
+    q: "Does Kick take a cut of ad revenue?",
+    a: "No. Kick pays streamers 100% of ad revenue, unlike Twitch's split. This calculator applies no split to the ads panel.",
+  },
+  {
+    q: "Does Kick have Prime subs?",
+    a: "No. Kick has no Prime sub equivalent. It has standard paid subs, gift subs, and KICKs (its Bits-analog) as the main support channels.",
+  },
+  {
+    q: "Is this Kick revenue calculator accurate?",
+    a: "It estimates gross pre-tax earnings from current Kick rates and your inputs. Real payouts vary by region, Stripe fees, and program terms.",
+  },
+];
+
+export const adRevenueFaqs = [
+  {
+    q: "How is Twitch ad revenue calculated?",
+    a: "Ad revenue ≈ CPM × (ad impressions ÷ 1000). Impressions = ads per hour × hours streamed × average concurrent viewers × streams per month. This calculator uses that impressions-based model.",
+  },
+  {
+    q: "What is a good Twitch ad CPM?",
+    a: "Typical Twitch ad CPMs range $2–$10 depending on region, season, and audience. The US default here is $4.00; adjust it to match your real ad stats.",
+  },
+  {
+    q: "How many ads should I run per hour?",
+    a: "Most Twitch partners run 1–4 ad breaks per hour. More ads raise revenue but can hurt viewer retention; test and watch your drop-off.",
+  },
+  {
+    q: "Does this include the streamer's split on ads?",
+    a: "Twitch pays streamers a share of ad revenue per their contract. This calculator reports gross ad revenue before any split is applied.",
+  },
+  {
+    q: "How does this differ from the Twitch Revenue Calculator?",
+    a: "The Twitch Revenue Calculator estimates your full income mix (subs + Bits + ads). This tool focuses only on ad earnings with finer ad-slot inputs (ads per hour, streams per month).",
+  },
+];
+
+export const patreonRevenueFaqs = [
+  {
+    q: "How much does Patreon take from creators?",
+    a: "New creators (published after August 4, 2025) pay a flat 10% platform fee. Legacy creators may still be on Lite (5%), Pro (8%), or Premium (12%) if their page stayed continuously published.",
+  },
+  {
+    q: "What are Patreon's payment processing fees?",
+    a: "On the Standard plan, processing is 2.9% + $0.30 per pledge (USD credit card/PayPal). The fixed $0.30 hits low-tier pledges harder — a $5 pledge loses about 19% effective, a $25 pledge about 5%.",
+  },
+  {
+    q: "How is Patreon revenue calculated?",
+    a: "Monthly take-home = Σ (patrons × tier price) − platform fee (plan % of gross) − processing fee (2.9% of gross + $0.30 per pledge). Annual is monthly × 12.",
+  },
+  {
+    q: "Do Patreon payouts include taxes?",
+    a: "No. These estimates are pre-tax. VAT/GST/sales tax may apply on the platform fee in some regions, and you handle your own income tax on payouts.",
+  },
+  {
+    q: "How many patrons do I need to hit a monthly goal?",
+    a: "The goal calc solves for patrons at one tier's price after fees. At the Standard plan with $5 tiers, each patron nets about $4.06, so $1,000/month needs roughly 247 patrons.",
+  },
+];
+
+export const spotifyRoyaltiesFaqs = [
+  {
+    q: "How much does Spotify pay per stream?",
+    a: "The global blended average is about $0.003–$0.005 per stream, but it varies widely by region: US/UK ~$0.0044, Nordic ~$0.0066, Latin America ~$0.0019, India ~$0.0008.",
+  },
+  {
+    q: "Why does region matter so much for Spotify royalties?",
+    a: "Spotify pays out of a royalty pool funded mostly by Premium subscriptions. Premium price and ad rates differ by country, so a stream from the US earns several times a stream from India.",
+  },
+  {
+    q: "What is the creator share percentage?",
+    a: "It's the share of the gross royalty you keep after your label or distributor takes their cut. An indie via a distributor might keep ~90%; a major-label artist might keep 10–50%. Default here is 70%.",
+  },
+  {
+    q: "How is Spotify royalty revenue calculated?",
+    a: "Monthly net = streams × per-stream rate for your region × (creator share ÷ 100). Annual is monthly × 12. Per 1,000 streams net = rate × 1000 × share.",
+  },
+  {
+    q: "Does this include Spotify's 1,000-stream threshold?",
+    a: "No. Since April 2024, tracks need 1,000 streams in a 12-month period to earn royalties. This calculator estimates gross earnings and does not model that eligibility threshold.",
+  },
+];
+
+export const netIncomeFaqs = [
+  {
+    q: "How is net income calculated for a creator?",
+    a: "Net income = gross revenue minus business expenses minus income tax minus self-employment/social tax. This calculator estimates each piece using 2026 brackets for your jurisdiction.",
+  },
+  {
+    q: "What is self-employment tax?",
+    a: "In the US, self-employment tax is 15.3% (12.4% Social Security + 2.9% Medicare) applied to 92.35% of your net earnings, separate from income tax. The UK has Class 4 NIC, Canada has CPP (both halves = 11.9%), and Australia has the 2% Medicare levy.",
+  },
+  {
+    q: "Why does take-home vary so much by country?",
+    a: "Each country has different brackets, allowances, and social contributions. The same $60,000 gross can leave you with materially different net pay across the US, UK, Canada, and Australia — switch the jurisdiction selector to compare.",
+  },
+  {
+    q: "What is the QBI deduction?",
+    a: "US-only: the Qualified Business Income deduction lets many self-employed people deduct 20% of their net business income (after half of SE tax) before income tax is calculated. This calculator applies it without the high-income phaseout.",
+  },
+  {
+    q: "Is this calculator tax advice?",
+    a: "No — estimates only. The model is deliberately simplified (no state tax, no itemized deductions, no phaseouts, and Canada's BPA and Australia's LITO are not modeled as credits). For real figures, use your jurisdiction's official tax tool or a CPA.",
+  },
+];
+
+export const cpmModifierFaqs = [
+  {
+    q: "What are CPM modifiers?",
+    a: "CPM modifiers are optional multipliers that adjust the base CPM (or RPM) for real-world ad-ops factors: seasonality, content niche, ad fill rate, and skippability. They default to neutral (1.0×) so your estimate is unchanged unless you enable them.",
+  },
+  {
+    q: "Why does Q4 raise CPM?",
+    a: "Q4 (October–December) is peak advertising season — holiday spend drives CPMs roughly 25% above baseline. Q1 is the post-holiday slump, typically 20% below baseline. Adjust the Season modifier to model this.",
+  },
+  {
+    q: "What is ad fill rate?",
+    a: "Fill rate is the percentage of available ad slots that actually get filled with paid ads. 100% means every slot is monetized; 50% means half go unfilled. Lower fill rate reduces effective CPM proportionally.",
+  },
+  {
+    q: "Skippable vs non-skippable ads — what's the difference?",
+    a: "Non-skippable ads command about a 25% CPM premium over skippable ads because advertisers pay for guaranteed full attention. Use 'Mostly non-skippable' if your content runs mostly pre-rolls or forced mid-rolls.",
+  },
+  {
+    q: "Are the niche multipliers exact?",
+    a: "No — Twitch does not publicly disclose CPM by content category, so the niche multipliers are illustrative relative adjustments (e.g. Tech tends higher, Music lower). Treat them as a rough directional guide, not exact rates.",
+  },
+];

@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import NetIncomeCalculator from '../components/calculators/NetIncomeCalculator.astro';
+import { netIncomeFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="Net Income Tax Calculator"
+  description="Estimate creator take-home pay after income tax and self-employment/social tax across the US, UK, Canada, and Australia."
+  slug="net-income-tax-calculator"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Tax Tools', url: '/net-income-tax-calculator' }]}
+  faqs={netIncomeFaqs}
+>
+  <NetIncomeCalculator />
+</ToolLayout>

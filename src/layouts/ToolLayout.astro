@@ -28,6 +28,7 @@ const jsonLd = [buildWebAppSchema(title), buildBreadcrumbSchema(crumbs)];
         <slot />
       </article>
     </section>
+    <slot name="below" />
     <FaqSection faqs={faqs} />
     <RelatedReads />
     <RelatedTools exclude={slug} />

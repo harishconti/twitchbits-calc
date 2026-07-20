@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import SpotifyCalculator from '../components/calculators/SpotifyCalculator.astro';
+import { spotifyRoyaltiesFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="Spotify Royalties Calculator"
+  description="Estimate Spotify royalty take-home from monthly streams, per-stream rate by region, and your creator share after label/distributor."
+  slug="spotify-royalties-calculator"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Spotify Tools', url: '/spotify-royalties-calculator' }]}
+  faqs={spotifyRoyaltiesFaqs}
+>
+  <SpotifyCalculator />
+</ToolLayout>

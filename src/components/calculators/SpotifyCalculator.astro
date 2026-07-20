@@ -1,0 +1,119 @@
+---
+import { estimateSpotifyRoyalties, spotifyStreamsForGoal } from '../../lib/calculators/spotify';
+import { SPOTIFY_REGION_PRESETS, SPOTIFY_CREATOR_SHARE_DEFAULT, SPOTIFY_STREAMS_DEFAULT } from '../../data/spotifyConfig';
+import { formatCurrency } from '../../lib/format';
+import RangeSlider from '../primitives/RangeSlider.astro';
+---
+<form class="spotify-calc" data-tool="spotify-royalties">
+  <fieldset class="panel-mini">
+    <legend>Streams & region</legend>
+    <label>Monthly streams
+      <RangeSlider id="streams" label="" min={0} max={10000000} step={1000} value={SPOTIFY_STREAMS_DEFAULT} compact />
+    </label>
+    <label>Region
+      <select data-region>
+        {SPOTIFY_REGION_PRESETS.map(r => <option value={r.value} selected={r.value === 'us'}>{r.label}</option>)}
+      </select>
+    </label>
+    <label>Creator share (%)
+      <RangeSlider id="share" label="" min={0} max={100} step={1} value={SPOTIFY_CREATOR_SHARE_DEFAULT} suffix="%" compact />
+    </label>
+  </fieldset>
+
+  <p class="rate-line" data-rate></p>
+
+  <div class="result" data-result aria-live="polite">$0.00 / month</div>
+  <div class="sub" data-subresult></div>
+
+  <div class="breakdown" data-breakdown>
+    <strong>Where your royalties come from</strong>
+    <div class="breakdown-grid" data-breakdown-grid></div>
+  </div>
+
+  <div class="goal-calc" data-goal>
+    <label>Monthly goal ($)
+      <input type="number" min="0" data-goal-input value="1000" />
+    </label>
+    <p data-goal-output>At 70% in the United States you need ~<strong>324,676</strong> streams/month.</p>
+  </div>
+</form>
+<script>
+  import { estimateSpotifyRoyalties, spotifyStreamsForGoal } from '../../lib/calculators/spotify';
+  import { formatCurrency, formatCurrencyPrecise } from '../../lib/format';
+  import { SPOTIFY_REGION_PRESETS } from '../../data/spotifyConfig';
+
+  const form = document.querySelector('[data-tool="spotify-royalties"]') as HTMLFormElement;
+  const sliderValue = (id: string) => Number(form.querySelector(`[data-range-slider="${id}"]`)?.dataset.value ?? 0);
+
+  const read = () => ({
+    streams: sliderValue('streams'),
+    region: (form.querySelector('[data-region]') as HTMLSelectElement)?.value ?? 'global',
+    creatorShare: sliderValue('share'),
+  });
+
+  const render = () => {
+    const r = estimateSpotifyRoyalties(read());
+    form.querySelector('[data-result]')!.textContent = `${formatCurrency(r.net, 'USD')} / month`;
+    form.querySelector('[data-subresult]')!.textContent = `≈ ${formatCurrency(r.annual, 'USD')} / year · ${formatCurrency(r.per1000, 'USD')}/1,000 streams net`;
+    form.querySelector('[data-rate]')!.textContent = `${formatCurrencyPrecise(r.rate, 'USD')}/stream · ${formatCurrency(r.per1000, 'USD')}/1,000 streams (your share)`;
+
+    const streams = sliderValue('streams');
+    const grid = form.querySelector('[data-breakdown-grid]') as HTMLElement;
+    const rows = [
+      { label: 'Streams', display: streams.toLocaleString() },
+      { label: 'Gross', display: formatCurrency(r.gross, 'USD') },
+      { label: 'Creator share', display: formatCurrency(r.gross - r.net, 'USD') },
+      { label: 'Net', display: formatCurrency(r.net, 'USD') },
+      { label: 'Per 1k net', display: formatCurrency(r.per1000, 'USD') },
+    ];
+    grid.innerHTML = rows.map(row => `
+      <div class="breakdown-cell">
+        <span>${row.label}</span>
+        <strong>${row.display}</strong>
+      </div>
+    `).join('');
+
+    renderGoal();
+  };
+
+  const renderGoal = () => {
+    const goal = Number((form.querySelector('[data-goal-input]') as HTMLInputElement)?.value ?? 0);
+    const region = (form.querySelector('[data-region]') as HTMLSelectElement)?.value ?? 'global';
+    const share = sliderValue('share');
+    const needed = spotifyStreamsForGoal(goal, region, share);
+    const regionLabel = SPOTIFY_REGION_PRESETS.find(p => p.value === region)?.label ?? 'Global average';
+    form.querySelector('[data-goal-output]')!.innerHTML = `At ${share}% in ${regionLabel} you need <strong>${needed.toLocaleString()}</strong> streams/month to hit ${formatCurrency(goal, 'USD')}.`;
+  };
+
+  form.querySelectorAll('[data-range-slider]').forEach(slider => {
+    slider.addEventListener('input', render);
+  });
+  form.querySelector('[data-region]')?.addEventListener('change', render);
+  form.querySelector('[data-goal-input]')?.addEventListener('input', renderGoal);
+
+  render();
+</script>
+<style>
+  .spotify-calc { display: flex; flex-direction: column; gap: var(--spacing-6); }
+  .panel-mini { border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); padding: var(--spacing-4); display: grid; gap: var(--spacing-4); }
+  legend { font-weight: 800; font-size: var(--text-sm); color: var(--color-fg); padding: 0 var(--spacing-2); }
+  label { display: grid; gap: var(--spacing-2); color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
+  select { width: 100%; min-height: 44px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
+  select:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .rate-line { color: var(--color-muted); font-size: var(--text-sm); margin: 0; }
+  .result { font-family: var(--font-mono); font-size: clamp(28px, 4vw, 48px); font-weight: 700; color: var(--color-accent); line-height: var(--leading-tight); white-space: nowrap; }
+  .sub { color: var(--color-muted); font-size: var(--text-sm); }
+  .breakdown { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); }
+  .breakdown strong { font-size: var(--text-sm); color: var(--color-fg); }
+  .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--spacing-3); }
+  .breakdown-cell { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); }
+  .breakdown-cell span { font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
+  .breakdown-cell strong { font-family: var(--font-mono); font-size: var(--text-base); color: var(--color-fg); }
+  .goal-calc { display: grid; grid-template-columns: 1fr 2fr; gap: var(--spacing-4); align-items: center; padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); }
+  .goal-calc label { margin: 0; }
+  .goal-calc input { width: 100%; min-height: 44px; padding: 0 var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); color: var(--color-fg); font: inherit; }
+  .goal-calc input:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--shadow-focus-ring); }
+  .goal-calc p { color: var(--color-fg-2); font-size: var(--text-sm); margin: 0; }
+  .goal-calc p strong { color: var(--color-accent); }
+  @media (max-width: 860px) { .goal-calc { grid-template-columns: 1fr; } }
+</style>

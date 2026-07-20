@@ -1,0 +1,50 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import YoutubeCalculator from '../components/calculators/YoutubeCalculator.astro';
+import ToolContent from '../components/ToolContent.astro';
+import { rangeFromRpm } from '../lib/calculators/youtube';
+import { DEFAULT_RPM } from '../data/youtubeConfig';
+import { YOUTUBE_VIEWS } from '../data/programmatic';
+import { toolContent } from '../data/toolContent';
+import { slugFor } from '../lib/slug';
+import { youtubeFaqs } from '../data/faqs';
+
+export function getStaticPaths() {
+  // Representative long-form, US estimate at the default RPM range. The
+  // interactive calculator above lets users refine; this content block gives
+  // a sane static figure for SEO and for no-JS readers.
+  return YOUTUBE_VIEWS.map((views) => {
+    const range = rangeFromRpm(views, DEFAULT_RPM.low, DEFAULT_RPM.high);
+    return {
+      params: { views: String(views) },
+      props: {
+        views,
+        lowUsd: range.low,
+        highUsd: range.high,
+      },
+    };
+  });
+}
+
+const { views, lowUsd, highUsd } = Astro.props;
+const slug = slugFor('youtubeViews', views);
+const viewsLabel = views.toLocaleString();
+---
+<ToolLayout
+  title={`YouTube Money Calculator — ${viewsLabel} Views`}
+  description={`Estimate how much ${viewsLabel} YouTube views earn based on niche, format, and audience country.`}
+  slug={slug}
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'YouTube Tools', url: `/${slug}` }]}
+  faqs={youtubeFaqs}
+>
+  <YoutubeCalculator />
+  <ToolContent
+    doc={toolContent.youtube}
+    values={{
+      views: viewsLabel,
+      lowUsd: lowUsd.toLocaleString('en-US', { maximumFractionDigits: 0 }),
+      highUsd: highUsd.toLocaleString('en-US', { maximumFractionDigits: 0 }),
+    }}
+    slot="below"
+  />
+</ToolLayout>

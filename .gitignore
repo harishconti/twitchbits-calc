@@ -8,3 +8,7 @@ dist/
 .playwright-mcp/
 .claude/plan.md
 .claude/settings.local.json
+# Cloudflare Pages local dev secrets
+.dev.vars
+# Cloudflare wrangler local dev artifacts
+.wrangler/
