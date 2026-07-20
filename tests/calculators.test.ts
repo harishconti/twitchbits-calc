@@ -22,6 +22,10 @@ import {
   estimateSponsorship,
   sponsorshipByFollowers,
 } from "../src/lib/calculators/sponsorship";
+import {
+  estimateKickRevenue,
+  kickSubsForGoal,
+} from "../src/lib/calculators/kick";
 
 describe("bits calculator", () => {
   it("converts bits to USD at $0.01/Bits", () => {
@@ -259,5 +263,150 @@ describe("sponsorship calculator", () => {
     expect(rows).toHaveLength(3);
     expect(rows[2].followers).toBe(100000);
     expect(rows[2].low).toBeGreaterThan(0);
+  });
+});
+
+describe("kick revenue calculator", () => {
+  it("computes monthly revenue from subs + kicks + ads at 95/5", () => {
+    const r = estimateKickRevenue({
+      subs: { tier1: 50, tier2: 0, tier3: 0, gift: 0 },
+      split: 0.95,
+      kicks: 10000, // 100 KICKs = $1.09 face → 10000/100 * 1.09 * 0.95 = 103.55
+      ads: { cpm: 4, minutes: 120, viewers: 50 }, // 4 * (120/1000) * 50 = 24 (no split)
+    });
+    // subs: 50 * 4.99 * 0.95 = 237.025
+    expect(r.monthly.subs).toBeCloseTo(237.025, 2);
+    expect(r.monthly.kicks).toBeCloseTo(103.55, 2);
+    expect(r.monthly.ads).toBeCloseTo(24, 2);
+    expect(r.monthly.total).toBeCloseTo(237.025 + 103.55 + 24, 2);
+  });
+
+  it("defaults split to 95/5 when split is invalid", () => {
+    const a = estimateKickRevenue({
+      subs: { tier1: 10, tier2: 0, tier3: 0, gift: 0 },
+      split: NaN,
+      kicks: 0,
+      ads: { cpm: 0, minutes: 0, viewers: 0 },
+    });
+    const b = estimateKickRevenue({
+      subs: { tier1: 10, tier2: 0, tier3: 0, gift: 0 },
+      split: 0.95,
+      kicks: 0,
+      ads: { cpm: 0, minutes: 0, viewers: 0 },
+    });
+    expect(a.monthly.subs).toBeCloseTo(b.monthly.subs, 4); // 10 * 4.99 * 0.95 = 47.405
+    expect(a.monthly.subs).toBeCloseTo(47.405, 2);
+  });
+
+  it("clamps split > 1 to the default", () => {
+    const r = estimateKickRevenue({
+      subs: { tier1: 10, tier2: 0, tier3: 0, gift: 0 },
+      split: 2,
+      kicks: 0,
+      ads: { cpm: 0, minutes: 0, viewers: 0 },
+    });
+    expect(r.monthly.subs).toBeCloseTo(47.405, 2); // default 0.95 applied
+  });
+
+  it("clamps split <= 0 to the default", () => {
+    const r = estimateKickRevenue({
+      subs: { tier1: 10, tier2: 0, tier3: 0, gift: 0 },
+      split: 0,
+      kicks: 0,
+      ads: { cpm: 0, minutes: 0, viewers: 0 },
+    });
+    expect(r.monthly.subs).toBeCloseTo(47.405, 2);
+  });
+
+  it("guards NaN/negative/Infinity inputs to 0", () => {
+    const r = estimateKickRevenue({
+      subs: { tier1: -5, tier2: NaN, tier3: Infinity, gift: -1 },
+      split: 0.95,
+      kicks: -100,
+      ads: { cpm: -1, minutes: NaN, viewers: Infinity },
+    });
+    expect(r.monthly.total).toBe(0);
+    expect(r.monthly.subs).toBe(0);
+    expect(r.monthly.kicks).toBe(0);
+    expect(r.monthly.ads).toBe(0);
+  });
+
+  it("treats gift subs as tier-1 price", () => {
+    const r = estimateKickRevenue({
+      subs: { tier1: 0, tier2: 0, tier3: 0, gift: 10 },
+      split: 0.95,
+      kicks: 0,
+      ads: { cpm: 0, minutes: 0, viewers: 0 },
+    });
+    expect(r.monthly.subs).toBeCloseTo(10 * 4.99 * 0.95, 2); // 47.405
+    expect(r.subsBreakdown.gift).toBeCloseTo(47.405, 2);
+  });
+
+  it("does not apply split to ads (Kick pays 100% on ads)", () => {
+    const lowSplit = estimateKickRevenue({
+      subs: { tier1: 0, tier2: 0, tier3: 0, gift: 0 },
+      split: 0.5,
+      kicks: 0,
+      ads: { cpm: 4, minutes: 120, viewers: 50 },
+    });
+    const highSplit = estimateKickRevenue({
+      subs: { tier1: 0, tier2: 0, tier3: 0, gift: 0 },
+      split: 1.0,
+      kicks: 0,
+      ads: { cpm: 4, minutes: 120, viewers: 50 },
+    });
+    expect(lowSplit.monthly.ads).toBe(24);
+    expect(highSplit.monthly.ads).toBe(24);
+  });
+
+  it("annual equals monthly times 12", () => {
+    const r = estimateKickRevenue({
+      subs: { tier1: 50, tier2: 0, tier3: 0, gift: 0 },
+      split: 0.95,
+      kicks: 0,
+      ads: { cpm: 0, minutes: 0, viewers: 0 },
+    });
+    expect(r.annual.subs).toBeCloseTo(r.monthly.subs * 12, 4);
+    expect(r.annual.total).toBeCloseTo(r.monthly.total * 12, 4);
+  });
+
+  it("breakdown tiers sum to monthly subs", () => {
+    const r = estimateKickRevenue({
+      subs: { tier1: 10, tier2: 5, tier3: 1, gift: 2 },
+      split: 0.95,
+      kicks: 0,
+      ads: { cpm: 0, minutes: 0, viewers: 0 },
+    });
+    const sum =
+      r.subsBreakdown.tier1 +
+      r.subsBreakdown.tier2 +
+      r.subsBreakdown.tier3 +
+      r.subsBreakdown.gift;
+    expect(sum).toBeCloseTo(r.monthly.subs, 4);
+    expect(r.subsBreakdown.total).toBeCloseTo(r.monthly.subs, 4);
+  });
+
+  it("computes hourlyEquivalent and minWageMultiple over 120 hrs/month", () => {
+    const r = estimateKickRevenue({
+      subs: { tier1: 50, tier2: 0, tier3: 0, gift: 0 },
+      split: 0.95,
+      kicks: 0,
+      ads: { cpm: 0, minutes: 0, viewers: 0 },
+    });
+    expect(r.hourlyEquivalent).toBeCloseTo(r.monthly.total / 120, 6);
+    expect(r.minWageMultiple).toBeCloseTo(r.hourlyEquivalent / 7.25, 6);
+  });
+
+  it("kickSubsForGoal ceils tier-1 subs needed at the given split", () => {
+    // $1000 / (4.99 * 0.95) = 1000 / 4.7405 ≈ 210.95 → ceil 211
+    expect(kickSubsForGoal(1000, 0.95)).toBe(211);
+    expect(kickSubsForGoal(0, 0.95)).toBe(0);
+    expect(kickSubsForGoal(-50, 0.95)).toBe(0);
+  });
+
+  it("kickSubsForGoal clamps invalid split to default 0.95", () => {
+    expect(kickSubsForGoal(1000, 2)).toBe(211);
+    expect(kickSubsForGoal(1000, 0)).toBe(211);
+    expect(kickSubsForGoal(1000, NaN)).toBe(211);
   });
 });
