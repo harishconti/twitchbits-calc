@@ -1,14 +1,14 @@
 ---
 import ToolLayout from '../layouts/ToolLayout.astro';
 import YoutubeCalculator from '../components/calculators/YoutubeCalculator.astro';
-import { youtubeFaqs } from '../data/faqs';
+import { youtubeFaqs, cpmModifierFaqs } from '../data/faqs';
 ---
 <ToolLayout
   title="YouTube Money Calculator"
   description="Estimate YouTube earnings from RPM × views across niches. See a realistic low–high monthly range."
   slug="youtube-money-calculator"
   crumbs={[{ name: 'Home', url: '/' }, { name: 'YouTube Tools', url: '/youtube-money-calculator' }]}
-  faqs={youtubeFaqs}
+  faqs={[...youtubeFaqs, ...cpmModifierFaqs]}
 >
   <YoutubeCalculator />
 </ToolLayout>
