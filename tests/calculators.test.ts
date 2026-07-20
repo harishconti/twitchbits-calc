@@ -35,6 +35,7 @@ import {
   estimateSpotifyRoyalties,
   spotifyStreamsForGoal,
 } from "../src/lib/calculators/spotify";
+import { estimateNetIncome } from "../src/lib/calculators/netIncome";
 
 describe("bits calculator", () => {
   it("converts bits to USD at $0.01/Bits", () => {
@@ -807,5 +808,253 @@ describe("spotify royalties calculator", () => {
   it("spotifyStreamsForGoal ceils the streams needed", () => {
     // netPerStream = 0.0044 * 0.70 = 0.00308; 1000/0.00308 = 324675.32 -> 324676
     expect(spotifyStreamsForGoal(1000, "us", 70)).toBe(324676);
+  });
+});
+
+describe("net income / tax calculator", () => {
+  it("US single $60k/$5k: SE tax + QBI + bracket income tax hand-trace", () => {
+    const r = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "single",
+    });
+    // netSE 55000; SE base 50792.50; SS 6298.27; Medicare 1472.98; socialTax 7771.25
+    expect(r.netSE).toBeCloseTo(55000, 2);
+    expect(r.socialTax).toBeCloseTo(7771.25, 2);
+    // QBI = 0.20 * (55000 - 7771.25/2) = 0.20 * 51114.37 = 10222.87
+    expect(r.qbiDeduction).toBeCloseTo(10222.87, 2);
+    // taxable = 55000 - 16100 - 10222.87 = 28677.13
+    expect(r.taxableIncome).toBeCloseTo(28677.13, 2);
+    // income tax = 0.10*12400 + 0.12*(28677.13-12400) = 1240 + 1953.26 = 3193.26
+    expect(r.incomeTax).toBeCloseTo(3193.26, 2);
+    expect(r.totalTax).toBeCloseTo(10964.51, 2);
+    expect(r.net).toBeCloseTo(44035.49, 2);
+    expect(r.effectiveRate).toBeCloseTo(0.1827, 4);
+    expect(r.marginalRate).toBeCloseTo(0.12, 2);
+    expect(r.currency).toBe("USD");
+  });
+
+  it("UK £60k/£5k: Class 4 NIC two bands + England bands hand-trace", () => {
+    const r = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "uk",
+    });
+    // Class 4: 0.06*(50270-12570) + 0.02*(55000-50270) = 2262 + 94.60 = 2356.60
+    expect(r.socialTax).toBeCloseTo(2356.6, 2);
+    // personalAllowance 12570; taxable 42430; IT = 0.20*37700 + 0.40*4730 = 9432
+    expect(r.taxableIncome).toBeCloseTo(42430, 2);
+    expect(r.incomeTax).toBeCloseTo(9432, 2);
+    expect(r.totalTax).toBeCloseTo(11788.6, 2);
+    expect(r.net).toBeCloseTo(43211.4, 2);
+    expect(r.effectiveRate).toBeCloseTo(0.1965, 4);
+    expect(r.marginalRate).toBeCloseTo(0.4, 2);
+    expect(r.currency).toBe("GBP");
+  });
+
+  it("CA C$60k/C$5k: self-employed CPP 11.9% + 14% first bracket", () => {
+    const r = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "ca",
+    });
+    // CPP = 0.119 * min(55000, 74600) = 6545
+    expect(r.socialTax).toBeCloseTo(6545, 2);
+    // BPA 16452; taxable 38548; IT = 0.14*38548 = 5396.72
+    expect(r.taxableIncome).toBeCloseTo(38548, 2);
+    expect(r.incomeTax).toBeCloseTo(5396.72, 2);
+    expect(r.totalTax).toBeCloseTo(11941.72, 2);
+    expect(r.net).toBeCloseTo(43058.28, 2);
+    expect(r.effectiveRate).toBeCloseTo(0.199, 4);
+    expect(r.marginalRate).toBeCloseTo(0.14, 2);
+    expect(r.currency).toBe("CAD");
+  });
+
+  it("AU A$60k/A$5k: Medicare 2% + 0%/16%/30% brackets hand-trace", () => {
+    const r = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "au",
+    });
+    // Medicare = 0.02 * 55000 = 1100; no allowance; taxable 55000
+    expect(r.socialTax).toBeCloseTo(1100, 2);
+    expect(r.taxableIncome).toBeCloseTo(55000, 2);
+    // IT = 0.16*(45000-18200) + 0.30*(55000-45000) = 4288 + 3000 = 7288
+    expect(r.incomeTax).toBeCloseTo(7288, 2);
+    expect(r.totalTax).toBeCloseTo(8388, 2);
+    expect(r.net).toBeCloseTo(46612, 2);
+    expect(r.effectiveRate).toBeCloseTo(0.1398, 4);
+    expect(r.marginalRate).toBeCloseTo(0.3, 2);
+    expect(r.currency).toBe("AUD");
+  });
+
+  it("US MFJ: higher standard deduction lowers tax vs single", () => {
+    const single = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "single",
+    });
+    const r = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "mfj",
+    });
+    // SE tax is filing-status-independent
+    expect(r.socialTax).toBeCloseTo(7771.25, 2);
+    // MFJ: taxable = 55000 - 32200 - 10222.87 = 12577.13; IT = 0.10*12577.13 = 1257.71
+    expect(r.taxableIncome).toBeCloseTo(12577.13, 2);
+    expect(r.incomeTax).toBeCloseTo(1257.71, 2);
+    expect(r.marginalRate).toBeCloseTo(0.1, 2);
+    // married benefit: MFJ net (~45971) > single net (~44035)
+    expect(r.net).toBeCloseTo(45971.04, 1);
+    expect(r.net).toBeGreaterThan(single.net);
+  });
+
+  it("overrideRate replaces the bracket engine with a flat tax", () => {
+    const r = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "single",
+      overrideRate: 15,
+    });
+    // overrideTax = 0.15 * 28677.13 = 4301.57; incomeTax = overrideTax
+    expect(r.overrideTax).toBeCloseTo(4301.57, 2);
+    expect(r.incomeTax).toBeCloseTo(4301.57, 2);
+    expect(r.totalTax).toBeCloseTo(12072.82, 2);
+    expect(r.net).toBeCloseTo(42927.18, 2);
+    expect(r.marginalRate).toBeCloseTo(0.15, 2);
+  });
+
+  it("guards NaN/negative/Infinity gross and expenses to 0", () => {
+    const r = estimateNetIncome({
+      gross: NaN,
+      expenses: -1000,
+      jurisdiction: "us",
+    });
+    expect(r.gross).toBe(0);
+    expect(r.expenses).toBe(0);
+    expect(r.netSE).toBe(0);
+    expect(r.socialTax).toBe(0);
+    expect(r.incomeTax).toBe(0);
+    expect(r.net).toBe(0);
+  });
+
+  it("falls back to US for an invalid jurisdiction", () => {
+    const r = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "mars" as any,
+    });
+    expect(r.currency).toBe("USD");
+    expect(r.net).toBeCloseTo(44035.49, 2);
+  });
+
+  it("falls back to single for an invalid US filing status", () => {
+    const r = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "nonexistent" as any,
+    });
+    expect(r.net).toBeCloseTo(44035.49, 2);
+  });
+
+  it("ignores NaN/negative overrideRate and uses brackets", () => {
+    const byBrackets = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "single",
+    });
+    const nanOverride = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "single",
+      overrideRate: NaN,
+    });
+    const negOverride = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "single",
+      overrideRate: -5,
+    });
+    expect(nanOverride.incomeTax).toBeCloseTo(byBrackets.incomeTax, 2);
+    expect(nanOverride.overrideTax).toBe(0);
+    expect(negOverride.incomeTax).toBeCloseTo(byBrackets.incomeTax, 2);
+  });
+
+  it("clamps overrideRate > 100 to 100", () => {
+    const r = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "single",
+      overrideRate: 150,
+    });
+    // 100% of taxable 28677.13 = 28677.13
+    expect(r.overrideTax).toBeCloseTo(28677.13, 2);
+    expect(r.incomeTax).toBeCloseTo(28677.13, 2);
+    expect(r.marginalRate).toBeCloseTo(1.0, 2);
+  });
+
+  it("net is never negative when expenses exceed gross", () => {
+    const r = estimateNetIncome({
+      gross: 5000,
+      expenses: 60000,
+      jurisdiction: "us",
+    });
+    expect(r.netSE).toBe(0);
+    expect(r.net).toBe(0);
+  });
+
+  it("resolves currency for each jurisdiction", () => {
+    expect(
+      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "us" })
+        .currency,
+    ).toBe("USD");
+    expect(
+      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "uk" })
+        .currency,
+    ).toBe("GBP");
+    expect(
+      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "ca" })
+        .currency,
+    ).toBe("CAD");
+    expect(
+      estimateNetIncome({ gross: 1000, expenses: 0, jurisdiction: "au" })
+        .currency,
+    ).toBe("AUD");
+  });
+
+  it("breakdown has Gross first, Net last, and a QBI row only for the US", () => {
+    const us = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "us",
+      filingStatus: "single",
+    });
+    expect(us.breakdown[0].label).toBe("Gross");
+    expect(us.breakdown[us.breakdown.length - 1].label).toBe("Net");
+    expect(us.breakdown.some((row) => row.label === "QBI deduction")).toBe(
+      true,
+    );
+    expect(us.breakdown.some((row) => row.label === "Net SE income")).toBe(
+      true,
+    );
+
+    const uk = estimateNetIncome({
+      gross: 60000,
+      expenses: 5000,
+      jurisdiction: "uk",
+    });
+    expect(uk.breakdown.some((row) => row.label === "QBI deduction")).toBe(
+      false,
+    );
   });
 });
