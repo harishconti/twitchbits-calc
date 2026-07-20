@@ -38,11 +38,13 @@
 ### Task C2-1: CPM modifiers config + pure function + tests
 
 **Files:**
+
 - Create: `src/data/cpmModifiers.ts`
 - Create: `src/lib/calculators/cpmModifiers.ts`
 - Test: `tests/calculators.test.ts` (append import + describe block)
 
 **Interfaces:**
+
 - Produces (consumed by C2-2 and C2-3 islands):
   - `applyCpmModifiers(base: number, s: CpmModifierSelection): number`
   - `NEUTRAL: CpmModifierSelection`
@@ -114,18 +116,27 @@ export const NEUTRAL: CpmModifierSelection = {
   skippableFactor: 1,
 };
 
-const clamp = (n: number, lo: number, hi: number): number =>
-  Number.isFinite(n) && n >= 0 ? Math.min(hi, Math.max(lo, n)) : lo;
+// Factors are multipliers: a missing/NaN factor means "no adjustment" → neutral (1),
+// not 0. The base CPM/RPM is a quantity: NaN/negative/Infinity → 0 (rule 3).
+// Negative-but-finite factors still clamp to the lo bound (e.g. fill -10 → 0).
+const clampFactor = (n: number | undefined, fallback: number): number => {
+  if (n == null || !Number.isFinite(n)) return fallback;
+  return Math.min(5, Math.max(0, n));
+};
+const clampFill = (n: number | undefined): number => {
+  if (n == null || !Number.isFinite(n)) return 100;
+  return Math.min(100, Math.max(0, n));
+};
 
 export function applyCpmModifiers(
   base: number,
   s: CpmModifierSelection,
 ): number {
   const b = Number.isFinite(base) && base >= 0 ? base : 0;
-  const season = clamp(s?.seasonFactor ?? 1, 0, 5);
-  const niche = clamp(s?.nicheFactor ?? 1, 0, 5);
-  const fill = clamp(s?.fillRatePct ?? 100, 0, 100) / 100;
-  const skip = clamp(s?.skippableFactor ?? 1, 0, 5);
+  const season = clampFactor(s?.seasonFactor, 1);
+  const niche = clampFactor(s?.nicheFactor, 1);
+  const fill = clampFill(s?.fillRatePct) / 100;
+  const skip = clampFactor(s?.skippableFactor, 1);
   return b * season * niche * fill * skip;
 }
 
@@ -253,11 +264,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task C2-2: Twitch Ad Revenue island — Advanced modifiers panel + FAQs
 
 **Files:**
+
 - Modify: `src/components/calculators/AdRevenueCalculator.astro`
 - Modify: `src/data/faqs.ts` (append `cpmModifierFaqs`)
 - Modify: `src/pages/twitch-ad-revenue-calculator.astro` (merge FAQs)
 
 **Interfaces:**
+
 - Consumes (from C2-1): `applyCpmModifiers`, `NEUTRAL`, `seasonFactor`, `nicheFactor`, `skippableFactor`, type `CpmModifierSelection`.
 
 - [ ] **Step 1: Append `cpmModifierFaqs` to `src/data/faqs.ts`**
@@ -320,47 +333,60 @@ import { adRevenueFaqs, cpmModifierFaqs } from '../data/faqs';
 In `src/components/calculators/AdRevenueCalculator.astro`, insert this block **immediately before** the `<div class="result" data-result ...>` line (i.e. after the closing `</fieldset>` of the inputs panel):
 
 ```html
-  <details class="advanced-modifiers" data-modifiers>
-    <summary>Advanced CPM modifiers</summary>
-    <div class="modifier-grid">
-      <label class="field">Season
-        <select data-mod-season>
-          <option value="none" selected>No adjustment</option>
-          <option value="q1">Q1 (Jan–Mar)</option>
-          <option value="q2">Q2 (Apr–Jun)</option>
-          <option value="q3">Q3 (Jul–Sep)</option>
-          <option value="q4">Q4 (Oct–Dec)</option>
-        </select>
-      </label>
-      <label class="field">Niche
-        <select data-mod-niche>
-          <option value="none" selected>No adjustment</option>
-          <option value="gaming">Gaming</option>
-          <option value="justchatting">Just Chatting / IRL</option>
-          <option value="music">Music &amp; Performing Arts</option>
-          <option value="tech">Tech &amp; Science</option>
-          <option value="art">Art &amp; Creative</option>
-          <option value="sports">Sports</option>
-        </select>
-      </label>
-      <label class="field">Fill rate
-        <RangeSlider id="fill-rate" label="" min={0} max={100} step={1} value={100} suffix="%" compact />
-      </label>
-      <label class="field">Skippability
-        <select data-mod-skippable>
-          <option value="standard" selected>Standard mix</option>
-          <option value="skippable">Mostly skippable</option>
-          <option value="nonskippable">Mostly non-skippable</option>
-        </select>
-      </label>
-    </div>
-  </details>
+<details class="advanced-modifiers" data-modifiers>
+  <summary>Advanced CPM modifiers</summary>
+  <div class="modifier-grid">
+    <label class="field"
+      >Season
+      <select data-mod-season>
+        <option value="none" selected>No adjustment</option>
+        <option value="q1">Q1 (Jan–Mar)</option>
+        <option value="q2">Q2 (Apr–Jun)</option>
+        <option value="q3">Q3 (Jul–Sep)</option>
+        <option value="q4">Q4 (Oct–Dec)</option>
+      </select>
+    </label>
+    <label class="field"
+      >Niche
+      <select data-mod-niche>
+        <option value="none" selected>No adjustment</option>
+        <option value="gaming">Gaming</option>
+        <option value="justchatting">Just Chatting / IRL</option>
+        <option value="music">Music &amp; Performing Arts</option>
+        <option value="tech">Tech &amp; Science</option>
+        <option value="art">Art &amp; Creative</option>
+        <option value="sports">Sports</option>
+      </select>
+    </label>
+    <label class="field"
+      >Fill rate
+      <RangeSlider
+        id="fill-rate"
+        label=""
+        min="{0}"
+        max="{100}"
+        step="{1}"
+        value="{100}"
+        suffix="%"
+        compact
+      />
+    </label>
+    <label class="field"
+      >Skippability
+      <select data-mod-skippable>
+        <option value="standard" selected>Standard mix</option>
+        <option value="skippable">Mostly skippable</option>
+        <option value="nonskippable">Mostly non-skippable</option>
+      </select>
+    </label>
+  </div>
+</details>
 ```
 
 Then add a modifier hint line **immediately after** the `<div class="sub" data-subresult></div>` line:
 
 ```html
-  <div class="mod-hint" data-mod-hint hidden></div>
+<div class="mod-hint" data-mod-hint hidden></div>
 ```
 
 - [ ] **Step 4: Wire modifiers into the island script in `AdRevenueCalculator.astro`**
@@ -368,44 +394,50 @@ Then add a modifier hint line **immediately after** the `<div class="sub" data-s
 In the `<script>` block, update the import at the top. Replace:
 
 ```ts
-  import { estimateAdRevenue } from '../../lib/calculators/ads';
-  import { formatCurrency } from '../../lib/format';
+import { estimateAdRevenue } from "../../lib/calculators/ads";
+import { formatCurrency } from "../../lib/format";
 ```
 
 with:
 
 ```ts
-  import { estimateAdRevenue } from '../../lib/calculators/ads';
-  import { formatCurrency } from '../../lib/format';
-  import {
-    applyCpmModifiers,
-    seasonFactor,
-    nicheFactor,
-    skippableFactor,
-    NEUTRAL,
-  } from '../../lib/calculators/cpmModifiers';
+import { estimateAdRevenue } from "../../lib/calculators/ads";
+import { formatCurrency } from "../../lib/format";
+import {
+  applyCpmModifiers,
+  seasonFactor,
+  nicheFactor,
+  skippableFactor,
+  NEUTRAL,
+} from "../../lib/calculators/cpmModifiers";
 ```
 
 Then, immediately after the existing `read` function definition (`const read = () => ({ ... });`), add a `readModifiers` helper and a `currentMultiplier` helper:
 
 ```ts
-  const modSeason = form.querySelector('[data-mod-season]') as HTMLSelectElement;
-  const modNiche = form.querySelector('[data-mod-niche]') as HTMLSelectElement;
-  const modSkippable = form.querySelector('[data-mod-skippable]') as HTMLSelectElement;
-  const modFill = form.querySelector('[data-range-slider="fill-rate"]') as HTMLElement;
-  const modHint = form.querySelector('[data-mod-hint]') as HTMLElement;
+const modSeason = form.querySelector("[data-mod-season]") as HTMLSelectElement;
+const modNiche = form.querySelector("[data-mod-niche]") as HTMLSelectElement;
+const modSkippable = form.querySelector(
+  "[data-mod-skippable]",
+) as HTMLSelectElement;
+const modFill = form.querySelector(
+  '[data-range-slider="fill-rate"]',
+) as HTMLElement;
+const modHint = form.querySelector("[data-mod-hint]") as HTMLElement;
 
-  const readModifiers = () => ({
-    seasonFactor: seasonFactor((modSeason?.value ?? 'none') as never),
-    nicheFactor: nicheFactor((modNiche?.value ?? 'none') as never),
-    fillRatePct: Number(modFill?.dataset.value ?? 100),
-    skippableFactor: skippableFactor((modSkippable?.value ?? 'standard') as never),
-  });
+const readModifiers = () => ({
+  seasonFactor: seasonFactor((modSeason?.value ?? "none") as never),
+  nicheFactor: nicheFactor((modNiche?.value ?? "none") as never),
+  fillRatePct: Number(modFill?.dataset.value ?? 100),
+  skippableFactor: skippableFactor(
+    (modSkippable?.value ?? "standard") as never,
+  ),
+});
 
-  const currentMultiplier = (sel: ReturnType<typeof readModifiers>): number => {
-    const m = applyCpmModifiers(1, sel);
-    return Math.round(m * 100) / 100;
-  };
+const currentMultiplier = (sel: ReturnType<typeof readModifiers>): number => {
+  const m = applyCpmModifiers(1, sel);
+  return Math.round(m * 100) / 100;
+};
 ```
 
 Then update the `render` function. Replace the existing `render` body's first two lines:
@@ -440,18 +472,20 @@ with:
 Then register change listeners on the new modifier controls. Find the existing listener-registration block:
 
 ```ts
-  form.querySelectorAll('[data-range-slider]').forEach(slider => {
-    slider.addEventListener('input', render);
-  });
+form.querySelectorAll("[data-range-slider]").forEach((slider) => {
+  slider.addEventListener("input", render);
+});
 ```
 
 and replace it with:
 
 ```ts
-  form.querySelectorAll('[data-range-slider]').forEach(slider => {
-    slider.addEventListener('input', render);
-  });
-  [modSeason, modNiche, modSkippable].forEach(el => el?.addEventListener('change', render));
+form.querySelectorAll("[data-range-slider]").forEach((slider) => {
+  slider.addEventListener("input", render);
+});
+[modSeason, modNiche, modSkippable].forEach((el) =>
+  el?.addEventListener("change", render),
+);
 ```
 
 - [ ] **Step 5: Add the panel styles to `AdRevenueCalculator.astro`**
@@ -459,12 +493,36 @@ and replace it with:
 In the `<style>` block, append (before the closing `</style>`):
 
 ```css
-  .advanced-modifiers { border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); padding: var(--spacing-4); }
-  .advanced-modifiers > summary { font-weight: 800; font-size: var(--text-sm); color: var(--color-fg); cursor: pointer; }
-  .advanced-modifiers[open] > summary { margin-bottom: var(--spacing-4); }
-  .modifier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--spacing-4); }
-  .mod-hint { font-size: var(--text-sm); color: var(--color-muted); font-weight: 700; }
-  @media (max-width: 560px) { .modifier-grid { grid-template-columns: 1fr; } }
+.advanced-modifiers {
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-warm);
+  padding: var(--spacing-4);
+}
+.advanced-modifiers > summary {
+  font-weight: 800;
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+.advanced-modifiers[open] > summary {
+  margin-bottom: var(--spacing-4);
+}
+.modifier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--spacing-4);
+}
+.mod-hint {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  font-weight: 700;
+}
+@media (max-width: 560px) {
+  .modifier-grid {
+    grid-template-columns: 1fr;
+  }
+}
 ```
 
 - [ ] **Step 6: Run tests + lint + build**
@@ -494,10 +552,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task C2-3: YouTube Money island — Advanced modifiers panel
 
 **Files:**
+
 - Modify: `src/components/calculators/YoutubeCalculator.astro`
 - Modify: `src/pages/youtube-money-calculator.astro` (merge FAQs)
 
 **Interfaces:**
+
 - Consumes (from C2-1): `applyCpmModifiers`, `seasonFactor`, `skippableFactor`, `NEUTRAL`. Niche is **not** wired here (YouTube already has its own niche select).
 
 - [ ] **Step 1: Merge FAQs on the YouTube Money page**
@@ -531,36 +591,48 @@ import { youtubeFaqs, cpmModifierFaqs } from '../data/faqs';
 In `src/components/calculators/YoutubeCalculator.astro`, insert this block **immediately before** the `<div class="result" data-result ...>` line:
 
 ```html
-  <details class="advanced-modifiers" data-modifiers>
-    <summary>Advanced CPM modifiers</summary>
-    <div class="modifier-grid">
-      <label class="field">Season
-        <select data-mod-season>
-          <option value="none" selected>No adjustment</option>
-          <option value="q1">Q1 (Jan–Mar)</option>
-          <option value="q2">Q2 (Apr–Jun)</option>
-          <option value="q3">Q3 (Jul–Sep)</option>
-          <option value="q4">Q4 (Oct–Dec)</option>
-        </select>
-      </label>
-      <label class="field">Fill rate
-        <RangeSlider id="yt-fill-rate" label="" min={0} max={100} step={1} value={100} suffix="%" compact />
-      </label>
-      <label class="field">Skippability
-        <select data-mod-skippable>
-          <option value="standard" selected>Standard mix</option>
-          <option value="skippable">Mostly skippable</option>
-          <option value="nonskippable">Mostly non-skippable</option>
-        </select>
-      </label>
-    </div>
-  </details>
+<details class="advanced-modifiers" data-modifiers>
+  <summary>Advanced CPM modifiers</summary>
+  <div class="modifier-grid">
+    <label class="field"
+      >Season
+      <select data-mod-season>
+        <option value="none" selected>No adjustment</option>
+        <option value="q1">Q1 (Jan–Mar)</option>
+        <option value="q2">Q2 (Apr–Jun)</option>
+        <option value="q3">Q3 (Jul–Sep)</option>
+        <option value="q4">Q4 (Oct–Dec)</option>
+      </select>
+    </label>
+    <label class="field"
+      >Fill rate
+      <RangeSlider
+        id="yt-fill-rate"
+        label=""
+        min="{0}"
+        max="{100}"
+        step="{1}"
+        value="{100}"
+        suffix="%"
+        compact
+      />
+    </label>
+    <label class="field"
+      >Skippability
+      <select data-mod-skippable>
+        <option value="standard" selected>Standard mix</option>
+        <option value="skippable">Mostly skippable</option>
+        <option value="nonskippable">Mostly non-skippable</option>
+      </select>
+    </label>
+  </div>
+</details>
 ```
 
 Then add a modifier hint line **immediately after** the `<p class="result-note" data-result-note>...</p>` line:
 
 ```html
-  <div class="mod-hint" data-mod-hint hidden></div>
+<div class="mod-hint" data-mod-hint hidden></div>
 ```
 
 - [ ] **Step 3: Wire modifiers into the island script in `YoutubeCalculator.astro`**
@@ -568,64 +640,88 @@ Then add a modifier hint line **immediately after** the `<p class="result-note" 
 In the `<script>` block, update the imports. Replace:
 
 ```ts
-  import { rangeFromRpm, earningsFromViews, adjustedRpm } from '../../lib/calculators/youtube';
-  import { RPM_BY_NICHE, RPM_BY_FORMAT, RPM_BY_COUNTRY, DEFAULT_RPM } from '../../data/youtubeConfig';
-  import { formatCurrency } from '../../lib/format';
+import {
+  rangeFromRpm,
+  earningsFromViews,
+  adjustedRpm,
+} from "../../lib/calculators/youtube";
+import {
+  RPM_BY_NICHE,
+  RPM_BY_FORMAT,
+  RPM_BY_COUNTRY,
+  DEFAULT_RPM,
+} from "../../data/youtubeConfig";
+import { formatCurrency } from "../../lib/format";
 ```
 
 with:
 
 ```ts
-  import { rangeFromRpm, earningsFromViews, adjustedRpm } from '../../lib/calculators/youtube';
-  import { RPM_BY_NICHE, RPM_BY_FORMAT, RPM_BY_COUNTRY, DEFAULT_RPM } from '../../data/youtubeConfig';
-  import { formatCurrency } from '../../lib/format';
-  import {
-    applyCpmModifiers,
-    seasonFactor,
-    skippableFactor,
-  } from '../../lib/calculators/cpmModifiers';
+import {
+  rangeFromRpm,
+  earningsFromViews,
+  adjustedRpm,
+} from "../../lib/calculators/youtube";
+import {
+  RPM_BY_NICHE,
+  RPM_BY_FORMAT,
+  RPM_BY_COUNTRY,
+  DEFAULT_RPM,
+} from "../../data/youtubeConfig";
+import { formatCurrency } from "../../lib/format";
+import {
+  applyCpmModifiers,
+  seasonFactor,
+  skippableFactor,
+} from "../../lib/calculators/cpmModifiers";
 ```
 
 Then, immediately after the existing element-grab block (after the `const whatIfGrid = ...` line), add modifier element grabs + helpers:
 
 ```ts
-  const modSeason = form.querySelector('[data-mod-season]') as HTMLSelectElement;
-  const modSkippable = form.querySelector('[data-mod-skippable]') as HTMLSelectElement;
-  const modFill = form.querySelector('[data-range-slider="yt-fill-rate"]') as HTMLElement;
-  const modHint = form.querySelector('[data-mod-hint]') as HTMLElement;
+const modSeason = form.querySelector("[data-mod-season]") as HTMLSelectElement;
+const modSkippable = form.querySelector(
+  "[data-mod-skippable]",
+) as HTMLSelectElement;
+const modFill = form.querySelector(
+  '[data-range-slider="yt-fill-rate"]',
+) as HTMLElement;
+const modHint = form.querySelector("[data-mod-hint]") as HTMLElement;
 
-  const readModifiers = () => ({
-    seasonFactor: seasonFactor((modSeason?.value ?? 'none') as never),
-    nicheFactor: 1,
-    fillRatePct: Number(modFill?.dataset.value ?? 100),
-    skippableFactor: skippableFactor((modSkippable?.value ?? 'standard') as never),
-  });
-  const currentMultiplier = (sel: ReturnType<typeof readModifiers>): number =>
-    Math.round(applyCpmModifiers(1, sel) * 100) / 100;
+const readModifiers = () => ({
+  seasonFactor: seasonFactor((modSeason?.value ?? "none") as never),
+  nicheFactor: 1,
+  fillRatePct: Number(modFill?.dataset.value ?? 100),
+  skippableFactor: skippableFactor(
+    (modSkippable?.value ?? "standard") as never,
+  ),
+});
+const currentMultiplier = (sel: ReturnType<typeof readModifiers>): number =>
+  Math.round(applyCpmModifiers(1, sel) * 100) / 100;
 ```
 
 Then update the `render` function. The existing `render` computes `low` and `high` then sets `result.textContent`. Insert the modifier application **right before** the `result.textContent = ...` line. Concretely, find:
 
 ```ts
-    result.textContent = `${formatCurrency(low, 'USD')} – ${formatCurrency(high, 'USD')} / month`;
+result.textContent = `${formatCurrency(low, "USD")} – ${formatCurrency(high, "USD")} / month`;
 ```
 
 and insert **immediately before** it:
 
 ```ts
-    const sel = readModifiers();
-    const mult = currentMultiplier(sel);
-    low = applyCpmModifiers(low, sel);
-    high = applyCpmModifiers(high, sel);
-    if (modHint) {
-      if (mult !== 1) {
-        modHint.hidden = false;
-        modHint.textContent = `Modifiers active: ×${mult.toFixed(2)}`;
-      } else {
-        modHint.hidden = true;
-        modHint.textContent = '';
-      }
-    }
+const sel = readModifiers();
+const mult = currentMultiplier(sel);
+low = applyCpmModifiers(low, sel);
+high = applyCpmModifiers(high, sel);
+if (modHint) {
+  if (mult !== 1) {
+    modHint.hidden = false;
+    modHint.textContent = `Modifiers active: ×${mult.toFixed(2)}`;
+  } else {
+    modHint.hidden = true;
+    modHint.textContent = "";
+  }
+}
 ```
 
 > **Note for the implementer:** `low` and `high` are declared with `let` in the existing `render` (`let low: number, high: number;`). Confirm that is the case; if they were declared `const`, change the declaration to `let`. The reassignment above is required.
@@ -633,17 +729,19 @@ and insert **immediately before** it:
 Then register change listeners. Find the existing listener block at the end of `render` setup:
 
 ```ts
-  formatInputs.forEach(i => i.addEventListener('change', render));
-  nicheSelect.addEventListener('change', render);
-  countrySelect.addEventListener('change', render);
-  viewsSlider.addEventListener('input', render);
-  rpmSlider.addEventListener('input', render);
+formatInputs.forEach((i) => i.addEventListener("change", render));
+nicheSelect.addEventListener("change", render);
+countrySelect.addEventListener("change", render);
+viewsSlider.addEventListener("input", render);
+rpmSlider.addEventListener("input", render);
 ```
 
 and append after it:
 
 ```ts
-  [modSeason, modSkippable].forEach(el => el?.addEventListener('change', render));
+[modSeason, modSkippable].forEach((el) =>
+  el?.addEventListener("change", render),
+);
 ```
 
 (The `modFill` slider is already covered by the existing `viewsSlider.addEventListener('input', render)`? No — it is a separate slider. Add `modFill?.addEventListener('input', render);` as well.)
@@ -651,8 +749,10 @@ and append after it:
 So the final appended block is:
 
 ```ts
-  [modSeason, modSkippable].forEach(el => el?.addEventListener('change', render));
-  modFill?.addEventListener('input', render);
+[modSeason, modSkippable].forEach((el) =>
+  el?.addEventListener("change", render),
+);
+modFill?.addEventListener("input", render);
 ```
 
 - [ ] **Step 4: Add the panel styles to `YoutubeCalculator.astro`**
@@ -660,12 +760,36 @@ So the final appended block is:
 In the `<style>` block, append (before the closing `</style>`):
 
 ```css
-  .advanced-modifiers { border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); padding: var(--spacing-4); }
-  .advanced-modifiers > summary { font-weight: 800; font-size: var(--text-sm); color: var(--color-fg); cursor: pointer; }
-  .advanced-modifiers[open] > summary { margin-bottom: var(--spacing-4); }
-  .modifier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--spacing-4); }
-  .mod-hint { font-size: var(--text-sm); color: var(--color-muted); font-weight: 700; }
-  @media (max-width: 560px) { .modifier-grid { grid-template-columns: 1fr; } }
+.advanced-modifiers {
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-warm);
+  padding: var(--spacing-4);
+}
+.advanced-modifiers > summary {
+  font-weight: 800;
+  font-size: var(--text-sm);
+  color: var(--color-fg);
+  cursor: pointer;
+}
+.advanced-modifiers[open] > summary {
+  margin-bottom: var(--spacing-4);
+}
+.modifier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--spacing-4);
+}
+.mod-hint {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  font-weight: 700;
+}
+@media (max-width: 560px) {
+  .modifier-grid {
+    grid-template-columns: 1fr;
+  }
+}
 ```
 
 - [ ] **Step 5: Run tests + lint + build**
@@ -706,9 +830,11 @@ Run: `npm run build` → 47 pages, no errors.
 - [ ] **Step 2: Regression-seam check**
 
 Confirm these files are byte-unchanged vs `fcf1826` (C1 tip):
+
 ```bash
 git diff fcf1826 -- src/lib/calculators/ads.ts src/lib/calculators/youtube.ts src/data/adConfig.ts src/data/youtubeConfig.ts src/lib/site.ts
 ```
+
 Expected: empty diff (no changes to the pure calculators, configs, or registry).
 
 - [ ] **Step 3: Neutral-default regression check**
@@ -732,6 +858,7 @@ C2 is stacked on C1 on `build/subproject-c`. Do not open a PR — the user's str
 ## Self-Review (run by plan author)
 
 **Spec coverage:**
+
 - Factors & values table → Task C2-1 Step 1 (config) ✅
 - Pure math layer (applyCpmModifiers, NEUTRAL, resolvers, guards) → Task C2-1 Step 2 ✅
 - Tests (neutral, per-factor, combined, clamp, guards, resolvers) → Task C2-1 Step 3 ✅

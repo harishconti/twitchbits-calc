@@ -22,12 +22,12 @@ This is a **fresh brainstorm→spec→plan→SDD cycle**. No prior sub-project's
 
 Four factors, all multiplicative, all defaulting to neutral (1.0×). Combined multiplier = `season × niche × (fill/100) × skippable`.
 
-| Factor | Options (multiplier) | Default | Source |
-|---|---|---|---|
-| **Season** | Q1 0.80× · Q2 1.00× · Q3 0.95× · Q4 1.25× | "No season adjustment" 1.00× | CPM seasonality: Q4 runs 1.13–1.30× baseline (Meta/TikTok), Q1 "January slump" ~0.60–0.70× of Q4 peak. Conservative rounded figures. ([Freestar](https://freestar.com/what-to-know-about-seasonality-and-cpms/), [MonetizationGuy](https://monetizationguy.com/articles/cpm-seasonality), [Gupta Media](https://www.guptamedia.com/social-media-ads-cost), [Red Volcano](https://www.redvolcano.io/pages/blog/seasonal-advertising-trends-when-to-expect-your-highest-and-lowest-cpms)) |
-| **Niche** *(Twitch only)* | Gaming 1.00× · Just Chatting/IRL 1.05× · Music 0.90× · Tech/Science 1.15× · Art/Creative 0.95× · Sports 1.10× | "No niche adjustment" 1.00× | Relative multipliers — Twitch ad CPM by category is not publicly disclosed; values are illustrative relative adjustments, flagged as such in FAQs. Config is the editable source of truth (CLAUDE.md rule 2). |
-| **Fill rate / ad density** | Slider 0–100% → multiplier = `fill/100` | 100% = 1.00× | Ad-ops standard: fill rate = filled impressions / total ad slots. Maps directly to the neutral-default constraint (100% = 1.0×). |
-| **Skippability** | Mostly skippable 0.85× · Standard mix 1.00× · Mostly non-skippable 1.25× | "Standard mix" 1.00× | ~30% non-skippable CPM premium, consistent across verticals (DigitalApplied 2026: non-skippable $14.85 vs skippable $11.42). ([DigitalApplied](https://www.digitalapplied.com/blog/youtube-ads-benchmarks-2026-cpv-cpm-ctr-industry), [Store Growers](https://www.storegrowers.com/youtube-ads-benchmarks/), [ThumbMentor](https://thumbmentor.com/en/blog/youtube-ad-formats-explained)) |
+| Factor                     | Options (multiplier)                                                                                          | Default                      | Source                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Season**                 | Q1 0.80× · Q2 1.00× · Q3 0.95× · Q4 1.25×                                                                     | "No season adjustment" 1.00× | CPM seasonality: Q4 runs 1.13–1.30× baseline (Meta/TikTok), Q1 "January slump" ~0.60–0.70× of Q4 peak. Conservative rounded figures. ([Freestar](https://freestar.com/what-to-know-about-seasonality-and-cpms/), [MonetizationGuy](https://monetizationguy.com/articles/cpm-seasonality), [Gupta Media](https://www.guptamedia.com/social-media-ads-cost), [Red Volcano](https://www.redvolcano.io/pages/blog/seasonal-advertising-trends-when-to-expect-your-highest-and-lowest-cpms)) |
+| **Niche** _(Twitch only)_  | Gaming 1.00× · Just Chatting/IRL 1.05× · Music 0.90× · Tech/Science 1.15× · Art/Creative 0.95× · Sports 1.10× | "No niche adjustment" 1.00×  | Relative multipliers — Twitch ad CPM by category is not publicly disclosed; values are illustrative relative adjustments, flagged as such in FAQs. Config is the editable source of truth (CLAUDE.md rule 2).                                                                                                                                                                                                                                                                           |
+| **Fill rate / ad density** | Slider 0–100% → multiplier = `fill/100`                                                                       | 100% = 1.00×                 | Ad-ops standard: fill rate = filled impressions / total ad slots. Maps directly to the neutral-default constraint (100% = 1.0×).                                                                                                                                                                                                                                                                                                                                                        |
+| **Skippability**           | Mostly skippable 0.85× · Standard mix 1.00× · Mostly non-skippable 1.25×                                      | "Standard mix" 1.00×         | ~30% non-skippable CPM premium, consistent across verticals (DigitalApplied 2026: non-skippable $14.85 vs skippable $11.42). ([DigitalApplied](https://www.digitalapplied.com/blog/youtube-ads-benchmarks-2026-cpv-cpm-ctr-industry), [Store Growers](https://www.storegrowers.com/youtube-ads-benchmarks/), [ThumbMentor](https://thumbmentor.com/en/blog/youtube-ad-formats-explained))                                                                                               |
 
 **Niche is Twitch-only** because YouTube already has a niche select; adding a second would double-count (decision 1).
 
@@ -51,24 +51,30 @@ tests/calculators.test.ts          ← + describe block (cpmModifiers)
 
 ```ts
 export interface CpmModifierSelection {
-  seasonFactor: number;    // default 1
-  nicheFactor: number;     // default 1 (Twitch only; YouTube passes 1)
-  fillRatePct: number;     // 0–100, default 100
+  seasonFactor: number; // default 1
+  nicheFactor: number; // default 1 (Twitch only; YouTube passes 1)
+  fillRatePct: number; // 0–100, default 100
   skippableFactor: number; // default 1
 }
 
 export const NEUTRAL: CpmModifierSelection = {
-  seasonFactor: 1, nicheFactor: 1, fillRatePct: 100, skippableFactor: 1,
+  seasonFactor: 1,
+  nicheFactor: 1,
+  fillRatePct: 100,
+  skippableFactor: 1,
 };
 
-export function applyCpmModifiers(base: number, s: CpmModifierSelection): number {
+export function applyCpmModifiers(
+  base: number,
+  s: CpmModifierSelection,
+): number {
   const b = Number.isFinite(base) && base >= 0 ? base : 0;
   const clamp = (n: number, lo: number, hi: number) =>
     Number.isFinite(n) && n >= 0 ? Math.min(hi, Math.max(lo, n)) : lo;
   const season = clamp(s.seasonFactor ?? 1, 0, 5);
-  const niche  = clamp(s.nicheFactor ?? 1, 0, 5);
-  const fill   = clamp(s.fillRatePct ?? 100, 0, 100) / 100;
-  const skip   = clamp(s.skippableFactor ?? 1, 0, 5);
+  const niche = clamp(s.nicheFactor ?? 1, 0, 5);
+  const fill = clamp(s.fillRatePct ?? 100, 0, 100) / 100;
+  const skip = clamp(s.skippableFactor ?? 1, 0, 5);
   return b * season * niche * fill * skip;
 }
 
@@ -79,6 +85,7 @@ export function skippableFactor(key: string): number;
 ```
 
 **Usage:**
+
 - Twitch island: `effectiveCpm = applyCpmModifiers(cpm, selection)` → passes `{ cpm: effectiveCpm, ... }` into unchanged `estimateAdRevenue`.
 - YouTube island: `low' = applyCpmModifiers(low, selection)`, `high' = applyCpmModifiers(high, selection)` → fed into unchanged `rangeFromRpm`/render.
 
@@ -89,7 +96,7 @@ Input guards (rule 3): NaN/negative/Infinity → 0 or neutral; fill-rate clamped
 A collapsible **"Advanced CPM modifiers"** `<details>` panel appended at the bottom of both `AdRevenueCalculator.astro` and `YoutubeCalculator.astro`, rendered closed (no `open` attribute). Contents:
 
 - **Season** — `<select>`: No adjustment / Q1 / Q2 / Q3 / Q4
-- **Niche** *(Twitch only)* — `<select>`: No adjustment / Gaming / Just Chatting / Music / Tech / Art / Sports
+- **Niche** _(Twitch only)_ — `<select>`: No adjustment / Gaming / Just Chatting / Music / Tech / Art / Sports
 - **Fill rate** — `<RangeSlider>` 0–100%, default 100, suffix `%`
 - **Skippability** — `<select>`: Standard mix / Mostly skippable / Mostly non-skippable
 
@@ -128,6 +135,7 @@ Mirrors B1/B2/C1 vertical-slice shape. Cumulative on `build/subproject-c` off `f
 ## Testing
 
 New `describe("cpmModifiers", ...)` block in `tests/calculators.test.ts`:
+
 - Neutral `NEUTRAL` selection returns base unchanged (byte-identical to no modifiers).
 - Each factor multiplies independently (season only, niche only, fill only, skippable only).
 - Combined multiplication (e.g. Q4 × non-skippable × 80% fill = 1.25 × 1.25 × 0.80 = 1.25).
