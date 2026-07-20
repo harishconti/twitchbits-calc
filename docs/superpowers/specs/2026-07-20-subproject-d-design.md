@@ -22,12 +22,14 @@ This is a **fresh brainstorm→spec→plan→SDD cycle**. No prior sub-project's
 ## What the platform APIs give us (grounded, 2025-07)
 
 ### Twitch (Helix, app access token)
+
 - Auth: `POST https://id.twitch.tv/oauth2/token` with `client_id` + `client_secret` + `grant_type=client_credentials` → app access token (~60-day life, non-refreshable; cache in KV ~50 days, refresh on 401). Every Helix request needs both `Authorization: Bearer <token>` and `Client-Id: <id>` headers.
 - `GET https://api.twitch.tv/helix/users?login=<login>` → `id`, `login`, `display_name`, `broadcaster_type` (`affiliate` | `partner` | `""`), `view_count` (cumulative lifetime views), `description`, `profile_image_url`, `created_at`.
 - `GET https://api.twitch.tv/helix/streams?user_id=<id>` → `viewer_count` + `started_at` if live; empty `data` array if offline.
-- **Follower count is private** (post-2023): `GET /channels/followers` requires a *user* OAuth token with `moderator:read:followers`. Not available with the app access token. Sub counts are likewise private. → Twitch import surfaces **lifetime views, broadcaster type, live status + concurrent viewers** — not followers or subs.
+- **Follower count is private** (post-2023): `GET /channels/followers` requires a _user_ OAuth token with `moderator:read:followers`. Not available with the app access token. Sub counts are likewise private. → Twitch import surfaces **lifetime views, broadcaster type, live status + concurrent viewers** — not followers or subs.
 
 ### YouTube (Data API v3, API key)
+
 - `GET https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forHandle=@<handle>&key=<key>` (or `id=<channelId>` or `forUsername=<name>` — exactly one filter).
 - Returns `subscriberCount` (rounded down to 3 significant figures per YouTube's 2025 policy), `viewCount` (lifetime; includes Shorts plays since 2025-03-31), `videoCount`, `hiddenSubscriberCount`, and `snippet.title` + `snippet.thumbnails`.
 - API key is sufficient (no OAuth) for public channel data. 1 quota unit per call; default 10,000 units/day.
@@ -75,17 +77,17 @@ tests/channel.test.ts     pure fn tests (parseUrl + normalize)
 type PlatformKey = "twitch" | "youtube";
 interface ChannelStats {
   platform: PlatformKey;
-  id: string;            // twitch login or youtube channelId
+  id: string; // twitch login or youtube channelId
   displayName: string;
   thumbnailUrl: string;
-  broadcasterType?: string;     // twitch only: affiliate | partner | ""
-  subscribers?: number;          // youtube only (undefined if hidden)
-  hiddenSubscribers?: boolean;  // youtube only
+  broadcasterType?: string; // twitch only: affiliate | partner | ""
+  subscribers?: number; // youtube only (undefined if hidden)
+  hiddenSubscribers?: boolean; // youtube only
   lifetimeViews: number;
-  videoCount?: number;           // youtube only
-  isLive?: boolean;              // twitch only
-  concurrentViewers?: number;   // twitch only, when isLive
-  fetchedAt: number;             // epoch ms
+  videoCount?: number; // youtube only
+  isLive?: boolean; // twitch only
+  concurrentViewers?: number; // twitch only, when isLive
+  fetchedAt: number; // epoch ms
 }
 ```
 
@@ -96,20 +98,20 @@ interface ChannelStats {
   - KV namespace binding `CHANNEL_CACHE`
 - **Never shipped to the browser.** The island only calls same-origin `/api/channel`; the Astro static build never reads the secrets; no secret appears in `dist/`.
 - **Same-origin guard** in `functions/_middleware.ts`: reject requests whose `Origin`/`Referer` is not the site origin. Blocks cross-site abuse of the endpoint.
-- **SSRF-safe by construction:** the Function only ever calls the fixed upstream API hosts (`api.twitch.tv`, `id.twitch.tv`, `googleapis.com`) with the *parsed identifier* from `parseChannelUrl` — never the raw user URL as a fetch target.
+- **SSRF-safe by construction:** the Function only ever calls the fixed upstream API hosts (`api.twitch.tv`, `id.twitch.tv`, `googleapis.com`) with the _parsed identifier_ from `parseChannelUrl` — never the raw user URL as a fetch target.
 - **Quota bounding:** KV caching (Twitch 10 min, YouTube 1 hr) caps upstream calls per channel; the Twitch app token is KV-cached (~50 days) to avoid re-tokenizing. Per-IP rate-limiting is **deferred** (YAGNI for v1; KV cache + origin guard + upstream quotas suffice — noted as a deferred item).
 - **Mock mode:** `USE_MOCK_UPSTREAM=true` makes the Function return `channelFixtures` data instead of calling upstream, so the full Function path is smoke-testable in `wrangler pages dev` without real API keys.
 
 ## Error handling
 
-| Condition | HTTP | `{ ok:false, error }` code | Island UX |
-|---|---|---|---|
-| Missing/invalid URL | 400 | `invalid-url` | "Couldn't read that channel URL." |
-| Unsupported platform | 400 | `unsupported-platform` | "Supported: Twitch and YouTube." |
-| Channel not found | 404 | `not-found` | "No channel found at that URL." |
-| Upstream quota exhausted | 429 | `quota-exceeded` | "We've hit our lookup limit — try again shortly." |
-| Upstream error / timeout | 502 | `upstream-error` | "Couldn't reach the platform. Try again." |
-| Missing server secrets (dev misconfig) | 503 | `not-configured` | "Channel import isn't configured." |
+| Condition                              | HTTP | `{ ok:false, error }` code | Island UX                                         |
+| -------------------------------------- | ---- | -------------------------- | ------------------------------------------------- |
+| Missing/invalid URL                    | 400  | `invalid-url`              | "Couldn't read that channel URL."                 |
+| Unsupported platform                   | 400  | `unsupported-platform`     | "Supported: Twitch and YouTube."                  |
+| Channel not found                      | 404  | `not-found`                | "No channel found at that URL."                   |
+| Upstream quota exhausted               | 429  | `quota-exceeded`           | "We've hit our lookup limit — try again shortly." |
+| Upstream error / timeout               | 502  | `upstream-error`           | "Couldn't reach the platform. Try again."         |
+| Missing server secrets (dev misconfig) | 503  | `not-configured`           | "Channel import isn't configured."                |
 
 The island never surfaces internal details; it maps `error` codes to friendly copy. The Function logs (server-side only) are the debugging surface.
 

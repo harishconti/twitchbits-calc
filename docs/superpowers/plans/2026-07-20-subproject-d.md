@@ -52,6 +52,7 @@ package.json                        (MODIFY — add @cloudflare/workers-types to
 ### Task D-1: Pure channel parse + normalize logic + tests
 
 **Files:**
+
 - Create: `src/data/channelConfig.ts`
 - Create: `src/lib/channel/types.ts`
 - Create: `src/lib/channel/parseUrl.ts`
@@ -59,6 +60,7 @@ package.json                        (MODIFY — add @cloudflare/workers-types to
 - Test: `tests/channel.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing (foundational pure layer).
 - Produces: `PlatformKey`, `YoutubeIdType`, `ParsedChannel`, `ChannelStats` types; `parseChannelUrl(url)`; `normalizeTwitch(raw)`, `normalizeYouTube(raw)`. Consumed by D-2 (Function) and D-3 (island).
 
@@ -71,20 +73,23 @@ package.json                        (MODIFY — add @cloudflare/workers-types to
 export type PlatformKey = "twitch" | "youtube";
 export type YoutubeIdType = "handle" | "channelId" | "username";
 
-export const CHANNEL_PLATFORMS: Record<PlatformKey, {
-  label: string;
-  urlHosts: string[];          // host substrings parseChannelUrl accepts
-  kvTtlSeconds: number;        // cache TTL for normalized stats
-}> = {
+export const CHANNEL_PLATFORMS: Record<
+  PlatformKey,
+  {
+    label: string;
+    urlHosts: string[]; // host substrings parseChannelUrl accepts
+    kvTtlSeconds: number; // cache TTL for normalized stats
+  }
+> = {
   twitch: {
     label: "Twitch",
     urlHosts: ["twitch.tv"],
-    kvTtlSeconds: 10 * 60,     // 10 minutes
+    kvTtlSeconds: 10 * 60, // 10 minutes
   },
   youtube: {
     label: "YouTube",
     urlHosts: ["youtube.com", "www.youtube.com", "youtu.be"],
-    kvTtlSeconds: 60 * 60,     // 1 hour
+    kvTtlSeconds: 60 * 60, // 1 hour
   },
 };
 
@@ -101,7 +106,8 @@ export const YOUTUBE_ENDPOINTS = {
 // KV keys
 export const KV_KEYS = {
   twitchAppToken: "twitch:app_token",
-  channel: (platform: PlatformKey, id: string) => `channel:${platform}:${id.toLowerCase()}`,
+  channel: (platform: PlatformKey, id: string) =>
+    `channel:${platform}:${id.toLowerCase()}`,
 } as const;
 ```
 
@@ -114,23 +120,23 @@ export type { PlatformKey, YoutubeIdType };
 
 export interface ParsedChannel {
   platform: PlatformKey;
-  identifier: string;   // twitch login, or youtube handle/channelId/username (no leading "@")
+  identifier: string; // twitch login, or youtube handle/channelId/username (no leading "@")
   idType: "login" | YoutubeIdType;
 }
 
 export interface ChannelStats {
   platform: PlatformKey;
-  id: string;            // twitch login or youtube channelId
+  id: string; // twitch login or youtube channelId
   displayName: string;
   thumbnailUrl: string;
-  broadcasterType?: string;      // twitch only: "affiliate" | "partner" | ""
-  subscribers?: number;           // youtube only (undefined when hiddenSubscribers)
-  hiddenSubscribers?: boolean;    // youtube only
+  broadcasterType?: string; // twitch only: "affiliate" | "partner" | ""
+  subscribers?: number; // youtube only (undefined when hiddenSubscribers)
+  hiddenSubscribers?: boolean; // youtube only
   lifetimeViews: number;
-  videoCount?: number;             // youtube only
-  isLive?: boolean;                // twitch only
-  concurrentViewers?: number;      // twitch only, when isLive
-  fetchedAt: number;               // epoch ms
+  videoCount?: number; // youtube only
+  isLive?: boolean; // twitch only
+  concurrentViewers?: number; // twitch only, when isLive
+  fetchedAt: number; // epoch ms
 }
 
 // Raw upstream shapes (only the fields we read). Unknown/missing fields are tolerated.
@@ -149,7 +155,11 @@ export interface YoutubeChannelRaw {
   id?: string;
   snippet?: {
     title?: string;
-    thumbnails?: { default?: { url?: string }; medium?: { url?: string }; high?: { url?: string } };
+    thumbnails?: {
+      default?: { url?: string };
+      medium?: { url?: string };
+      high?: { url?: string };
+    };
   };
   statistics?: {
     subscriberCount?: number | string;
@@ -165,45 +175,66 @@ export interface YoutubeChannelRaw {
 ```ts
 import { describe, it, expect } from "vitest";
 import { parseChannelUrl } from "../src/lib/channel/parseUrl";
-import { normalizeTwitch, normalizeYouTube } from "../src/lib/channel/normalize";
+import {
+  normalizeTwitch,
+  normalizeYouTube,
+} from "../src/lib/channel/normalize";
 
 describe("parseChannelUrl", () => {
   it("parses a twitch.tv login URL", () => {
     expect(parseChannelUrl("https://twitch.tv/shroud")).toEqual({
-      platform: "twitch", identifier: "shroud", idType: "login",
+      platform: "twitch",
+      identifier: "shroud",
+      idType: "login",
     });
   });
   it("parses a twitch.tv URL without protocol", () => {
     expect(parseChannelUrl("twitch.tv/shroud")).toEqual({
-      platform: "twitch", identifier: "shroud", idType: "login",
+      platform: "twitch",
+      identifier: "shroud",
+      idType: "login",
     });
   });
   it("parses a youtube @handle URL", () => {
     expect(parseChannelUrl("https://www.youtube.com/@MrBeast")).toEqual({
-      platform: "youtube", identifier: "MrBeast", idType: "handle",
+      platform: "youtube",
+      identifier: "MrBeast",
+      idType: "handle",
     });
   });
   it("parses a youtube /channel/UC... URL", () => {
-    expect(parseChannelUrl("https://youtube.com/channel/UCX6OQ3DkcsbYNE6H8u7q3dA")).toEqual({
-      platform: "youtube", identifier: "UCX6OQ3DkcsbYNE6H8u7q3dA", idType: "channelId",
+    expect(
+      parseChannelUrl("https://youtube.com/channel/UCX6OQ3DkcsbYNE6H8u7q3dA"),
+    ).toEqual({
+      platform: "youtube",
+      identifier: "UCX6OQ3DkcsbYNE6H8u7q3dA",
+      idType: "channelId",
     });
   });
   it("parses a youtube /user/name URL", () => {
     expect(parseChannelUrl("https://www.youtube.com/user/Google")).toEqual({
-      platform: "youtube", identifier: "Google", idType: "username",
+      platform: "youtube",
+      identifier: "Google",
+      idType: "username",
     });
   });
   it("best-effort parses /c/name as a handle (strips @)", () => {
     expect(parseChannelUrl("https://youtube.com/c/Google")).toEqual({
-      platform: "youtube", identifier: "Google", idType: "handle",
+      platform: "youtube",
+      identifier: "Google",
+      idType: "handle",
     });
   });
   it("strips a trailing slash and query string", () => {
     expect(parseChannelUrl("https://twitch.tv/shroud/")).toEqual({
-      platform: "twitch", identifier: "shroud", idType: "login",
+      platform: "twitch",
+      identifier: "shroud",
+      idType: "login",
     });
     expect(parseChannelUrl("https://www.youtube.com/@MrBeast?view=1")).toEqual({
-      platform: "youtube", identifier: "MrBeast", idType: "handle",
+      platform: "youtube",
+      identifier: "MrBeast",
+      idType: "handle",
     });
   });
   it("returns null for unsupported hosts", () => {
@@ -222,19 +253,39 @@ describe("normalizeTwitch", () => {
   const now = 1700000000000;
   it("maps a live broadcaster with viewers", () => {
     const stats = normalizeTwitch(
-      { id: "1", login: "shroud", display_name: "shroud", broadcaster_type: "partner", view_count: 12345, profile_image_url: "https://img/shroud.png" },
+      {
+        id: "1",
+        login: "shroud",
+        display_name: "shroud",
+        broadcaster_type: "partner",
+        view_count: 12345,
+        profile_image_url: "https://img/shroud.png",
+      },
       { viewer_count: 4200 },
       now,
     );
     expect(stats).toEqual({
-      platform: "twitch", id: "shroud", displayName: "shroud",
-      thumbnailUrl: "https://img/shroud.png", broadcasterType: "partner",
-      lifetimeViews: 12345, isLive: true, concurrentViewers: 4200, fetchedAt: now,
+      platform: "twitch",
+      id: "shroud",
+      displayName: "shroud",
+      thumbnailUrl: "https://img/shroud.png",
+      broadcasterType: "partner",
+      lifetimeViews: 12345,
+      isLive: true,
+      concurrentViewers: 4200,
+      fetchedAt: now,
     });
   });
   it("maps an offline broadcaster (no stream)", () => {
     const stats = normalizeTwitch(
-      { id: "1", login: "shroud", display_name: "shroud", broadcaster_type: "", view_count: 0, profile_image_url: "https://img/shroud.png" },
+      {
+        id: "1",
+        login: "shroud",
+        display_name: "shroud",
+        broadcaster_type: "",
+        view_count: 0,
+        profile_image_url: "https://img/shroud.png",
+      },
       null,
       now,
     );
@@ -253,7 +304,12 @@ describe("normalizeTwitch", () => {
   });
   it("parses numeric strings from the API", () => {
     const stats = normalizeTwitch(
-      { login: "x", display_name: "X", view_count: "999", profile_image_url: "u" },
+      {
+        login: "x",
+        display_name: "X",
+        view_count: "999",
+        profile_image_url: "u",
+      },
       { viewer_count: "50" },
       now,
     );
@@ -265,31 +321,77 @@ describe("normalizeTwitch", () => {
 describe("normalizeYouTube", () => {
   const now = 1700000000000;
   it("maps a public channel with visible subscribers", () => {
-    const stats = normalizeYouTube({
-      id: "UC1",
-      snippet: { title: "MrBeast", thumbnails: { medium: { url: "https://img/mr.png" } } },
-      statistics: { subscriberCount: "50000000", viewCount: "25000000000", videoCount: "800", hiddenSubscriberCount: false },
-    }, now);
+    const stats = normalizeYouTube(
+      {
+        id: "UC1",
+        snippet: {
+          title: "MrBeast",
+          thumbnails: { medium: { url: "https://img/mr.png" } },
+        },
+        statistics: {
+          subscriberCount: "50000000",
+          viewCount: "25000000000",
+          videoCount: "800",
+          hiddenSubscriberCount: false,
+        },
+      },
+      now,
+    );
     expect(stats).toEqual({
-      platform: "youtube", id: "UC1", displayName: "MrBeast",
-      thumbnailUrl: "https://img/mr.png", subscribers: 50000000,
-      hiddenSubscribers: false, lifetimeViews: 25000000000, videoCount: 800, fetchedAt: now,
+      platform: "youtube",
+      id: "UC1",
+      displayName: "MrBeast",
+      thumbnailUrl: "https://img/mr.png",
+      subscribers: 50000000,
+      hiddenSubscribers: false,
+      lifetimeViews: 25000000000,
+      videoCount: 800,
+      fetchedAt: now,
     });
   });
   it("respects hiddenSubscriberCount", () => {
-    const stats = normalizeYouTube({
-      id: "UC1", snippet: { title: "Hidden" }, statistics: { viewCount: "100", hiddenSubscriberCount: true },
-    }, now);
+    const stats = normalizeYouTube(
+      {
+        id: "UC1",
+        snippet: { title: "Hidden" },
+        statistics: { viewCount: "100", hiddenSubscriberCount: true },
+      },
+      now,
+    );
     expect(stats.subscribers).toBeUndefined();
     expect(stats.hiddenSubscribers).toBe(true);
     expect(stats.lifetimeViews).toBe(100);
   });
   it("picks the best available thumbnail (high > medium > default)", () => {
-    const hi = normalizeYouTube({ id: "1", snippet: { title: "t", thumbnails: { high: { url: "H" }, medium: { url: "M" } } } }, now);
+    const hi = normalizeYouTube(
+      {
+        id: "1",
+        snippet: {
+          title: "t",
+          thumbnails: { high: { url: "H" }, medium: { url: "M" } },
+        },
+      },
+      now,
+    );
     expect(hi.thumbnailUrl).toBe("H");
-    const md = normalizeYouTube({ id: "1", snippet: { title: "t", thumbnails: { medium: { url: "M" }, default: { url: "D" } } } }, now);
+    const md = normalizeYouTube(
+      {
+        id: "1",
+        snippet: {
+          title: "t",
+          thumbnails: { medium: { url: "M" }, default: { url: "D" } },
+        },
+      },
+      now,
+    );
     expect(md.thumbnailUrl).toBe("M");
-    const def = normalizeYouTube({ id: "1", snippet: { title: "t", thumbnails: { default: { url: "D" } } } }, now);
+    const def = normalizeYouTube(
+      {
+        id: "1",
+        snippet: { title: "t", thumbnails: { default: { url: "D" } } },
+      },
+      now,
+    );
     expect(def.thumbnailUrl).toBe("D");
   });
   it("guards missing statistics/snippet to neutral", () => {
@@ -301,10 +403,18 @@ describe("normalizeYouTube", () => {
     expect(stats.subscribers).toBeUndefined();
   });
   it("parses numeric strings", () => {
-    const stats = normalizeYouTube({
-      id: "1", snippet: { title: "t" },
-      statistics: { subscriberCount: "123", viewCount: "456", videoCount: "789" },
-    }, now);
+    const stats = normalizeYouTube(
+      {
+        id: "1",
+        snippet: { title: "t" },
+        statistics: {
+          subscriberCount: "123",
+          viewCount: "456",
+          videoCount: "789",
+        },
+      },
+      now,
+    );
     expect(stats.subscribers).toBe(123);
     expect(stats.lifetimeViews).toBe(456);
     expect(stats.videoCount).toBe(789);
@@ -328,7 +438,9 @@ const safeUrl = (input: string): URL | null => {
   const trimmed = input.trim();
   if (!trimmed) return null;
   // Accept URLs missing the protocol by prefixing https://
-  const withProto = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  const withProto = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
   try {
     return new URL(withProto);
   } catch {
@@ -337,7 +449,7 @@ const safeUrl = (input: string): URL | null => {
 };
 
 const hostMatches = (host: string, candidates: string[]): boolean =>
-  candidates.some(c => host === c || host.endsWith(`.${c}`));
+  candidates.some((c) => host === c || host.endsWith(`.${c}`));
 
 /**
  * Parse a creator channel URL into a normalized { platform, identifier, idType }.
@@ -354,7 +466,11 @@ export function parseChannelUrl(input: string): ParsedChannel | null {
   if (hostMatches(host, ["twitch.tv"])) {
     const login = segments[0];
     if (!login) return null;
-    return { platform: "twitch" as PlatformKey, identifier: login, idType: "login" };
+    return {
+      platform: "twitch" as PlatformKey,
+      identifier: login,
+      idType: "login",
+    };
   }
 
   // YouTube: youtube.com / www.youtube.com / youtu.be
@@ -366,19 +482,35 @@ export function parseChannelUrl(input: string): ParsedChannel | null {
     if (first.startsWith("@")) {
       const handle = first.slice(1);
       if (!handle) return null;
-      return { platform: "youtube" as PlatformKey, identifier: handle, idType: "handle" as YoutubeIdType };
+      return {
+        platform: "youtube" as PlatformKey,
+        identifier: handle,
+        idType: "handle" as YoutubeIdType,
+      };
     }
     // /channel/UC...
     if (first === "channel" && segments[1]) {
-      return { platform: "youtube" as PlatformKey, identifier: segments[1], idType: "channelId" as YoutubeIdType };
+      return {
+        platform: "youtube" as PlatformKey,
+        identifier: segments[1],
+        idType: "channelId" as YoutubeIdType,
+      };
     }
     // /user/name
     if (first === "user" && segments[1]) {
-      return { platform: "youtube" as PlatformKey, identifier: segments[1], idType: "username" as YoutubeIdType };
+      return {
+        platform: "youtube" as PlatformKey,
+        identifier: segments[1],
+        idType: "username" as YoutubeIdType,
+      };
     }
     // /c/name — best-effort as handle (YouTube redirects /c/ to the handle)
     if (first === "c" && segments[1]) {
-      return { platform: "youtube" as PlatformKey, identifier: segments[1], idType: "handle" as YoutubeIdType };
+      return {
+        platform: "youtube" as PlatformKey,
+        identifier: segments[1],
+        idType: "handle" as YoutubeIdType,
+      };
     }
     return null;
   }
@@ -390,7 +522,12 @@ export function parseChannelUrl(input: string): ParsedChannel | null {
 - [ ] **Step 6: Write `src/lib/channel/normalize.ts`**
 
 ```ts
-import type { ChannelStats, TwitchUserRaw, TwitchStreamRaw, YoutubeChannelRaw } from "./types";
+import type {
+  ChannelStats,
+  TwitchUserRaw,
+  TwitchStreamRaw,
+  YoutubeChannelRaw,
+} from "./types";
 import type { PlatformKey } from "../../data/channelConfig";
 
 const toNumber = (n: number | string | undefined | null): number => {
@@ -425,7 +562,11 @@ export function normalizeTwitch(
   };
 }
 
-type ThumbSet = { high?: { url?: string }; medium?: { url?: string }; default?: { url?: string } };
+type ThumbSet = {
+  high?: { url?: string };
+  medium?: { url?: string };
+  default?: { url?: string };
+};
 
 const pickThumb = (snippet: YoutubeChannelRaw["snippet"]): string => {
   const t = snippet?.thumbnails as ThumbSet | undefined;
@@ -437,7 +578,10 @@ const pickThumb = (snippet: YoutubeChannelRaw["snippet"]): string => {
  * Normalize a YouTube Data API v3 channel resource into ChannelStats.
  * Pure: no DOM, no fetch (CLAUDE.md rule 3). Missing/NaN fields → neutral.
  */
-export function normalizeYouTube(raw: YoutubeChannelRaw, fetchedAt: number): ChannelStats {
+export function normalizeYouTube(
+  raw: YoutubeChannelRaw,
+  fetchedAt: number,
+): ChannelStats {
   const stats = raw?.statistics;
   const hidden = !!stats?.hiddenSubscriberCount;
   return {
@@ -479,6 +623,7 @@ git commit -m "feat(channel): add pure channel URL parser + normalizers + tests 
 ### Task D-2: Cloudflare Pages Function + middleware + config + fixtures
 
 **Files:**
+
 - Create: `functions/api/channel.ts`
 - Create: `functions/_middleware.ts`
 - Create: `functions/tsconfig.json`
@@ -489,6 +634,7 @@ git commit -m "feat(channel): add pure channel URL parser + normalizers + tests 
 - Modify: `.gitignore` (add `.dev.vars`)
 
 **Interfaces:**
+
 - Consumes (from D-1): `parseChannelUrl`, `normalizeTwitch`, `normalizeYouTube`, `ChannelStats`, `ParsedChannel`, `channelConfig.ts` (endpoints, TTLs, KV keys).
 - Produces: `GET /api/channel?url=<encoded>` → `{ ok: true, stats: ChannelStats } | { ok: false, error: string }`. Consumed by D-3 (island).
 
@@ -515,9 +661,9 @@ export interface Env {
   TWITCH_CLIENT_ID: string;
   TWITCH_CLIENT_SECRET: string;
   YOUTUBE_API_KEY: string;
-  USE_MOCK_UPSTREAM?: string;   // "true" → return fixtures instead of calling upstream
+  USE_MOCK_UPSTREAM?: string; // "true" → return fixtures instead of calling upstream
   CHANNEL_CACHE: KVNamespace;
-  ORIGIN?: string;              // optional allowed origin override (defaults to request origin)
+  ORIGIN?: string; // optional allowed origin override (defaults to request origin)
 }
 ```
 
@@ -547,15 +693,36 @@ export interface Env {
 // Mock upstream payloads for local dev + smoke testing the Function end-to-end
 // without real API keys (USE_MOCK_UPSTREAM=true). Not shipped to the browser
 // (only imported by functions/api/channel.ts, which runs server-side).
-import type { TwitchUserRaw, TwitchStreamRaw, YoutubeChannelRaw } from "../lib/channel/types";
+import type {
+  TwitchUserRaw,
+  TwitchStreamRaw,
+  YoutubeChannelRaw,
+} from "../lib/channel/types";
 
-export const TWITCH_FIXTURES: Record<string, { user: TwitchUserRaw; stream: TwitchStreamRaw | null }> = {
+export const TWITCH_FIXTURES: Record<
+  string,
+  { user: TwitchUserRaw; stream: TwitchStreamRaw | null }
+> = {
   shroud: {
-    user: { id: "1", login: "shroud", display_name: "shroud", broadcaster_type: "partner", view_count: 12345, profile_image_url: "https://mockcdn.example/shroud.png" },
+    user: {
+      id: "1",
+      login: "shroud",
+      display_name: "shroud",
+      broadcaster_type: "partner",
+      view_count: 12345,
+      profile_image_url: "https://mockcdn.example/shroud.png",
+    },
     stream: { viewer_count: 4200 },
   },
   ninja: {
-    user: { id: "2", login: "ninja", display_name: "Ninja", broadcaster_type: "partner", view_count: 99999, profile_image_url: "https://mockcdn.example/ninja.png" },
+    user: {
+      id: "2",
+      login: "ninja",
+      display_name: "Ninja",
+      broadcaster_type: "partner",
+      view_count: 99999,
+      profile_image_url: "https://mockcdn.example/ninja.png",
+    },
     stream: null,
   },
 };
@@ -563,8 +730,16 @@ export const TWITCH_FIXTURES: Record<string, { user: TwitchUserRaw; stream: Twit
 export const YOUTUBE_FIXTURES: Record<string, YoutubeChannelRaw> = {
   mrbeast: {
     id: "UC1",
-    snippet: { title: "MrBeast", thumbnails: { medium: { url: "https://mockcdn.example/mrbeast.png" } } },
-    statistics: { subscriberCount: "50000000", viewCount: "25000000000", videoCount: "800", hiddenSubscriberCount: false },
+    snippet: {
+      title: "MrBeast",
+      thumbnails: { medium: { url: "https://mockcdn.example/mrbeast.png" } },
+    },
+    statistics: {
+      subscriberCount: "50000000",
+      viewCount: "25000000000",
+      videoCount: "800",
+      hiddenSubscriberCount: false,
+    },
   },
 };
 
@@ -588,7 +763,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return json({ ok: false, error: "method-not-allowed" }, 405);
   }
 
-  const origin = request.headers.get("Origin") || request.headers.get("Referer");
+  const origin =
+    request.headers.get("Origin") || request.headers.get("Referer");
   if (origin) {
     const allowed = env.ORIGIN || new URL(request.url).origin;
     try {
@@ -618,20 +794,34 @@ function json(body: unknown, status = 200): Response {
 ```ts
 import type { Env } from "../types";
 import { parseChannelUrl } from "../../src/lib/channel/parseUrl";
-import { normalizeTwitch, normalizeYouTube } from "../../src/lib/channel/normalize";
+import {
+  normalizeTwitch,
+  normalizeYouTube,
+} from "../../src/lib/channel/normalize";
 import type { ChannelStats } from "../../src/lib/channel/types";
 import {
-  CHANNEL_PLATFORMS, TWITCH_ENDPOINTS, YOUTUBE_ENDPOINTS, KV_KEYS,
+  CHANNEL_PLATFORMS,
+  TWITCH_ENDPOINTS,
+  YOUTUBE_ENDPOINTS,
+  KV_KEYS,
 } from "../../src/data/channelConfig";
-import { TWITCH_FIXTURES, YOUTUBE_FIXTURES, MOCK_NOT_FOUND } from "../../src/data/channelFixtures";
+import {
+  TWITCH_FIXTURES,
+  YOUTUBE_FIXTURES,
+  MOCK_NOT_FOUND,
+} from "../../src/data/channelFixtures";
 
 const json = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+    },
   });
 
-const err = (error: string, status: number) => json({ ok: false, error }, status);
+const err = (error: string, status: number) =>
+  json({ ok: false, error }, status);
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
@@ -667,7 +857,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
 // --- Live upstream ------------------------------------------------------
 
-async function liveFetch(parsed: ReturnType<typeof parseChannelUrl>, env: Env): Promise<ChannelStats | null> {
+async function liveFetch(
+  parsed: ReturnType<typeof parseChannelUrl>,
+  env: Env,
+): Promise<ChannelStats | null> {
   if (!parsed) return null;
   if (parsed.platform === "twitch") return liveTwitch(parsed.identifier, env);
   return liveYouTube(parsed, env);
@@ -686,19 +879,31 @@ async function getTwitchToken(env: Env): Promise<string> {
     }),
   });
   if (!res.ok) throw new UpstreamError("twitch-token");
-  const body = await res.json() as { access_token?: string };
+  const body = (await res.json()) as { access_token?: string };
   if (!body.access_token) throw new UpstreamError("twitch-token");
   // Cache ~50 days (token lives ~60 days); refresh on 401 at call sites.
-  await env.CHANNEL_CACHE.put(KV_KEYS.twitchAppToken, body.access_token, { expirationTtl: 50 * 24 * 60 * 60 });
+  await env.CHANNEL_CACHE.put(KV_KEYS.twitchAppToken, body.access_token, {
+    expirationTtl: 50 * 24 * 60 * 60,
+  });
   return body.access_token;
 }
 
-async function liveTwitch(login: string, env: Env): Promise<ChannelStats | null> {
-  if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET) throw new UpstreamError("not-configured");
+async function liveTwitch(
+  login: string,
+  env: Env,
+): Promise<ChannelStats | null> {
+  if (!env.TWITCH_CLIENT_ID || !env.TWITCH_CLIENT_SECRET)
+    throw new UpstreamError("not-configured");
   const token = await getTwitchToken(env);
-  const headers = { Authorization: `Bearer ${token}`, "Client-Id": env.TWITCH_CLIENT_ID };
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    "Client-Id": env.TWITCH_CLIENT_ID,
+  };
 
-  const usersRes = await fetch(`${TWITCH_ENDPOINTS.users}?login=${encodeURIComponent(login)}`, { headers });
+  const usersRes = await fetch(
+    `${TWITCH_ENDPOINTS.users}?login=${encodeURIComponent(login)}`,
+    { headers },
+  );
   if (usersRes.status === 401) {
     // token expired — purge and surface a retryable error
     await env.CHANNEL_CACHE.delete(KV_KEYS.twitchAppToken);
@@ -706,29 +911,37 @@ async function liveTwitch(login: string, env: Env): Promise<ChannelStats | null>
   }
   if (usersRes.status === 429) throw new UpstreamError("quota-exceeded");
   if (!usersRes.ok) throw new UpstreamError("upstream-error");
-  const usersBody = await usersRes.json() as { data?: unknown[] };
+  const usersBody = (await usersRes.json()) as { data?: unknown[] };
   const user = (usersBody.data?.[0] as Record<string, unknown>) ?? null;
   if (!user) return null;
 
-  const streamsRes = await fetch(`${TWITCH_ENDPOINTS.streams}?user_login=${encodeURIComponent(login)}`, { headers });
-  const streamsBody = await streamsRes.json() as { data?: unknown[] };
+  const streamsRes = await fetch(
+    `${TWITCH_ENDPOINTS.streams}?user_login=${encodeURIComponent(login)}`,
+    { headers },
+  );
+  const streamsBody = (await streamsRes.json()) as { data?: unknown[] };
   const stream = (streamsBody.data?.[0] as Record<string, unknown>) ?? null;
 
   return normalizeTwitch(user as never, stream as never, Date.now());
 }
 
-async function liveYouTube(parsed: NonNullable<ReturnType<typeof parseChannelUrl>>, env: Env): Promise<ChannelStats | null> {
+async function liveYouTube(
+  parsed: NonNullable<ReturnType<typeof parseChannelUrl>>,
+  env: Env,
+): Promise<ChannelStats | null> {
   if (!env.YOUTUBE_API_KEY) throw new UpstreamError("not-configured");
   const filter =
-    parsed.idType === "handle" ? `forHandle=${encodeURIComponent("@" + parsed.identifier)}` :
-    parsed.idType === "channelId" ? `id=${encodeURIComponent(parsed.identifier)}` :
-    `forUsername=${encodeURIComponent(parsed.identifier)}`;
+    parsed.idType === "handle"
+      ? `forHandle=${encodeURIComponent("@" + parsed.identifier)}`
+      : parsed.idType === "channelId"
+        ? `id=${encodeURIComponent(parsed.identifier)}`
+        : `forUsername=${encodeURIComponent(parsed.identifier)}`;
   const u = `${YOUTUBE_ENDPOINTS.channels}?part=snippet,statistics&${filter}&key=${encodeURIComponent(env.YOUTUBE_API_KEY)}`;
   const res = await fetch(u);
   if (res.status === 429) throw new UpstreamError("quota-exceeded");
   if (res.status === 403) throw new UpstreamError("quota-exceeded");
   if (!res.ok) throw new UpstreamError("upstream-error");
-  const body = await res.json() as { items?: unknown[] };
+  const body = (await res.json()) as { items?: unknown[] };
   const item = (body.items?.[0] as Record<string, unknown>) ?? null;
   if (!item) return null;
   return normalizeYouTube(item as never, Date.now());
@@ -736,7 +949,9 @@ async function liveYouTube(parsed: NonNullable<ReturnType<typeof parseChannelUrl
 
 // --- Mock upstream (dev / smoke) ---------------------------------------
 
-async function mockFetch(parsed: NonNullable<ReturnType<typeof parseChannelUrl>>): Promise<ChannelStats | null> {
+async function mockFetch(
+  parsed: NonNullable<ReturnType<typeof parseChannelUrl>>,
+): Promise<ChannelStats | null> {
   if (parsed.platform === "twitch") {
     const fx = TWITCH_FIXTURES[parsed.identifier.toLowerCase()];
     if (!fx) return null;
@@ -751,7 +966,10 @@ async function mockFetch(parsed: NonNullable<ReturnType<typeof parseChannelUrl>>
 
 class UpstreamError extends Error {
   code: string;
-  constructor(code: string) { super(code); this.code = code; }
+  constructor(code: string) {
+    super(code);
+    this.code = code;
+  }
 }
 
 // Map thrown UpstreamError codes → HTTP responses (wrap the handler).
@@ -760,7 +978,8 @@ export const onRequestGetWrapped: PagesFunction<Env> = async (context) => {
     return await onRequestGet(context);
   } catch (e) {
     const code = e instanceof UpstreamError ? e.code : "upstream-error";
-    const status = code === "not-configured" ? 503 : code === "quota-exceeded" ? 429 : 502;
+    const status =
+      code === "not-configured" ? 503 : code === "quota-exceeded" ? 429 : 502;
     return err(code, status);
   }
 };
@@ -778,7 +997,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     return await handle(context);
   } catch (e) {
     const code = e instanceof UpstreamError ? e.code : "upstream-error";
-    const status = code === "not-configured" ? 503 : code === "quota-exceeded" ? 429 : 502;
+    const status =
+      code === "not-configured" ? 503 : code === "quota-exceeded" ? 429 : 502;
     return err(code, status);
   }
 };
@@ -795,7 +1015,9 @@ async function handle(context: Context<Env>): Promise<Response> {
   if (cached) return json({ ok: true, stats: cached as ChannelStats });
 
   const useMock = env.USE_MOCK_UPSTREAM === "true";
-  const stats = useMock ? await mockFetch(parsed) : await liveFetch(parsed, env);
+  const stats = useMock
+    ? await mockFetch(parsed)
+    : await liveFetch(parsed, env);
   if (!stats) return err("not-found", 404);
 
   try {
@@ -855,12 +1077,14 @@ git commit -m "feat(channel): add /api/channel Pages Function + middleware + moc
 ### Task D-3: ChannelImport island + wire into three tool pages
 
 **Files:**
+
 - Create: `src/components/ChannelImport.astro`
 - Modify: `src/pages/youtube-money-calculator.astro` (additive: import + element)
 - Modify: `src/pages/twitch-ad-revenue-calculator.astro` (additive: import + element)
 - Modify: `src/pages/twitch-revenue-calculator.astro` (additive: import + element)
 
 **Interfaces:**
+
 - Consumes (from D-1/D-2): `GET /api/channel` JSON shape `{ ok, stats } | { ok:false, error }`; `ChannelStats` type (for the island's rendering logic — re-import the type, no runtime dep on the pure module).
 - Produces: a progressive-enhancement UI. Pre-fills the Twitch islands' "avg viewers" RangeSlider when `stats.isLive` by setting the slider's `.number-input` value and dispatching a bubbling `input` event (triggers the existing RangeSlider `sync` + the calculator's `render` listener). No calculator island is modified.
 
@@ -1104,9 +1328,11 @@ git commit -m "feat(channel): add ChannelImport island to YouTube + Twitch Ad + 
 ### Task D-4: Final verify + regression-seam check + whole-branch opus review
 
 **Files:**
+
 - No code changes (verification + review only), unless the opus review surfaces must-fix findings.
 
 **Interfaces:**
+
 - Consumes: the full D branch (`ab384dc..HEAD`).
 
 - [ ] **Step 1: Run the full verification suite**
