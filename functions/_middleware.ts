@@ -4,21 +4,27 @@ const ALLOWED_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 // Same-origin guard: block cross-site calls to /api/* to prevent abuse.
 // Browsers send Origin on cross-origin fetches; same-origin fetches may omit it.
+// POST is allowed ONLY on /api/subscribe (newsletter capture); all other paths
+// remain GET/HEAD/OPTIONS only.
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
   const method = request.method.toUpperCase();
+  const pathname = new URL(request.url).pathname;
 
-  if (!ALLOWED_METHODS.has(method)) {
+  const allowed =
+    ALLOWED_METHODS.has(method) ||
+    (method === "POST" && pathname === "/api/subscribe");
+  if (!allowed) {
     return json({ ok: false, error: "method-not-allowed" }, 405);
   }
 
   const origin =
     request.headers.get("Origin") || request.headers.get("Referer");
   if (origin) {
-    const allowed = env.ORIGIN || new URL(request.url).origin;
+    const allowedOrigin = env.ORIGIN || new URL(request.url).origin;
     try {
       const o = new URL(origin);
-      if (o.origin !== allowed) {
+      if (o.origin !== allowedOrigin) {
         return json({ ok: false, error: "forbidden-origin" }, 403);
       }
     } catch {

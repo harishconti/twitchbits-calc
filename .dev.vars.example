@@ -4,4 +4,7 @@ TWITCH_CLIENT_ID=your_twitch_client_id
 TWITCH_CLIENT_SECRET=your_twitch_client_secret
 YOUTUBE_API_KEY=your_youtube_api_key
 USE_MOCK_UPSTREAM=true
-# CHANNEL_CACHE is bound via --kv=CHANNEL_CACHE on the wrangler command line.
+# Newsletter capture — secret salt for subscriber keys + rate-limit keys.
+# Generate with: openssl rand -hex 32
+NEWSLETTER_KV_SALT=dev_salt_replace_in_production
+# KV bindings are bound via --kv=CHANNEL_CACHE --kv=LEADS on the wrangler command line.
