@@ -1,0 +1,7 @@
+# Copy to .dev.vars and fill with real values for local `wrangler pages dev`.
+# .dev.vars is gitignored — never commit real secrets.
+TWITCH_CLIENT_ID=your_twitch_client_id
+TWITCH_CLIENT_SECRET=your_twitch_client_secret
+YOUTUBE_API_KEY=your_youtube_api_key
+USE_MOCK_UPSTREAM=true
+# CHANNEL_CACHE is bound via --kv=CHANNEL_CACHE on the wrangler command line.
