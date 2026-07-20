@@ -26,6 +26,7 @@ import {
   estimateKickRevenue,
   kickSubsForGoal,
 } from "../src/lib/calculators/kick";
+import { estimateAdRevenue } from "../src/lib/calculators/ads";
 
 describe("bits calculator", () => {
   it("converts bits to USD at $0.01/Bits", () => {
@@ -408,5 +409,121 @@ describe("kick revenue calculator", () => {
     expect(kickSubsForGoal(1000, 2)).toBe(211);
     expect(kickSubsForGoal(1000, 0)).toBe(211);
     expect(kickSubsForGoal(1000, NaN)).toBe(211);
+  });
+});
+
+describe("ad revenue calculator", () => {
+  it("computes monthly ad revenue from impressions", () => {
+    // impressionsPerStream = 3 ads/hr * 4 hrs * 50 viewers = 600
+    // monthlyImpressions = 600 * 20 streams = 12000
+    // monthly = (12000 / 1000) * 4 CPM = 48
+    const r = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
+    expect(r.impressionsPerStream).toBe(600);
+    expect(r.monthlyImpressions).toBe(12000);
+    expect(r.monthly).toBeCloseTo(48, 2);
+    expect(r.annual).toBeCloseTo(48 * 12, 2);
+  });
+
+  it("guards NaN/negative/Infinity inputs to 0", () => {
+    const r = estimateAdRevenue({
+      cpm: -1,
+      viewers: NaN,
+      adsPerHour: Infinity,
+      hoursPerStream: -2,
+      streamsPerMonth: NaN,
+    });
+    expect(r.impressionsPerStream).toBe(0);
+    expect(r.monthlyImpressions).toBe(0);
+    expect(r.monthly).toBe(0);
+    expect(r.annual).toBe(0);
+  });
+
+  it("monthly is proportional to CPM", () => {
+    const low = estimateAdRevenue({
+      cpm: 2,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
+    const high = estimateAdRevenue({
+      cpm: 8,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
+    expect(high.monthly).toBeCloseTo(low.monthly * 4, 4);
+  });
+
+  it("annual equals monthly times 12", () => {
+    const r = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
+    expect(r.annual).toBeCloseTo(r.monthly * 12, 4);
+  });
+
+  it("rpmPerViewer is monthly revenue per average viewer", () => {
+    const r = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
+    // monthly 48 / 50 viewers = 0.96
+    expect(r.rpmPerViewer).toBeCloseTo(0.96, 4);
+  });
+
+  it("rpmPerViewer is 0 when viewers is 0 (no division by zero)", () => {
+    const r = estimateAdRevenue({
+      cpm: 4,
+      viewers: 0,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
+    expect(r.monthly).toBe(0); // 0 viewers → 0 impressions → 0 revenue
+    expect(r.rpmPerViewer).toBe(0);
+  });
+
+  it("monthly scales with streams per month", () => {
+    const r10 = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 10,
+    });
+    const r40 = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 40,
+    });
+    expect(r40.monthly).toBeCloseTo(r10.monthly * 4, 4);
+  });
+
+  it("default inputs produce a sane positive monthly estimate", () => {
+    const r = estimateAdRevenue({
+      cpm: 4,
+      viewers: 50,
+      adsPerHour: 3,
+      hoursPerStream: 4,
+      streamsPerMonth: 20,
+    });
+    expect(r.monthly).toBeGreaterThan(0);
+    expect(r.impressionsPerStream).toBeGreaterThan(0);
   });
 });
