@@ -217,3 +217,26 @@ export const patreonRevenueFaqs = [
     a: "The goal calc solves for patrons at one tier's price after fees. At the Standard plan with $5 tiers, each patron nets about $4.06, so $1,000/month needs roughly 247 patrons.",
   },
 ];
+
+export const spotifyRoyaltiesFaqs = [
+  {
+    q: "How much does Spotify pay per stream?",
+    a: "The global blended average is about $0.003–$0.005 per stream, but it varies widely by region: US/UK ~$0.0044, Nordic ~$0.0066, Latin America ~$0.0019, India ~$0.0008.",
+  },
+  {
+    q: "Why does region matter so much for Spotify royalties?",
+    a: "Spotify pays out of a royalty pool funded mostly by Premium subscriptions. Premium price and ad rates differ by country, so a stream from the US earns several times a stream from India.",
+  },
+  {
+    q: "What is the creator share percentage?",
+    a: "It's the share of the gross royalty you keep after your label or distributor takes their cut. An indie via a distributor might keep ~90%; a major-label artist might keep 10–50%. Default here is 70%.",
+  },
+  {
+    q: "How is Spotify royalty revenue calculated?",
+    a: "Monthly net = streams × per-stream rate for your region × (creator share ÷ 100). Annual is monthly × 12. Per 1,000 streams net = rate × 1000 × share.",
+  },
+  {
+    q: "Does this include Spotify's 1,000-stream threshold?",
+    a: "No. Since April 2024, tracks need 1,000 streams in a 12-month period to earn royalties. This calculator estimates gross earnings and does not model that eligibility threshold.",
+  },
+];

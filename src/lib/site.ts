@@ -60,4 +60,10 @@ export const TOOLS = [
     short: "Patreon",
     desc: "Estimate Patreon take-home by tier after plan fee + processing.",
   },
+  {
+    slug: "spotify-royalties-calculator",
+    name: "Spotify Royalties Calculator",
+    short: "Spotify",
+    desc: "Estimate Spotify royalties by region rate × creator share.",
+  },
 ] as const;
