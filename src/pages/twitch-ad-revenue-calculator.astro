@@ -1,0 +1,14 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import AdRevenueCalculator from '../components/calculators/AdRevenueCalculator.astro';
+import { adRevenueFaqs } from '../data/faqs';
+---
+<ToolLayout
+  title="Twitch Ad Revenue Calculator"
+  description="Estimate Twitch ad earnings from CPM, average concurrent viewers, ads per hour, hours per stream, and streams per month."
+  slug="twitch-ad-revenue-calculator"
+  crumbs={[{ name: 'Home', url: '/' }, { name: 'Twitch Tools', url: '/twitch-ad-revenue-calculator' }]}
+  faqs={adRevenueFaqs}
+>
+  <AdRevenueCalculator />
+</ToolLayout>

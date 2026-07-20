@@ -1,0 +1,89 @@
+---
+import { estimateAdRevenue } from '../../lib/calculators/ads';
+import { AD_CPM_DEFAULTS, AD_INPUT_DEFAULTS } from '../../data/adConfig';
+import { formatCurrency } from '../../lib/format';
+import RangeSlider from '../primitives/RangeSlider.astro';
+---
+<form class="ad-calc" data-tool="ad-revenue">
+  <fieldset class="panel-mini">
+    <legend>Ad earnings</legend>
+    <label>CPM ($)
+      <RangeSlider id="cpm" label="" min={0} max={20} step={0.1} value={AD_CPM_DEFAULTS.us} prefix="$" compact />
+    </label>
+    <label>Avg concurrent viewers
+      <RangeSlider id="viewers" label="" min={0} max={5000} step={10} value={AD_INPUT_DEFAULTS.viewers} compact />
+    </label>
+    <label>Ads per hour
+      <RangeSlider id="ads-per-hour" label="" min={0} max={12} step={1} value={AD_INPUT_DEFAULTS.adsPerHour} compact />
+    </label>
+    <label>Hours per stream
+      <RangeSlider id="hours-per-stream" label="" min={0} max={12} step={0.5} value={AD_INPUT_DEFAULTS.hoursPerStream} suffix="hr" compact />
+    </label>
+    <label>Streams per month
+      <RangeSlider id="streams-per-month" label="" min={0} max={120} step={1} value={AD_INPUT_DEFAULTS.streamsPerMonth} compact />
+    </label>
+  </fieldset>
+
+  <div class="result" data-result aria-live="polite">$0.00 / month</div>
+  <div class="sub" data-subresult></div>
+
+  <div class="breakdown" data-breakdown>
+    <strong>Ad performance</strong>
+    <div class="breakdown-grid" data-breakdown-grid></div>
+  </div>
+</form>
+<script>
+  import { estimateAdRevenue } from '../../lib/calculators/ads';
+  import { formatCurrency } from '../../lib/format';
+
+  const form = document.querySelector('[data-tool="ad-revenue"]') as HTMLFormElement;
+  const sliderValue = (id: string) => Number(form.querySelector(`[data-range-slider="${id}"]`)?.dataset.value ?? 0);
+
+  const read = () => ({
+    cpm: sliderValue('cpm'),
+    viewers: sliderValue('viewers'),
+    adsPerHour: sliderValue('ads-per-hour'),
+    hoursPerStream: sliderValue('hours-per-stream'),
+    streamsPerMonth: sliderValue('streams-per-month'),
+  });
+
+  const render = () => {
+    const r = estimateAdRevenue(read());
+    form.querySelector('[data-result]')!.textContent = `${formatCurrency(r.monthly, 'USD')} / month`;
+    form.querySelector('[data-subresult]')!.textContent = `≈ ${formatCurrency(r.annual, 'USD')} / year · ${formatCurrency(r.rpmPerViewer, 'USD')}/viewer/month`;
+
+    const grid = form.querySelector('[data-breakdown-grid]') as HTMLElement;
+    const rows = [
+      { label: 'Impressions / stream', value: r.impressionsPerStream.toLocaleString('en-US') },
+      { label: 'Monthly impressions', value: r.monthlyImpressions.toLocaleString('en-US') },
+      { label: 'RPM / viewer', value: formatCurrency(r.rpmPerViewer, 'USD') },
+    ];
+    grid.innerHTML = rows.map(row => `
+      <div class="breakdown-cell">
+        <span>${row.label}</span>
+        <strong>${row.value}</strong>
+      </div>
+    `).join('');
+  };
+
+  form.querySelectorAll('[data-range-slider]').forEach(slider => {
+    slider.addEventListener('input', render);
+  });
+
+  render();
+</script>
+<style>
+  .ad-calc { display: flex; flex-direction: column; gap: var(--spacing-6); }
+  .panel-mini { border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); padding: var(--spacing-4); display: grid; gap: var(--spacing-4); }
+  legend { font-weight: 800; font-size: var(--text-sm); color: var(--color-fg); padding: 0 var(--spacing-2); }
+  label { display: grid; gap: var(--spacing-2); color: var(--color-fg-2); font-size: var(--text-sm); font-weight: 700; }
+  .result { font-family: var(--font-mono); font-size: clamp(28px, 4vw, 48px); font-weight: 700; color: var(--color-accent); line-height: var(--leading-tight); white-space: nowrap; }
+  .sub { color: var(--color-muted); font-size: var(--text-sm); }
+  .breakdown { display: flex; flex-direction: column; gap: var(--spacing-3); padding: var(--spacing-4); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); background: var(--color-surface-warm); }
+  .breakdown strong { font-size: var(--text-sm); color: var(--color-fg); }
+  .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--spacing-3); }
+  .breakdown-cell { display: flex; flex-direction: column; gap: var(--spacing-1); padding: var(--spacing-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); }
+  .breakdown-cell span { font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-muted); }
+  .breakdown-cell strong { font-family: var(--font-mono); font-size: var(--text-base); color: var(--color-fg); }
+  @media (max-width: 860px) { .panel-mini { grid-template-columns: 1fr; } }
+</style>

@@ -48,4 +48,10 @@ export const TOOLS = [
     short: "Kick",
     desc: "Estimate Kick earnings from subs, KICKs, and ads at 95/5.",
   },
+  {
+    slug: "twitch-ad-revenue-calculator",
+    name: "Twitch Ad Revenue Calculator",
+    short: "Ad Rev",
+    desc: "Estimate Twitch ad revenue from CPM, viewers, and ad slots.",
+  },
 ] as const;

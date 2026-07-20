@@ -171,3 +171,26 @@ export const kickRevenueFaqs = [
     a: "It estimates gross pre-tax earnings from current Kick rates and your inputs. Real payouts vary by region, Stripe fees, and program terms.",
   },
 ];
+
+export const adRevenueFaqs = [
+  {
+    q: "How is Twitch ad revenue calculated?",
+    a: "Ad revenue ≈ CPM × (ad impressions ÷ 1000). Impressions = ads per hour × hours streamed × average concurrent viewers × streams per month. This calculator uses that impressions-based model.",
+  },
+  {
+    q: "What is a good Twitch ad CPM?",
+    a: "Typical Twitch ad CPMs range $2–$10 depending on region, season, and audience. The US default here is $4.00; adjust it to match your real ad stats.",
+  },
+  {
+    q: "How many ads should I run per hour?",
+    a: "Most Twitch partners run 1–4 ad breaks per hour. More ads raise revenue but can hurt viewer retention; test and watch your drop-off.",
+  },
+  {
+    q: "Does this include the streamer's split on ads?",
+    a: "Twitch pays streamers a share of ad revenue per their contract. This calculator reports gross ad revenue before any split is applied.",
+  },
+  {
+    q: "How does this differ from the Twitch Revenue Calculator?",
+    a: "The Twitch Revenue Calculator estimates your full income mix (subs + Bits + ads). This tool focuses only on ad earnings with finer ad-slot inputs (ads per hour, streams per month).",
+  },
+];
