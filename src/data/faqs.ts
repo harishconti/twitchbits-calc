@@ -263,3 +263,26 @@ export const netIncomeFaqs = [
     a: "No — estimates only. The model is deliberately simplified (no state tax, no itemized deductions, no phaseouts, and Canada's BPA and Australia's LITO are not modeled as credits). For real figures, use your jurisdiction's official tax tool or a CPA.",
   },
 ];
+
+export const cpmModifierFaqs = [
+  {
+    q: "What are CPM modifiers?",
+    a: "CPM modifiers are optional multipliers that adjust the base CPM (or RPM) for real-world ad-ops factors: seasonality, content niche, ad fill rate, and skippability. They default to neutral (1.0×) so your estimate is unchanged unless you enable them.",
+  },
+  {
+    q: "Why does Q4 raise CPM?",
+    a: "Q4 (October–December) is peak advertising season — holiday spend drives CPMs roughly 25% above baseline. Q1 is the post-holiday slump, typically 20% below baseline. Adjust the Season modifier to model this.",
+  },
+  {
+    q: "What is ad fill rate?",
+    a: "Fill rate is the percentage of available ad slots that actually get filled with paid ads. 100% means every slot is monetized; 50% means half go unfilled. Lower fill rate reduces effective CPM proportionally.",
+  },
+  {
+    q: "Skippable vs non-skippable ads — what's the difference?",
+    a: "Non-skippable ads command about a 25% CPM premium over skippable ads because advertisers pay for guaranteed full attention. Use 'Mostly non-skippable' if your content runs mostly pre-rolls or forced mid-rolls.",
+  },
+  {
+    q: "Are the niche multipliers exact?",
+    a: "No — Twitch does not publicly disclose CPM by content category, so the niche multipliers are illustrative relative adjustments (e.g. Tech tends higher, Music lower). Treat them as a rough directional guide, not exact rates.",
+  },
+];
