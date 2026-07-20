@@ -24,25 +24,24 @@ Both ship as **single tool pages only** — no programmatic-SEO variant pages, n
 
 ## 3. Architecture & file plan
 
-### New files (9)
+### New files (7)
 
 | File | Purpose |
 |---|---|
 | `src/data/kickConfig.ts` | Kick sub prices, 95/5 split default + presets, Kicks face value |
 | `src/lib/calculators/kick.ts` | Pure `estimateKickRevenue` + `kickSubsForGoal` |
-| `src/lib/calculators/kick.test.ts` | Vitest guards + math |
 | `src/components/calculators/KickRevenueCalculator.astro` | Three-panel island (subs/kicks/ads) |
 | `src/pages/kick-revenue-calculator.astro` | ToolLayout page |
 | `src/lib/calculators/ads.ts` | Pure `estimateAdRevenue` (impressions-based) |
-| `src/lib/calculators/ads.test.ts` | Vitest guards + math |
 | `src/components/calculators/AdRevenueCalculator.astro` | Focused ad island |
 | `src/pages/twitch-ad-revenue-calculator.astro` | ToolLayout page |
 
-### Modified files (3)
+### Modified files (4)
 
 - `src/lib/site.ts` — add 2 entries to `TOOLS[]` (kick-revenue-calculator, twitch-ad-revenue-calculator)
-- `src/data/faqs.ts` — add FAQ items for both tools (feed visible FAQ + JSON-LD)
+- `src/data/faqs.ts` — add `kickRevenueFaqs` + `adRevenueFaqs` exports (feed visible FAQ + JSON-LD)
 - `src/data/adConfig.ts` — add `AD_INPUT_DEFAULTS` (existing `AD_CPM_DEFAULTS` + `MIN_WAGE_USD_HOURLY` untouched)
+- `tests/calculators.test.ts` — append `describe("kick revenue calculator")` + `describe("ad revenue calculator")` blocks (established convention: all calculator math tests live in this one shared file)
 
 ## 4. Data config
 
@@ -120,11 +119,14 @@ export interface AdRevenueInput {
   - `rpmPerViewer = g(viewers) > 0 ? monthly / g(viewers) : 0`
   - returns `{monthly, annual, impressionsPerStream, monthlyImpressions, rpmPerViewer}`
 
-### Tests (~20 total)
+### Tests (~20 total, appended to `tests/calculators.test.ts`)
 
-`kick.test.ts`: NaN/negative/Infinity→0 on every field; split clamping (≤0, >1, NaN → 0.95); subs math at 95/5; Kicks face-value×split; ads no-split; breakdown sums equal monthly total; annual = monthly×12; hourlyEquivalent; minWageMultiple; `kickSubsForGoal` guards + ceil. ~12 tests.
+Per repo convention, all calculator math tests live in the single shared file `tests/calculators.test.ts` (currently 27 tests across 6 `describe` blocks). B1 appends two new `describe` blocks:
 
-`ads.test.ts`: guards on every field; impressions math; monthly/annual; zero-viewer `rpmPerViewer` = 0; non-zero RPM correctness; default inputs sanity. ~8 tests.
+- `describe("kick revenue calculator")`: NaN/negative/Infinity→0 on every field; split clamping (≤0, >1, NaN → 0.95); subs math at 95/5; Kicks face-value×split; ads no-split; breakdown sums equal monthly total; annual = monthly×12; hourlyEquivalent; minWageMultiple; `kickSubsForGoal` guards + ceil. ~12 `it` blocks.
+- `describe("ad revenue calculator")`: guards on every field; impressions math; monthly/annual; zero-viewer `rpmPerViewer` = 0; non-zero RPM correctness; default-inputs sanity. ~8 `it` blocks.
+
+Suite total: 45 → ~65 tests.
 
 ## 6. Islands (vanilla-JS, existing pattern)
 
@@ -165,7 +167,7 @@ Focused single panel:
 
 ## 9. Testing & verification
 
-- `kick.test.ts` + `ads.test.ts`: ~20 pure tests
+- `kick` + `ad revenue` describe blocks appended to `tests/calculators.test.ts`: ~20 pure tests (suite 45 → ~65)
 - Build: 42 → 44 pages, green; `npm test` all pass; `npm run lint` clean
 - No changes to `programmatic.test.ts` (no prog-SEO in B1)
 - Verify no regression: existing `revenue.test.ts` and `programmatic.test.ts` unchanged and green
@@ -174,9 +176,9 @@ Focused single panel:
 
 | Task | Scope | Model | Depends on |
 |---|---|---|---|
-| **B1-1** | `kickConfig.ts` + `kick.ts` + `kick.test.ts` | cheap (mechanical, single-file, complete spec) | — |
+| **B1-1** | `kickConfig.ts` + `kick.ts` + append `describe("kick revenue calculator")` to `tests/calculators.test.ts` | cheap (mechanical, single-file, complete spec) | — |
 | **B1-2** | `KickRevenueCalculator.astro` + `kick-revenue-calculator.astro` + `TOOLS[]` entry + FAQs | sonnet (integration, multi-file, parity with RevenueCalculator) | B1-1 |
-| **B1-3** | `adConfig.ts` `AD_INPUT_DEFAULTS` + `ads.ts` + `ads.test.ts` | cheap (mechanical, single-file) | — |
+| **B1-3** | `adConfig.ts` `AD_INPUT_DEFAULTS` + `ads.ts` + append `describe("ad revenue calculator")` to `tests/calculators.test.ts` | cheap (mechanical, single-file) | — |
 | **B1-4** | `AdRevenueCalculator.astro` + `twitch-ad-revenue-calculator.astro` + `TOOLS[]` entry + FAQs | sonnet (integration) | B1-3 |
 
 Per task: implementer subagent with curated brief → task reviewer (spec + quality) → fix loop for Critical/Important → commit with `Co-Authored-By: Claude <noreply@anthropic.com>` trailer. Continuous execution (no check-ins between tasks); stop only on BLOCKED or genuine ambiguity. Artifacts: `.superpowers/sdd/task-B1-{n}-{brief,report}.md`; ledger: `.superpowers/sdd/progress-b1.md`. No PR after B1.
